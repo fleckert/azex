@@ -3,14 +3,19 @@ import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
 import { AzureRoleAssignmentsToMarkdown2 } from "../AzureRoleAssignmentsToMarkdown2";
 import { AzureRoleAssignmentsVerifier    } from "../AzureRoleAssignmentsVerifier";
 import { DefaultAzureCredential          } from "@azure/identity";
-import { writeFile                       } from "fs/promises";
+import { readFile, writeFile             } from "fs/promises";
+import { RbacDefinition } from "../models/RbacDefinition";
 
 export class rbac_verify {
     static async handle(subscriptionId: string, pathIn: string, pathOut:string) {
         const startDate = new Date();
 
-        new AzureRoleAssignmentsVerifier()
-        .verify(new DefaultAzureCredential(), subscriptionId, pathIn)
+        readFile(pathIn)
+        .then(p => JSON.parse(p.toString()) as RbacDefinition[])
+        .then(p => {
+            return new AzureRoleAssignmentsVerifier().verify(new DefaultAzureCredential(), subscriptionId, p);
+        }
+        )
         .then(p => {
             p.sort(AzureRoleAssignmentsSorter.sort);
             return p;

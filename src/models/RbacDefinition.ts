@@ -4,7 +4,8 @@ export interface RbacDefinition {
     scope           : string;
 }
 
-export interface RbacDefinitionWithLocality extends RbacDefinition {
-    isPlanned: boolean | undefined;
-    exists   : boolean | undefined;
+export interface RbacDefinitionEx extends RbacDefinition {
+    roleDefinitionName  : string | undefined;
+    principalType       : string | undefined;
+    principalDisplayName: string | undefined;
 }
