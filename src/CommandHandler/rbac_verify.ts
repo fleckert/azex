@@ -7,7 +7,7 @@ import { readFile, writeFile             } from "fs/promises";
 import { RbacDefinition } from "../models/RbacDefinition";
 
 export class rbac_verify {
-    static async handle(subscriptionId: string, pathIn: string, pathOut:string) {
+    static async handle(subscriptionId: string, pathIn: string, pathOut: string) {
         const startDate = new Date();
 
         readFile(pathIn)

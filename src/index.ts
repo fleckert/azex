@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import { rbac_apply } from "./CommandHandler/rbac_apply";
 import { rbac_export } from "./CommandHandler/rbac_export";
 import { rbac_extend } from "./CommandHandler/rbac_extend";
 import { rbac_verify } from "./CommandHandler/rbac_verify";
@@ -47,6 +48,19 @@ if (args[0]?.toLowerCase() === "rbac") {
             const pathOut       : string = argv.pathOut     ;
 
             rbac_extend.handle(subscriptionId, pathIn, pathOut);
+        }
+    }
+    else if (args[1]?.toLowerCase() === "apply")
+    {
+        var argv = require('minimist')(process.argv.slice(2));
+
+             if (argv.subscription === undefined) { console.error("Parameter --subscription is missing."); }
+        else if (argv.path         === undefined) { console.error("Parameter --path is missing."        ); }
+        else {
+            const subscriptionId: string = argv.subscription;
+            const path          : string = argv.path        ;
+
+            rbac_apply.handle(subscriptionId, path);
         }
     }
     else {
