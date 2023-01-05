@@ -60,7 +60,6 @@ export class AzureRoleAssignmentsVerifier {
                 subscriptionId      : roleAssignment.subscriptionId,
                 subscriptionName    : roleAssignment.subscriptionName,
                 tenantId            : roleAssignment.tenantId,
-                resourceId          : roleAssignment.resourceId,
                 roleAssignmentStatus: isPlanned ? 'okay' : 'unexpected-rbac'
             });
         }
@@ -88,7 +87,6 @@ export class AzureRoleAssignmentsVerifier {
                     subscriptionId      : subscriptionId,
                     subscriptionName    : subscription.displayName,
                     tenantId            : tenantId,
-                    resourceId          : new AzureResourceId(rbacDefinition.scope),
                     roleAssignmentStatus: resourceExists ? 'missing-rbac' : 'missing-resource'
                 });
             }

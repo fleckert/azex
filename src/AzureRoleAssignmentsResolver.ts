@@ -137,8 +137,7 @@ export class AzureRoleAssignmentsResolver {
                 managementGroupInfo,
                 subscriptionId,
                 subscriptionName,
-                tenantId,
-                resourceId
+                tenantId
             });
         }
 
