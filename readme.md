@@ -22,3 +22,11 @@ azex rbac export --subscription <subscription-id> --pathOut ./rbac-export
 ```
 azex rbac verify --subscription <subscription-id> --pathIn ./rbac-export-<subscription-id>.min.json --pathOut ./rbac-verify
 ```
+
+
+### [rbac apply](/docs/commands/rbac/apply.md)
+
+
+```
+azex rbac apply --subscription <subscription-id> --path ./rbac-apply-<subscription-id>.min.json
+```

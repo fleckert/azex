@@ -1,14 +1,15 @@
 [home](/readme.md)
 
-# rbac verify
+# rbac apply
 
-Verify that current Azure Role Based Access Control assignments are in sync with a given input file.
+Add and delete Azure Role Based Access Control assignments to align with a given input file.
 
 ```
-azex rbac verify --subscription <subscription-id> --pathIn ./rbac-export-<subscription-id>.min.json --pathOut ./rbac-verify
+azex rbac apply --subscription <subscription-id> --path ./rbac-apply-<subscription-id>.min.json
 ```
 
-Checks wether existing Azure Role Based Access Control assignments are in sync with the given input file.
+Sync existing Azure Role Based Access Control assignments with the given input file.
+
 ```
 example input file
 [
