@@ -38,6 +38,16 @@ export class RoleAssignmentHelper {
     return reponse;
   }
 
+  deleteRoleAssignment(
+    scope             : string,
+    roleAssignmentName: string
+  ): Promise<RoleAssignment> {
+      return this.authorizationManagementClient.roleAssignments.deleteMethod(
+        scope,
+        roleAssignmentName
+      );
+  }
+
   private async getRoleAssignment(
     scope           : string,
     principalId     : string,
