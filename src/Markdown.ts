@@ -39,7 +39,7 @@ export class Markdown {
         return this.getLinkWithToolTip(title, url, tooltip);
     }
     static activeDirectoryUser(principal: ActiveDirectoryUser): string {
-        const title = `${principal.userPrincipalName}<br/>User`;
+        const title = `${principal.displayName}<br/>User`;
         const url = AzurePortalLinks.user(principal.id);
         const tooltip = `User${this.lineBreak}` +
             `-----${this.lineBreak}` +

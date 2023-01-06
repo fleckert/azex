@@ -1,4 +1,4 @@
-import { AzurePortalLinks    } from "./AzurePortalLinks";
+import { AzureResourceId } from "./AzureResourceId";
 import { Markdown            } from "./Markdown";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
 
@@ -13,7 +13,7 @@ export class AzureRoleAssignmentsToMarkdown2{
             lines.push("|ManagementGroup|Subscription|Role|Principal|");
             lines.push("|-|-|-|-|");
 
-            for (const item of collection.filter(p => p.resourceId?.isValid !== true)) {
+            for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid !== true)) {
 
                 const tenantId                = item.tenantId;
                 const subscriptionId          = item.subscriptionId;
@@ -33,17 +33,18 @@ export class AzureRoleAssignmentsToMarkdown2{
         lines.push("|Subscription|ResourceGroup|Resource|Instance|Role|Principal|");
         lines.push("|-|-|-|-|-|-|");
 
-        for (const item of collection.filter(p => p.resourceId?.isValid === true)) {
+        for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid === true)) {
 
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
             const subscriptionDisplayName = item.subscriptionName;
+            const resourceId              = new AzureResourceId(`${item.roleAssignment.scope}`);
 
             lines.push(
                 `|${Markdown.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}` +
-                `|${Markdown.resourceGroup           (tenantId, subscriptionId, item.resourceId?.resourceGroupName)}` +
-                `|${Markdown.providerNamespace       (item.resourceId?.providerNamespace, item.resourceId?.resourceType)}` +
-                `|${Markdown.resource                (tenantId, subscriptionId, item.resourceId?.resourceGroupName, item.resourceId?.providerNamespace, item.resourceId?.resourceType, item.resourceId?.name)}` +
+                `|${Markdown.resourceGroup           (tenantId, subscriptionId, resourceId.resourceGroupName)}` +
+                `|${Markdown.providerNamespace       (resourceId.providerNamespace, resourceId.resourceType)}` +
+                `|${Markdown.resource                (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.providerNamespace, resourceId.resourceType, resourceId.name)}` +
                 `|${Markdown.roleDefinition          (item)}` +
                 `|${Markdown.activeDirectoryPrincipal(item)}|`
             );
@@ -61,7 +62,7 @@ export class AzureRoleAssignmentsToMarkdown2{
             lines.push("|ManagementGroup|Subscription|Role|Principal|");
             lines.push("|-|-|-|-|");
 
-            for (const item of collection.filter(p => p.resourceId?.isValid !== true)) {
+            for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid !== true)) {
 
                 const tenantId                = item.tenantId;
                 const subscriptionId          = item.subscriptionId;
@@ -81,18 +82,19 @@ export class AzureRoleAssignmentsToMarkdown2{
         lines.push("|Status|Subscription|ResourceGroup|Resource|Instance|Role|Principal|");
         lines.push("|:-:|-|-|-|-|-|-|");
 
-        for (const item of collection.filter(p => p.resourceId?.isValid === true)) {
+        for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid === true)) {
 
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
             const subscriptionDisplayName = item.subscriptionName;
+            const resourceId              = new AzureResourceId(`${item.roleAssignment.scope}`);
 
             lines.push(
                 `|${Markdown.azureRoleAssignmentStatus(item)}` +
                 `|${Markdown.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}` +
-                `|${Markdown.resourceGroup           (tenantId, subscriptionId, item.resourceId?.resourceGroupName)}` +
-                `|${Markdown.providerNamespace       (item.resourceId?.providerNamespace, item.resourceId?.resourceType)}` +
-                `|${Markdown.resource                (tenantId, subscriptionId, item.resourceId?.resourceGroupName, item.resourceId?.providerNamespace, item.resourceId?.resourceType, item.resourceId?.name)}` +
+                `|${Markdown.resourceGroup           (tenantId, subscriptionId, resourceId.resourceGroupName)}` +
+                `|${Markdown.providerNamespace       (resourceId.providerNamespace, resourceId.resourceType)}` +
+                `|${Markdown.resource                (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.providerNamespace, resourceId.resourceType, resourceId.name)}` +
                 `|${Markdown.roleDefinition          (item)}` +
                 `|${Markdown.activeDirectoryPrincipal(item)}|`
             );

@@ -2,7 +2,6 @@ import {  RoleAssignment,  RoleDefinition } from "@azure/arm-authorization/esm/m
 import { ActiveDirectoryGroup             } from "./ActiveDirectoryGroup";
 import { ActiveDirectoryServicePrincipal  } from "./ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser              } from "./ActiveDirectoryUser";
-import { AzureResourceId                  } from "../AzureResourceId";
 import { ManagementGroupInfo              } from "@azure/arm-managementgroups";
 
 export interface AzureRoleAssignment {
@@ -13,7 +12,6 @@ export interface AzureRoleAssignment {
     subscriptionId     : string;
     subscriptionName   : string              | undefined;
     tenantId           : string;
-    resourceId         : AzureResourceId     | undefined;
 }
 
 export interface AzureRoleAssignmentEx extends AzureRoleAssignment {

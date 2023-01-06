@@ -1,10 +1,8 @@
 import { AuthorizationManagementClient } from "@azure/arm-authorization";
 import { ResourceManagementClient      } from "@azure/arm-resources";
 import { SubscriptionClient            } from "@azure/arm-subscriptions";
-import { readFile                      } from "fs/promises";
 import { ActiveDirectoryHelper         } from "./ActiveDirectoryHelper";
-import { AzureResourceId               } from "./AzureResourceId";
-import { AzureRoleAssignmentsResolver     } from "./AzureRoleAssignmentsResolver";
+import { AzureRoleAssignmentsResolver  } from "./AzureRoleAssignmentsResolver";
 import { AzureRoleAssignmentEx         } from "./models/AzureRoleAssignment";
 import { RbacDefinition                } from "./models/RbacDefinition";
 import { ResourcesHelper               } from "./ResourcesHelper";
@@ -13,17 +11,13 @@ import { TenantsHelperJwtDecode        } from "./TenantsHelperJwtDecode";
 import { TokenCredential               } from "@azure/identity";
 
 export class AzureRoleAssignmentsVerifier {
-    async verify(credential :TokenCredential, subscriptionId: string, path: string) : Promise<Array<AzureRoleAssignmentEx>>{
-
-        const content = await readFile(path)
-        const rbacDefinitionsPlanned = JSON.parse(content.toString()) as RbacDefinition[];
-
+    async verify(credential :TokenCredential, subscriptionId: string, rbacDefinitions: Array<RbacDefinition>) : Promise<Array<AzureRoleAssignmentEx>>{
         const authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
         const resourceManagementClient      = new ResourceManagementClient     (credential, subscriptionId);
 
-        const principalIds       = new Set(rbacDefinitionsPlanned.map(p => p.principalId     ));
-        const scopes             = new Set(rbacDefinitionsPlanned.map(p => p.scope           ));
-        const roleDefinitionsIds = new Set(rbacDefinitionsPlanned.map(p => p.roleDefinitionId));
+        const principalIds       = new Set(rbacDefinitions.map(p => p.principalId     ));
+        const scopes             = new Set(rbacDefinitions.map(p => p.scope           ));
+        const roleDefinitionsIds = new Set(rbacDefinitions.map(p => p.roleDefinitionId));
 
         const resourcesPromise       = new ResourcesHelper       (resourceManagementClient).getByIds([...scopes]);
         const roleDefinitionsPromise = new RoleDefinitionHelper  (authorizationManagementClient).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds]);
@@ -46,7 +40,7 @@ export class AzureRoleAssignmentsVerifier {
         const roleAssignmentEx = new Array<AzureRoleAssignmentEx>();
 
         for (const roleAssignment of roleAssignmentsEx.roleAssignments) {
-            const isPlanned = rbacDefinitionsPlanned.filter(p => {
+            const isPlanned = rbacDefinitions.filter(p => {
                 return p.principalId     .toLowerCase() === roleAssignment.roleAssignment?.principalId?.     toLowerCase()
                     && p.roleDefinitionId.toLowerCase() === roleAssignment.roleAssignment?.roleDefinitionId?.toLowerCase()
                     && p.scope           .toLowerCase() === roleAssignment.roleAssignment?.scope?.           toLowerCase();
@@ -60,12 +54,11 @@ export class AzureRoleAssignmentsVerifier {
                 subscriptionId      : roleAssignment.subscriptionId,
                 subscriptionName    : roleAssignment.subscriptionName,
                 tenantId            : roleAssignment.tenantId,
-                resourceId          : roleAssignment.resourceId,
                 roleAssignmentStatus: isPlanned ? 'okay' : 'unexpected-rbac'
             });
         }
 
-        for (const rbacDefinition of rbacDefinitionsPlanned) {
+        for (const rbacDefinition of rbacDefinitions) {
             if (roleAssignmentEx.filter(p => {
                 return rbacDefinition.principalId     .toLowerCase() === p.roleAssignment?.principalId?.     toLowerCase()
                     && rbacDefinition.roleDefinitionId.toLowerCase() === p.roleAssignment?.roleDefinitionId?.toLowerCase()
@@ -88,7 +81,6 @@ export class AzureRoleAssignmentsVerifier {
                     subscriptionId      : subscriptionId,
                     subscriptionName    : subscription.displayName,
                     tenantId            : tenantId,
-                    resourceId          : new AzureResourceId(rbacDefinition.scope),
                     roleAssignmentStatus: resourceExists ? 'missing-rbac' : 'missing-resource'
                 });
             }
