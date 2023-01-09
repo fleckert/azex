@@ -1,7 +1,7 @@
-import {  RbacDefinitionEx } from "./RbacDefinition";
+import {  RbacDefinition } from "./RbacDefinition";
 
 export class RbacDefinitionSorter {
-    static sort(a: RbacDefinitionEx, b: RbacDefinitionEx) {
+    static sort(a: RbacDefinition, b: RbacDefinition) {
         const compareScope = `${a.scope}`.toLowerCase().localeCompare(`${b.scope}`.toLowerCase());
 
         if (compareScope !== 0) { return compareScope; }

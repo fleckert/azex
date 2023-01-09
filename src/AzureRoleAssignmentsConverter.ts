@@ -1,6 +1,6 @@
-import { ActiveDirectoryUser } from "./models/ActiveDirectoryUser";
+import { ActiveDirectoryUser                        } from "./models/ActiveDirectoryUser";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
-import { RbacDefinitionEx } from "./models/RbacDefinition";
+import { RbacDefinition                             } from "./models/RbacDefinition";
 
 export class AzureRoleAssignmentsConverter {
     mapMinimal(collection: Array<AzureRoleAssignment>): any {
@@ -24,7 +24,7 @@ export class AzureRoleAssignmentsConverter {
         })
     }
 
-    mapExtendend(collection: Array<AzureRoleAssignment>): Array<RbacDefinitionEx> {
+    mapExtendend(collection: Array<AzureRoleAssignment>): Array<RbacDefinition> {
         return collection.map(p => {
             if (p.principal?.type === 'User') {
                 return {
@@ -48,7 +48,7 @@ export class AzureRoleAssignmentsConverter {
         })
     }
 
-    mapExtendendEx(collection: Array<AzureRoleAssignmentEx>): Array<RbacDefinitionEx> {
+    mapExtendendEx(collection: Array<AzureRoleAssignmentEx>): Array<RbacDefinition> {
         return collection.map(p => {
             if(p.principal?.type === 'User'){
                 return {

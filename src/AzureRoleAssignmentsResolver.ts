@@ -59,7 +59,7 @@ export class AzureRoleAssignmentsResolver {
 
         const roleDefinitionIds  = Array.from(new Set(roleAssignments.filter(p => p.roleDefinitionId !== undefined).map(p => p.roleDefinitionId!)));
 
-        const roleDefinitions = roleDefinitionHelper.listAllForScopeById(`/subscriptions/${subscriptionId}`, roleDefinitionIds);
+        const roleDefinitions = roleDefinitionHelper.listAllForScopeById(`/subscriptions/${subscriptionId}`, roleDefinitionIds, []);
 
         const usersPromise             = activeDirectoryHelper.getUsersById            (userIds            );
         const groupsPromise            = activeDirectoryHelper.getGroupsById           (groupIds           );

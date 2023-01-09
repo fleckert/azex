@@ -1,10 +1,7 @@
 export interface RbacDefinition {
-    principalId     : string;
-    roleDefinitionId: string;
-    scope           : string;
-}
-
-export interface RbacDefinitionEx extends RbacDefinition {
+    scope              : string;
+    principalId        : string | undefined;
+    roleDefinitionId   : string | undefined;
     roleDefinitionName : string | undefined;
     principalType      : string | undefined;
     principalName      : string | undefined;

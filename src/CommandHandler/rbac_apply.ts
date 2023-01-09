@@ -1,11 +1,11 @@
-import { AuthorizationManagementClient    } from "@azure/arm-authorization";
-import { DefaultAzureCredential           } from "@azure/identity";
-import { RbacDefinition, RbacDefinitionEx } from "../models/RbacDefinition";
-import { readFile                         } from "fs/promises";
-import { RoleAssignment                   } from "@azure/arm-authorization/esm/models";
-import { RoleAssignmentHelper             } from "../RoleAssignmentHelper";
-import { AzureRoleAssignmentsVerifier     } from "../AzureRoleAssignmentsVerifier";
-import { AzureRoleAssignmentsConverter    } from "../AzureRoleAssignmentsConverter";
+import { AuthorizationManagementClient } from "@azure/arm-authorization";
+import { DefaultAzureCredential        } from "@azure/identity";
+import { RbacDefinition                } from "../models/RbacDefinition";
+import { readFile                      } from "fs/promises";
+import { RoleAssignment                } from "@azure/arm-authorization/esm/models";
+import { RoleAssignmentHelper          } from "../RoleAssignmentHelper";
+import { AzureRoleAssignmentsVerifier  } from "../AzureRoleAssignmentsVerifier";
+import { AzureRoleAssignmentsConverter } from "../AzureRoleAssignmentsConverter";
 
 export class rbac_apply {
     static async handle(subscriptionId: string, path: string) {
@@ -22,7 +22,7 @@ export class rbac_apply {
             const roleAssignmentHelper = new RoleAssignmentHelper(authorizationManagementClient);
             
             const newRoleAssignments = new Array<RoleAssignment>();
-            const newRoleAssignmentsFailed = new Array<RbacDefinitionEx>();
+            const newRoleAssignmentsFailed = new Array<RbacDefinition>();
             const roleAssignmentsMissingRbac = roleAssignments.filter(p => p.roleAssignmentStatus === 'missing-rbac');
             for (const item of roleAssignmentsMissingRbac) {
                 if (item.roleAssignment.scope === undefined) {
@@ -55,7 +55,7 @@ export class rbac_apply {
             }
 
             const deletedRoleAssignments = new Array<RoleAssignment>();
-            const deletedRoleAssignmentsFailed = new Array<RbacDefinitionEx>();
+            const deletedRoleAssignmentsFailed = new Array<RbacDefinition>();
             const roleAssignmentsUnexpectedRbac = roleAssignments.filter(p => p.roleAssignmentStatus === 'unexpected-rbac');
             for (const item of roleAssignmentsUnexpectedRbac) {
                 if (item.roleAssignment.scope === undefined) {
