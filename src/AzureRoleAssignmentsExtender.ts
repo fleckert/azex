@@ -3,6 +3,7 @@ import { ActiveDirectoryHelper            } from "./ActiveDirectoryHelper";
 import { RbacDefinition, RbacDefinitionEx } from "./models/RbacDefinition";
 import { RoleDefinitionHelper             } from "./RoleDefinitionHelper";
 import { TokenCredential                  } from "@azure/identity";
+import { ActiveDirectoryUser              } from "./models/ActiveDirectoryUser";
 
 export class AzureRoleAssignmentsExtender {
     async extend(
@@ -28,12 +29,12 @@ export class AzureRoleAssignmentsExtender {
             const roleDefinition = roleDefinitions.filter(p => item.roleDefinitionId.toLowerCase() === p.id?.toLowerCase())[0];
 
             collection.push({
-                scope               : item.scope,
-                roleDefinitionId    : item.roleDefinitionId,
-                principalId         : item.principalId,
-                roleDefinitionName  : roleDefinition?.roleName,
-                principalType       : principal?.type,
-                principalDisplayName: principal?.displayName
+                scope             : item.scope,
+                roleDefinitionId  : item.roleDefinitionId,
+                principalId       : item.principalId,
+                roleDefinitionName: roleDefinition?.roleName,
+                principalType     : principal?.type,
+                principalName     : (principal as ActiveDirectoryUser)?.userPrincipalName ?? principal.displayName
             });
         }
 
