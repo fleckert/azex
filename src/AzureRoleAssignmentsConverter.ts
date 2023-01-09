@@ -13,6 +13,17 @@ export class AzureRoleAssignmentsConverter {
         })
     }
 
+    mapMinimalNoIds(collection: Array<AzureRoleAssignment>): any {
+        return collection.map(p => {
+            return {
+                scope             : p.roleAssignment.scope,
+                roleDefinitionName: p.roleDefinition.roleName,
+                principalType     : p.roleAssignment.principalType,
+                principalName     : (p.principal as ActiveDirectoryUser).userPrincipalName ?? p.principal?.displayName
+            }
+        })
+    }
+
     mapMinimalEx(collection: Array<AzureRoleAssignmentEx>): any {
         return collection.map(p => {
             return {

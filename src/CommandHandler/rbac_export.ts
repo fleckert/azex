@@ -29,6 +29,11 @@ export class rbac_export {
             await writeFile(`${pathForFiles}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
             return p;
         })
+        .then(async p => {
+            const collection = new AzureRoleAssignmentsConverter().mapMinimalNoIds(p.roleAssignments);
+            await writeFile(`${pathForFiles}-${subscriptionId}.names.json`, JSON.stringify(collection, null, 2));
+            return p;
+        })
         .then(p => {
             const markDown = new AzureRoleAssignmentsToMarkdown2().convert(p.roleAssignments);
             writeFile(`${pathForFiles}-${subscriptionId}.md`, markDown)
@@ -44,6 +49,7 @@ export class rbac_export {
                     `${pathForFiles}-${subscriptionId}.full.json`,
                     `${pathForFiles}-${subscriptionId}.min.json`,
                     `${pathForFiles}-${subscriptionId}.ext.json`,
+                    `${pathForFiles}-${subscriptionId}.names.json`,
                     `${pathForFiles}-${subscriptionId}.md`,
                 ],
                 failedRequests: p.failedRequests,
