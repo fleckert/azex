@@ -1,7 +1,7 @@
-import {  RbacDefinitionEx } from "./RbacDefinition";
+import {  RbacDefinition } from "./RbacDefinition";
 
 export class RbacDefinitionSorter {
-    static sort(a: RbacDefinitionEx, b: RbacDefinitionEx) {
+    static sort(a: RbacDefinition, b: RbacDefinition) {
         const compareScope = `${a.scope}`.toLowerCase().localeCompare(`${b.scope}`.toLowerCase());
 
         if (compareScope !== 0) { return compareScope; }
@@ -14,9 +14,9 @@ export class RbacDefinitionSorter {
 
         if (comparePrincipalType !== 0) { return comparePrincipalType; }
 
-        const comparePrincipalDisplayName = `${a.principalDisplayName}`.toLowerCase().localeCompare(`${b.principalDisplayName}`.toLowerCase());
+        const comparePrincipalName = `${a.principalName}`.toLowerCase().localeCompare(`${b.principalName}`.toLowerCase());
 
-        if (comparePrincipalDisplayName !== 0) { return comparePrincipalDisplayName; }
+        if (comparePrincipalName !== 0) { return comparePrincipalName; }
 
         return 0;
     }

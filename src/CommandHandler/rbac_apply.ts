@@ -1,11 +1,10 @@
-import { ActiveDirectoryHelper         } from "../ActiveDirectoryHelper";
 import { AuthorizationManagementClient } from "@azure/arm-authorization";
 import { DefaultAzureCredential        } from "@azure/identity";
 import { RbacDefinition                } from "../models/RbacDefinition";
 import { readFile                      } from "fs/promises";
 import { RoleAssignment                } from "@azure/arm-authorization/esm/models";
 import { RoleAssignmentHelper          } from "../RoleAssignmentHelper";
-import { AzureRoleAssignmentsVerifier } from "../AzureRoleAssignmentsVerifier";
+import { AzureRoleAssignmentsVerifier  } from "../AzureRoleAssignmentsVerifier";
 import { AzureRoleAssignmentsConverter } from "../AzureRoleAssignmentsConverter";
 
 export class rbac_apply {
@@ -23,20 +22,20 @@ export class rbac_apply {
             const roleAssignmentHelper = new RoleAssignmentHelper(authorizationManagementClient);
             
             const newRoleAssignments = new Array<RoleAssignment>();
-            const newRoleAssignmentsFailed = new Array<RoleAssignment>();
+            const newRoleAssignmentsFailed = new Array<RbacDefinition>();
             const roleAssignmentsMissingRbac = roleAssignments.filter(p => p.roleAssignmentStatus === 'missing-rbac');
             for (const item of roleAssignmentsMissingRbac) {
                 if (item.roleAssignment.scope === undefined) {
-                    newRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                    newRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                 }
                 else if (item.roleAssignment.principalId === undefined) {
-                    newRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                    newRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                 }
                 else if (item.roleAssignment.roleDefinitionId === undefined) {
-                    newRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                    newRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                 }
                 else if (item.principal?.type === undefined) {
-                    newRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                    newRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                 }
                 else {
                     try {
@@ -47,35 +46,35 @@ export class rbac_apply {
                             item.principal.type
                         );
 
-                        newRoleAssignments.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                        newRoleAssignments.push(roleAssignment);
                     }
                     catch {
-                        newRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                        newRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                     }
                 }
             }
 
             const deletedRoleAssignments = new Array<RoleAssignment>();
-            const deletedRoleAssignmentsFailed = new Array<RoleAssignment>();
+            const deletedRoleAssignmentsFailed = new Array<RbacDefinition>();
             const roleAssignmentsUnexpectedRbac = roleAssignments.filter(p => p.roleAssignmentStatus === 'unexpected-rbac');
             for (const item of roleAssignmentsUnexpectedRbac) {
                 if (item.roleAssignment.scope === undefined) {
-                    deletedRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                    deletedRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                 }
                 else if (item.roleAssignment.name === undefined) {
-                    deletedRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                    deletedRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                 }
                 else {
                     try {
-                        await roleAssignmentHelper.deleteRoleAssignment(
+                        const deletedRoleAssignment = await roleAssignmentHelper.deleteRoleAssignment(
                             item.roleAssignment.scope,
                             item.roleAssignment.name
                         );
 
-                        deletedRoleAssignments.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                        deletedRoleAssignments.push(deletedRoleAssignment);
                     }
                     catch {
-                        deletedRoleAssignmentsFailed.push(new AzureRoleAssignmentsConverter().mapExtendend([item]));
+                        deletedRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
                     }
                 }
             }

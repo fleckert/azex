@@ -74,7 +74,7 @@ export class RoleDefinitionHelper {
         return roleDefinitionsAll;
     }
 
-    async listAllForScopeById(scope: string, roleDefinitionIds: Array<string>): Promise<Array<RoleDefinition>> {
+    async listAllForScopeById(scope: string, roleDefinitionIds: Array<string>, roleDefinitionNames: Array<string>): Promise<Array<RoleDefinition>> {
 
         const roleDefinitionsAll = new Array<RoleDefinition>();
 
@@ -82,6 +82,9 @@ export class RoleDefinitionHelper {
 
         for (const roleDefinition of roleDefinitions) {
             if (roleDefinitionIds.filter(p => roleDefinition.id?.toLowerCase() === p.toLowerCase())[0] !== undefined) {
+                roleDefinitionsAll.push(roleDefinition);
+            }
+            else if(roleDefinitionNames.filter(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase())[0] !== undefined){
                 roleDefinitionsAll.push(roleDefinition);
             }
         }
@@ -93,6 +96,9 @@ export class RoleDefinitionHelper {
 
             for (const roleDefinition of roleDefinitionsNext) {
                 if (roleDefinitionIds.filter(p => roleDefinition.id === p)[0] !== undefined) {
+                    roleDefinitionsAll.push(roleDefinition);
+                }
+                else if(roleDefinitionNames.filter(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase())[0] !== undefined){
                     roleDefinitionsAll.push(roleDefinition);
                 }
             }
