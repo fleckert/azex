@@ -14,9 +14,9 @@ export class RbacDefinitionSorter {
 
         if (comparePrincipalType !== 0) { return comparePrincipalType; }
 
-        const comparePrincipalDisplayName = `${a.principalDisplayName}`.toLowerCase().localeCompare(`${b.principalDisplayName}`.toLowerCase());
+        const comparePrincipalName = `${a.principalName}`.toLowerCase().localeCompare(`${b.principalName}`.toLowerCase());
 
-        if (comparePrincipalDisplayName !== 0) { return comparePrincipalDisplayName; }
+        if (comparePrincipalName !== 0) { return comparePrincipalName; }
 
         return 0;
     }
