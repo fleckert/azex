@@ -4,6 +4,7 @@ import { rbac_apply } from "./CommandHandler/rbac_apply";
 import { rbac_export } from "./CommandHandler/rbac_export";
 import { rbac_extend } from "./CommandHandler/rbac_extend";
 import { rbac_verify } from "./CommandHandler/rbac_verify";
+import { SubscriptionResolver } from "./SubscriptionResolver";
 
 const args = process.argv.slice(2)
 
@@ -11,13 +12,23 @@ if (args[0]?.toLowerCase() === "rbac") {
     if (args[1]?.toLowerCase() === "export") {
         var argv = require('minimist')(process.argv.slice(2));
 
-             if (argv.subscription === undefined) { console.error("Parameter --subscription is missing."); }
-        else if (argv.pathOut      === undefined) { console.error("Parameter --path is missing."        ); }
+        if (argv.pathOut === undefined) { console.error("Parameter --path is missing."); }
         else {
-            const subscriptionId: string = argv.subscription;
             const pathForFiles: string = argv.pathOut;
-
-            rbac_export.handle(subscriptionId, pathForFiles);
+                if (argv.subscription === undefined) {
+                    new SubscriptionResolver().getSubscriptionId()
+                    .then(subscriptionId =>{
+                        if (subscriptionId === undefined) {
+                            throw new Error("Parameter --subscription is missing.");
+                        }
+                        else {
+                            rbac_export.handle(subscriptionId, pathForFiles);
+                        };
+                    })
+                }
+                else {
+                    rbac_export.handle(argv.subscription, pathForFiles);
+                }
         }
     }
     else if (args[1]?.toLowerCase() === "verify")
