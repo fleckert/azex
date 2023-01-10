@@ -46,6 +46,11 @@ export class rbac_verify {
             const durationInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
 
             console.log({
+                parameters:{
+                    subscriptionId,
+                    pathIn,
+                    pathOut
+                },
                 files: [
                     `${pathOut}-${subscriptionId}.full.json`,
                     `${pathOut}-${subscriptionId}.min.json`,

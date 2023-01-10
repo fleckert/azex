@@ -89,6 +89,10 @@ export class rbac_apply {
             console.log(
                 JSON.stringify(
                     {
+                        parameters:{
+                            subscriptionId,
+                            path
+                        },
                         durationInSeconds,
                         newRoleAssignmentsFailed    : p.newRoleAssignmentsFailed,
                         newRoleAssignments          : p.newRoleAssignments,

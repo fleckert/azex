@@ -6,7 +6,7 @@ import { DefaultAzureCredential          } from "@azure/identity";
 import { writeFile                       } from "fs/promises";
 
 export class rbac_export {
-    static async handle(subscriptionId: string, pathForFiles: string) {
+    static async handle(subscriptionId: string, path: string) {
         const startDate = new Date();
 
         new AzureRoleAssignmentsResolver()
@@ -16,27 +16,27 @@ export class rbac_export {
             return p;
         })
         .then(async p => {
-            await writeFile(`${pathForFiles}-${subscriptionId}.full.json`, JSON.stringify(p, null, 2));
+            await writeFile(`${path}-${subscriptionId}.full.json`, JSON.stringify(p, null, 2));
             return p;
         })
         .then(async p => {
             const collection = new AzureRoleAssignmentsConverter().mapMinimal(p.roleAssignments);
-            await writeFile(`${pathForFiles}-${subscriptionId}.min.json`, JSON.stringify(collection, null, 2));
+            await writeFile(`${path}-${subscriptionId}.min.json`, JSON.stringify(collection, null, 2));
             return p;
         })
         .then(async p => {
             const collection = new AzureRoleAssignmentsConverter().mapExtendend(p.roleAssignments);
-            await writeFile(`${pathForFiles}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
+            await writeFile(`${path}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
             return p;
         })
         .then(async p => {
             const collection = new AzureRoleAssignmentsConverter().mapMinimalNoIds(p.roleAssignments);
-            await writeFile(`${pathForFiles}-${subscriptionId}.names.json`, JSON.stringify(collection, null, 2));
+            await writeFile(`${path}-${subscriptionId}.names.json`, JSON.stringify(collection, null, 2));
             return p;
         })
         .then(p => {
             const markDown = new AzureRoleAssignmentsToMarkdown2().convert(p.roleAssignments);
-            writeFile(`${pathForFiles}-${subscriptionId}.md`, markDown)
+            writeFile(`${path}-${subscriptionId}.md`, markDown)
             return p;
         })
         .then(p => {
@@ -45,15 +45,19 @@ export class rbac_export {
             const durationInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
 
             console.log({
+                parameters:{
+                    subscriptionId,
+                    path
+                },
+                durationInSeconds,
                 files: [
-                    `${pathForFiles}-${subscriptionId}.full.json`,
-                    `${pathForFiles}-${subscriptionId}.min.json`,
-                    `${pathForFiles}-${subscriptionId}.ext.json`,
-                    `${pathForFiles}-${subscriptionId}.names.json`,
-                    `${pathForFiles}-${subscriptionId}.md`,
+                    `${path}-${subscriptionId}.full.json`,
+                    `${path}-${subscriptionId}.min.json`,
+                    `${path}-${subscriptionId}.ext.json`,
+                    `${path}-${subscriptionId}.names.json`,
+                    `${path}-${subscriptionId}.md`,
                 ],
                 failedRequests: p.failedRequests,
-                durationInSeconds,
             });
         })
         .catch(p => console.error(p));

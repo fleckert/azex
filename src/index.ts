@@ -4,63 +4,62 @@ import { rbac_apply } from "./CommandHandler/rbac_apply";
 import { rbac_export } from "./CommandHandler/rbac_export";
 import { rbac_extend } from "./CommandHandler/rbac_extend";
 import { rbac_verify } from "./CommandHandler/rbac_verify";
+import { SubscriptionIdResolver } from "./SubscriptionIdResolver";
 
 const args = process.argv.slice(2)
 
 if (args[0]?.toLowerCase() === "rbac") {
     if (args[1]?.toLowerCase() === "export") {
         var argv = require('minimist')(process.argv.slice(2));
+  
+        new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+        .then(subscriptionId =>{
+            if (subscriptionId === undefined) { throw new Error("Parameter --subscription is missing."); }
 
-             if (argv.subscription === undefined) { console.error("Parameter --subscription is missing."); }
-        else if (argv.pathOut      === undefined) { console.error("Parameter --path is missing."        ); }
-        else {
-            const subscriptionId: string = argv.subscription;
-            const pathForFiles: string = argv.pathOut;
-
-            rbac_export.handle(subscriptionId, pathForFiles);
-        }
+            rbac_export.handle(subscriptionId, argv.out ?? 'azex-rbac-export');
+        })
+        .catch(console.error);
     }
     else if (args[1]?.toLowerCase() === "verify")
     {
         var argv = require('minimist')(process.argv.slice(2));
 
-             if (argv.subscription === undefined) { console.error("Parameter --subscription is missing."); }
-        else if (argv.pathIn       === undefined) { console.error("Parameter --pathIn is missing."      ); }
-        else if (argv.pathOut      === undefined) { console.error("Parameter --pathOut is missing."     ); }
+        if (argv.path === undefined) { console.error("Parameter --path is missing."); }
         else {
-            const subscriptionId: string = argv.subscription;
-            const pathIn        : string = argv.pathIn      ;
-            const pathOut       : string = argv.pathOut     ;
-
-            rbac_verify.handle(subscriptionId, pathIn, pathOut);
+            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+            .then(subscriptionId =>{
+                if (subscriptionId === undefined) {    throw new Error("Parameter --subscription is missing.");}
+                rbac_verify.handle(subscriptionId, argv.path, argv.out ?? 'azex-rbac-verify');         
+            })
+            .catch(console.error);
         }
     }
     else if (args[1]?.toLowerCase() === "extend")
     {
         var argv = require('minimist')(process.argv.slice(2));
 
-             if (argv.subscription === undefined) { console.error("Parameter --subscription is missing."); }
-        else if (argv.pathIn       === undefined) { console.error("Parameter --pathIn is missing."      ); }
-        else if (argv.pathOut      === undefined) { console.error("Parameter --pathOut is missing."     ); }
+        if (argv.path === undefined) { console.error("Parameter --path is missing."); }
         else {
-            const subscriptionId: string = argv.subscription;
-            const pathIn        : string = argv.pathIn      ;
-            const pathOut       : string = argv.pathOut     ;
-
-            rbac_extend.handle(subscriptionId, pathIn, pathOut);
+            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+            .then(subscriptionId => {
+                if (subscriptionId === undefined) { throw new Error("Parameter --subscription is missing."); }
+                rbac_extend.handle(subscriptionId, argv.path, argv.out ?? 'azex-rbac-extend');
+            })
+            .catch(console.error);
         }
     }
     else if (args[1]?.toLowerCase() === "apply")
     {
         var argv = require('minimist')(process.argv.slice(2));
 
-             if (argv.subscription === undefined) { console.error("Parameter --subscription is missing."); }
-        else if (argv.path         === undefined) { console.error("Parameter --path is missing."        ); }
+        if (argv.path === undefined) { console.error("Parameter --path is missing."); }
         else {
-            const subscriptionId: string = argv.subscription;
-            const path          : string = argv.path        ;
-
-            rbac_apply.handle(subscriptionId, path);
+            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+            .then(subscriptionId => {
+                if (subscriptionId === undefined) { throw new Error("Parameter --subscription is missing."); }
+                rbac_apply.handle(subscriptionId, argv.path);
+            })
+            .catch(console.error);
         }
     }
     else {

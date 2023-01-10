@@ -5,7 +5,7 @@
 Add and delete Azure Role Based Access Control assignments to align with a given input file.
 
 ```
-azex rbac apply --subscription <subscription-id> --path ./rbac-apply-<subscription-id>.min.json
+azex rbac apply --path rbac-definitions.json [--subscription ...]
 ```
 
 Sync existing Azure Role Based Access Control assignments with the given input file.

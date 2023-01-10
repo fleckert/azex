@@ -5,12 +5,13 @@
 Verify that current Azure Role Based Access Control assignments are in sync with a given input file.
 
 ```
-azex rbac verify --subscription <subscription-id> --pathIn ./rbac-export-<subscription-id>.min.json --pathOut ./rbac-verify
+azex rbac verify --path ./rbac-definitions.min.json [--out ...] [--subscription ...]
 ```
 
 Checks wether existing Azure Role Based Access Control assignments are in sync with the given input file.
-```
+
 example input file
+```json
 [
   {
     "scope": "/subscriptions/00000000-0000-0000-0000-000000000000",
