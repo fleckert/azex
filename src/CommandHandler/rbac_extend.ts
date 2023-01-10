@@ -27,6 +27,11 @@ export class rbac_extend {
             const durationInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
 
             console.log({
+                parameters:{
+                    subscriptionId,
+                    pathIn,
+                    pathOut
+                },
                 files: [
                     `${pathOut}-${subscriptionId}.ext.json`
                 ],

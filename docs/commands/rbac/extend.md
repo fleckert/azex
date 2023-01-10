@@ -5,7 +5,7 @@
 Extends an input file to contain properties as in 
 
 ```
-azex rbac extend --subscription <subscription-id> --pathIn ./rbac-export-<subscription-id>.min.json   --pathOut ./rbac-extend
+azex rbac extend --path ./rbac-definitions.json [--out ...] [--subscription ...]
 ```
 
 sample input files

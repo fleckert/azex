@@ -1,0 +1,16 @@
+npm run rbac-export-tst
+npm run rbac-export-tst-ns
+npm run rbac-export-tst-ns-np
+npm run rbac-verify-tst
+npm run rbac-verify-tst-ns
+npm run rbac-verify-tst-ns-np
+npm run rbac-extend-tst-min
+npm run rbac-extend-tst-min-ns
+npm run rbac-extend-tst-min-ns-np
+npm run rbac-extend-tst-ext
+npm run rbac-extend-tst-ext-ns
+npm run rbac-extend-tst-ext-ns-np
+npm run rbac-apply-tst-0
+npm run rbac-apply-tst-0-ns
+npm run rbac-apply-tst-1
+npm run rbac-apply-tst-1-ns

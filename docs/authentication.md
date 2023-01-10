@@ -1,3 +1,8 @@
+[home](/readme.md)
+
+# Authentication
+
+
 The commands use the [Azure Identity client library for JavaScript](https://www.npmjs.com/package/@azure/identity) for authentication.
 
 Please have a look at https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/README.md for documentation.
