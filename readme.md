@@ -2,22 +2,31 @@
 
 see [Authentication](/docs/authentication.md)
 
-## Commands
 
-## Examples
+
+## Configuration
+
+see [Configuration](/docs/configuration/index.md)
+
+
+|Parameter|Comments|
+|-|-|
+|[subscription](/docs/configuration/subscription.md)| how to set the subscription id |
+
+## Commands
 
 ### [rbac export](/docs/commands/rbac/export.md)
 
 
 ```
-azex rbac export --subscription <subscription-id> --pathOut ./rbac-export
+azex rbac export [--subscription ...] [--out ...]
 ```
 
 ### [rbac extend](/docs/commands/rbac/extend.md)
 
 
 ```
-azex rbac extend --subscription <subscription-id> --pathIn ./rbac-export-<subscription-id>.min.json --pathOut ./rbac-extend
+azex rbac extend --path path-to-rbac-definitions.json [--subscription ...]  [--out ...]
 ```
 
 
@@ -25,7 +34,7 @@ azex rbac extend --subscription <subscription-id> --pathIn ./rbac-export-<subscr
 
 
 ```
-azex rbac verify --subscription <subscription-id> --pathIn ./rbac-export-<subscription-id>.min.json --pathOut ./rbac-verify
+azex rbac verify --path path-to-rbac-definitions.json [--subscription ...] [--out ...]
 ```
 
 
@@ -33,5 +42,5 @@ azex rbac verify --subscription <subscription-id> --pathIn ./rbac-export-<subscr
 
 
 ```
-azex rbac apply --subscription <subscription-id> --path ./rbac-apply-<subscription-id>.min.json
+azex rbac apply --path path-to-rbac-definitions.json [--subscription ...]
 ```
