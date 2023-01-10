@@ -1,5 +1,5 @@
 import { AuthorizationManagementClient } from "@azure/arm-authorization";
-import { DefaultAzureCredential        } from "@azure/identity";
+import { TokenCredential               } from "@azure/identity";
 import { RbacDefinition                } from "../models/RbacDefinition";
 import { readFile                      } from "fs/promises";
 import { RoleAssignment                } from "@azure/arm-authorization/esm/models";
@@ -8,14 +8,13 @@ import { AzureRoleAssignmentsVerifier  } from "../AzureRoleAssignmentsVerifier";
 import { AzureRoleAssignmentsConverter } from "../AzureRoleAssignmentsConverter";
 
 export class rbac_apply {
-    static async handle(subscriptionId: string, path: string) {
+    static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
         const startDate = new Date();
 
         readFile(path)
         .then(p => JSON.parse(p.toString()) as RbacDefinition[])
         .then(async rbacDefinitions => {
 
-            const credential = new DefaultAzureCredential();
             const roleAssignments = await new AzureRoleAssignmentsVerifier().verify(credential, subscriptionId, rbacDefinitions);
 
             const authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);

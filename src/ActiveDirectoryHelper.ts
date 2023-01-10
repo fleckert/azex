@@ -38,9 +38,9 @@ export class ActiveDirectoryHelper {
     ) { }
 
     private async getToken(): Promise<string> {
-        const token = await this.credential.getToken("https://graph.microsoft.com");
+        const token = await this.credential.getToken("https://graph.microsoft.com/.default");
 
-        if (token === null) { throw "token === null" }
+        if (token === null) { throw "token === null"; }
 
         return token.token;
     }

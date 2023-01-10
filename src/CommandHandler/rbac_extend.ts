@@ -1,17 +1,17 @@
 import { AzureRoleAssignmentsExtender } from "../AzureRoleAssignmentsExtender";
-import { DefaultAzureCredential       } from "@azure/identity";
+import { TokenCredential              } from "@azure/identity";
 import { RbacDefinition               } from "../models/RbacDefinition";
 import { RbacDefinitionSorter         } from "../models/RbacDefinitionSorter";
 import { readFile, writeFile          } from "fs/promises";
 
 export class rbac_extend {
-    static async handle(subscriptionId: string, pathIn: string, pathOut: string) {
+    static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) {
         const startDate = new Date();
 
         readFile(pathIn)
         .then(p => JSON.parse(p.toString()) as RbacDefinition[])
         .then(p => {
-            return new AzureRoleAssignmentsExtender().extend(new DefaultAzureCredential(), subscriptionId, p);
+            return new AzureRoleAssignmentsExtender().extend(credential, subscriptionId, p);
         })
         .then(p => {
             p.sort(RbacDefinitionSorter.sort);
