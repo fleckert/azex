@@ -38,11 +38,11 @@ export class ActiveDirectoryHelper {
     ) { }
 
     private async getToken(): Promise<string> {
-        const token = await this.credential.getToken("https://graph.microsoft.com");
+        const accessToken = await this.credential.getToken("https://graph.microsoft.com/.default");
 
-        if (token === null) { throw "token === null" }
+        if (accessToken === null) { throw "Failed to retrieve accessToken for https://graph.microsoft.com/.default."; }
 
-        return token.token;
+        return accessToken.token;
     }
 
     async getUsersById            (ids: string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched            (ids); }

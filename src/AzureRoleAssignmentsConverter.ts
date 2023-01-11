@@ -1,3 +1,4 @@
+import { ActiveDirectoryPrincipal                   } from "./models/ActiveDirectoryPrincipal";
 import { ActiveDirectoryUser                        } from "./models/ActiveDirectoryUser";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
 import { RbacDefinition                             } from "./models/RbacDefinition";
@@ -19,7 +20,7 @@ export class AzureRoleAssignmentsConverter {
                 scope             : p.roleAssignment.scope,
                 roleDefinitionName: p.roleDefinition.roleName,
                 principalType     : p.roleAssignment.principalType,
-                principalName     : (p.principal as ActiveDirectoryUser).userPrincipalName ?? p.principal?.displayName
+                principalName     : this.getPrincipalName(p.principal),
             }
         })
     }
@@ -37,50 +38,34 @@ export class AzureRoleAssignmentsConverter {
 
     mapExtendend(collection: Array<AzureRoleAssignment>): Array<RbacDefinition> {
         return collection.map(p => {
-            if (p.principal?.type === 'User') {
-                return {
-                    scope             : `${p.roleAssignment.scope}`,
-                    roleDefinitionId  : `${p.roleAssignment.roleDefinitionId}`,
-                    principalId       : `${p.roleAssignment.principalId}`,
-                    roleDefinitionName: p.roleDefinition.roleName,
-                    principalType     : p.roleAssignment.principalType,
-                    principalName     : (p.principal as ActiveDirectoryUser).userPrincipalName
-                }
-            }
-
             return {
                 scope             : `${p.roleAssignment.scope}`,
                 roleDefinitionId  : `${p.roleAssignment.roleDefinitionId}`,
                 principalId       : `${p.roleAssignment.principalId}`,
                 roleDefinitionName: p.roleDefinition.roleName,
                 principalType     : p.roleAssignment.principalType,
-                principalName     : p.principal?.displayName
+                principalName     : this.getPrincipalName(p.principal),
             }
         })
     }
 
     mapExtendendEx(collection: Array<AzureRoleAssignmentEx>): Array<RbacDefinition> {
         return collection.map(p => {
-            if(p.principal?.type === 'User'){
-                return {
-                    scope                     : `${p.roleAssignment.scope}`,
-                    roleDefinitionId          : `${p.roleAssignment.roleDefinitionId}`,
-                    principalId               : `${p.roleAssignment.principalId}`,
-                    roleDefinitionName        : p.roleDefinition.roleName,
-                    principalType             : p.roleAssignment.principalType,
-                    principalName: (p.principal as ActiveDirectoryUser).userPrincipalName
-                }
-            }
-            
             return {
                 scope               : `${p.roleAssignment.scope}`,
                 roleDefinitionId    : `${p.roleAssignment.roleDefinitionId}`,
                 principalId         : `${p.roleAssignment.principalId}`,
                 roleDefinitionName  : p.roleDefinition.roleName,
                 principalType       : p.roleAssignment.principalType,
-                principalName       : p.principal?.displayName,
+                principalName       : this.getPrincipalName(p.principal),
                 roleAssignmentStatus: p.roleAssignmentStatus
             }
         })
+    }
+
+    private getPrincipalName(principal: ActiveDirectoryPrincipal | undefined) : string | undefined{
+        return principal?.type === 'User'
+            ? (principal as ActiveDirectoryUser).userPrincipalName
+            : principal?.displayName;
     }
 }

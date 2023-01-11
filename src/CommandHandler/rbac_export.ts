@@ -2,15 +2,15 @@ import { AzureRoleAssignmentsConverter   } from "../AzureRoleAssignmentsConverte
 import { AzureRoleAssignmentsResolver    } from "../AzureRoleAssignmentsResolver";
 import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
 import { AzureRoleAssignmentsToMarkdown2 } from "../AzureRoleAssignmentsToMarkdown2";
-import { DefaultAzureCredential          } from "@azure/identity";
+import { TokenCredential                 } from "@azure/identity";
 import { writeFile                       } from "fs/promises";
 
 export class rbac_export {
-    static async handle(subscriptionId: string, path: string) {
+    static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
         const startDate = new Date();
 
         new AzureRoleAssignmentsResolver()
-        .resolve(new DefaultAzureCredential(), subscriptionId)
+        .resolve(credential, subscriptionId)
         .then(p => {
             p.roleAssignments.sort(AzureRoleAssignmentsSorter.sort);
             return p;
