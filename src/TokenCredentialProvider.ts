@@ -2,7 +2,7 @@ import { AccessToken, DefaultAzureCredential, DeviceCodeCredential, GetTokenOpti
 
 export class TokenCredentialProvider {
     static get(): TokenCredential {
-        const clientId = 'aa0e54d9-7650-4725-8cff-973461c74876';
+        const clientId = 'a54fd18c-99ca-4cb3-9356-aa29f42897b4';
 
         const credential = new TryCatchedChainedTokenCredential([
             new DefaultAzureCredential(),
