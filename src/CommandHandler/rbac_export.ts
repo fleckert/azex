@@ -4,6 +4,7 @@ import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
 import { AzureRoleAssignmentsToMarkdown2 } from "../AzureRoleAssignmentsToMarkdown2";
 import { TokenCredential                 } from "@azure/identity";
 import { writeFile                       } from "fs/promises";
+import { AzureRoleAssignmentsToHtml } from "../AzureRoleAssignmentsToHtml";
 
 export class rbac_export {
     static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
@@ -35,8 +36,13 @@ export class rbac_export {
             return p;
         })
         .then(p => {
-            const markDown = new AzureRoleAssignmentsToMarkdown2().convert(p.roleAssignments);
-            writeFile(`${path}-${subscriptionId}.md`, markDown)
+            const content = new AzureRoleAssignmentsToMarkdown2().convert(p.roleAssignments);
+            writeFile(`${path}-${subscriptionId}.md`, content)
+            return p;
+        })
+        .then(p => {
+            const content = new AzureRoleAssignmentsToHtml().convert(p.roleAssignments);
+            writeFile(`${path}-${subscriptionId}.html`, content)
             return p;
         })
         .then(p => {
@@ -56,6 +62,7 @@ export class rbac_export {
                     `${path}-${subscriptionId}.ext.json`,
                     `${path}-${subscriptionId}.names.json`,
                     `${path}-${subscriptionId}.md`,
+                    `${path}-${subscriptionId}.html`,
                 ],
                 failedRequests: p.failedRequests,
             });

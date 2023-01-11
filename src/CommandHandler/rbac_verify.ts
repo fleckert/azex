@@ -5,6 +5,7 @@ import { AzureRoleAssignmentsVerifier    } from "../AzureRoleAssignmentsVerifier
 import { TokenCredential                 } from "@azure/identity";
 import { readFile, writeFile             } from "fs/promises";
 import { RbacDefinition                  } from "../models/RbacDefinition";
+import { AzureRoleAssignmentsToHtml } from "../AzureRoleAssignmentsToHtml";
 
 export class rbac_verify {
     static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) {
@@ -35,8 +36,14 @@ export class rbac_verify {
             return p;
         })
         .then(p => {
-            const markDown = new AzureRoleAssignmentsToMarkdown2().convertEx(p);
-            writeFile(`${pathOut}-${subscriptionId}.md`, markDown)
+            const content = new AzureRoleAssignmentsToMarkdown2().convertEx(p);
+            writeFile(`${pathOut}-${subscriptionId}.md`, content)
+
+            return p;
+        })
+        .then(p => {
+            const content = new AzureRoleAssignmentsToHtml().convertEx(p);
+            writeFile(`${pathOut}-${subscriptionId}.html`, content)
 
             return p;
         })
@@ -56,6 +63,7 @@ export class rbac_verify {
                     `${pathOut}-${subscriptionId}.min.json`,
                     `${pathOut}-${subscriptionId}.ext.json`,
                     `${pathOut}-${subscriptionId}.md`,
+                    `${pathOut}-${subscriptionId}.html`,
                 ],
                 durationInSeconds,
             });
