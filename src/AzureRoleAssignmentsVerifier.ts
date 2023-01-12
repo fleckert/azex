@@ -6,7 +6,7 @@ import { ResourceManagementClient     } from "@azure/arm-resources";
 import { ResourcesHelper              } from "./ResourcesHelper";
 import { RoleDefinitionHelper         } from "./RoleDefinitionHelper";
 import { SubscriptionClient           } from "@azure/arm-subscriptions";
-import { TenantsHelperJwtDecode       } from "./TenantsHelperJwtDecode";
+import { TenantIdResolver             } from "./TenantIdResolver";
 import { TokenCredential              } from "@azure/identity";
 
 export class AzureRoleAssignmentsVerifier {
@@ -25,7 +25,7 @@ export class AzureRoleAssignmentsVerifier {
         const roleDefinitionsByIdsPromise = new RoleDefinitionHelper  (credential, subscriptionId).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], []);
         const principalsByIdsPromise      = new ActiveDirectoryHelper (credential).getPrincipalsbyId([...principalIds]);
         const subscriptionPromise         = new SubscriptionClient    (credential).subscriptions.get(subscriptionId);
-        const tenantIdPromise             = new TenantsHelperJwtDecode(credential).getTenantId();
+        const tenantIdPromise             = new TenantIdResolver      (credential).getTenantId();
 
         const roleAssignmentsEx = await new AzureRoleAssignmentsResolver().resolve(credential, subscriptionId);
 
