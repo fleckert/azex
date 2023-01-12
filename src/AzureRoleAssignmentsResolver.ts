@@ -12,7 +12,7 @@ import { RoleAssignmentHelper            } from "./RoleAssignmentHelper";
 import { RoleDefinition                  } from "@azure/arm-resources";
 import { RoleDefinitionHelper            } from "./RoleDefinitionHelper";
 import { SubscriptionClient              } from "@azure/arm-subscriptions";
-import { TenantsHelperJwtDecode          } from "./TenantsHelperJwtDecode";
+import { TenantIdResolver                } from "./TenantIdResolver";
 import { TokenCredential                 } from "@azure/identity";
 
 export class AzureRoleAssignmentsResolver {
@@ -26,7 +26,7 @@ export class AzureRoleAssignmentsResolver {
         const roleDefinitionHelper   = new RoleDefinitionHelper  (credential, subscriptionId);
         const managementGroupsHelper = new ManagementGroupsHelper(credential                );
         const roleAssignmentHelper   = new RoleAssignmentHelper  (credential, subscriptionId);
-        const tenantHelper           = new TenantsHelperJwtDecode(credential                );
+        const tenantIdResolver       = new TenantIdResolver      (credential                );
 
         const roleAssignments = await roleAssignmentHelper.listAllForScope(`/subscriptions/${subscriptionId}`);
     
@@ -62,7 +62,7 @@ export class AzureRoleAssignmentsResolver {
         const groupsPromise            = activeDirectoryHelper.getGroupsById           (groupIds           );
         const servicePrincipalsPromise = activeDirectoryHelper.getServicePrincipalsById(servicePrincipalIds);
         const managementGroups         = managementGroupsHelper.getByIds(managementGroupIds);
-        const tenantIdPromise          = tenantHelper.getTenantId();
+        const tenantIdPromise          = tenantIdResolver.getTenantId();
 
         const usersResponses             = await usersPromise;
         const groupsResponses            = await groupsPromise;
