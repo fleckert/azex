@@ -3,6 +3,7 @@ import { ActiveDirectoryGroup                       } from "../models/ActiveDire
 import { ActiveDirectoryServicePrincipal            } from "../models/ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser                        } from "../models/ActiveDirectoryUser";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
+import { RoleAssignmentHelper } from "../RoleAssignmentHelper";
 
 export class Html {
     private static readonly lineBreak = "&#013;";
@@ -139,11 +140,8 @@ export class Html {
             ? Html.getLinkWithToolTip(item.managementGroupInfo.displayName, AzurePortalLinks.managementGroupOverview(item.managementGroupInfo), `show link to managementGroup '${item.managementGroupInfo.displayName}'`)
             : undefined;
 
-        const managementGroupText1
-            = item.roleAssignment.scope !== undefined && item.roleAssignment.scope.startsWith('/providers/Microsoft.Management/managementGroups/')
-            ? item.roleAssignment.scope.replace('/providers/Microsoft.Management/managementGroups/', '')
-            : undefined;
-        
+        const managementGroupText1 = RoleAssignmentHelper.getManagementGroupName(item.roleAssignment);
+
         const managementGroupText = managementGroupText0 ?? managementGroupText1 ?? "";
 
         return managementGroupText;
