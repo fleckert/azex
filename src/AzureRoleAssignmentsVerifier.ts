@@ -42,11 +42,11 @@ export class AzureRoleAssignmentsVerifier {
         const roleAssignmentEx = new Array<AzureRoleAssignmentEx>();
 
         for (const roleAssignment of roleAssignmentsEx.roleAssignments) {
-            const isPlanned = rbacDefinitions.some(p => {
+            const isPlanned = rbacDefinitions.find(p => {
                 return p.principalId      !== undefined && p.principalId     .toLowerCase() === roleAssignment.roleAssignment?.principalId?.     toLowerCase()
                     && p.roleDefinitionId !== undefined && p.roleDefinitionId.toLowerCase() === roleAssignment.roleAssignment?.roleDefinitionId?.toLowerCase()
                     &&                                     p.scope           .toLowerCase() === roleAssignment.roleAssignment?.scope?.           toLowerCase();
-            });
+            }) !== undefined;
 
             roleAssignmentEx.push({
                 roleAssignment      : roleAssignment.roleAssignment,
@@ -61,11 +61,11 @@ export class AzureRoleAssignmentsVerifier {
         }
 
         for (const rbacDefinition of rbacDefinitions) {
-            if (roleAssignmentEx.some(p => {
+            if (roleAssignmentEx.find(p => {
                 return rbacDefinition.principalId      !== undefined && rbacDefinition.principalId     .toLowerCase() === p.roleAssignment?.principalId?.     toLowerCase()
                     && rbacDefinition.roleDefinitionId !== undefined && rbacDefinition.roleDefinitionId.toLowerCase() === p.roleAssignment?.roleDefinitionId?.toLowerCase()
                     &&                                                  rbacDefinition.scope           .toLowerCase() === p.roleAssignment?.scope?.           toLowerCase();
-            })) {
+            }) === undefined) {
                 const principal = principalsByIds.items.find(p => p.id.toLowerCase() === rbacDefinition.principalId?.toLowerCase());
 
                 const resourceExists = resources.items.some(p => `${p.id}`.toLowerCase() === rbacDefinition.scope.toLowerCase());
