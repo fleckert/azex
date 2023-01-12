@@ -1,6 +1,6 @@
-import { AuthorizationManagementClient  } from "@azure/arm-authorization";
-import { PrincipalType, RoleAssignment, } from "@azure/arm-authorization/esm/models";
-import { v4 as uuidv4                   } from "uuid";
+import { AuthorizationManagementClient } from "@azure/arm-authorization";
+import { PrincipalType, RoleAssignment } from "@azure/arm-authorization/esm/models";
+import { v4 as uuidv4                  } from "uuid";
 
 export class RoleAssignmentHelper {
   constructor(
@@ -136,5 +136,9 @@ export class RoleAssignmentHelper {
     }
 
     return roleAssignmentsAll;
+  }
+
+  static isManagementGroupScope(roleAssignment: RoleAssignment | undefined) {
+    return roleAssignment?.scope?.startsWith('/providers/Microsoft.Management/managementGroups/');
   }
 }

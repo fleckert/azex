@@ -1,6 +1,7 @@
-import { AzureResourceId } from "./AzureResourceId";
-import { Markdown            } from "./Markdown";
+import { AzureResourceId                            } from "./AzureResourceId";
+import { Markdown                                   } from "./Markdown";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
+import { RoleAssignmentHelper                       } from "./RoleAssignmentHelper";
 
 export class AzureRoleAssignmentsToMarkdown2{
 
@@ -8,12 +9,14 @@ export class AzureRoleAssignmentsToMarkdown2{
 
         const lines = new Array<string>();
 
-        if (collection.filter(p => p.managementGroupInfo !== undefined)[0] !== undefined) {
+        const collectionManagementGroups = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment));
+
+        if (collectionManagementGroups.length > 0) {
             // ManagementGroups are not supported on all subscriptions
             lines.push("|ManagementGroup|Subscription|Role|Principal|");
             lines.push("|-|-|-|-|");
 
-            for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid !== true)) {
+            for (const item of collectionManagementGroups) {
 
                 const tenantId                = item.tenantId;
                 const subscriptionId          = item.subscriptionId;
@@ -33,7 +36,9 @@ export class AzureRoleAssignmentsToMarkdown2{
         lines.push("|Subscription|ResourceGroup|Resource|Instance|Role|Principal|");
         lines.push("|-|-|-|-|-|-|");
 
-        for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid === true)) {
+        const collectionSubscription = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment) === false);
+
+        for (const item of collectionSubscription) {
 
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
@@ -57,12 +62,14 @@ export class AzureRoleAssignmentsToMarkdown2{
 
         const lines = new Array<string>();
 
-        if (collection.filter(p => p.managementGroupInfo !== undefined)[0] !== undefined) {
+        const collectionManagementGroups = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment));
+
+        if (collectionManagementGroups.length > 0) {
             // ManagementGroups are not supported on all subscriptions
             lines.push("|ManagementGroup|Subscription|Role|Principal|");
             lines.push("|-|-|-|-|");
 
-            for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid !== true)) {
+            for (const item of collectionManagementGroups) {
 
                 const tenantId                = item.tenantId;
                 const subscriptionId          = item.subscriptionId;
@@ -82,7 +89,9 @@ export class AzureRoleAssignmentsToMarkdown2{
         lines.push("|Status|Subscription|ResourceGroup|Resource|Instance|Role|Principal|");
         lines.push("|:-:|-|-|-|-|-|-|");
 
-        for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid === true)) {
+        const collectionSubscription = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment) === false);
+
+        for (const item of collectionSubscription) {
 
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;

@@ -45,6 +45,7 @@ export class AzureRoleAssignmentsConverter {
                 roleDefinitionName: p.roleDefinition.roleName,
                 principalType     : p.roleAssignment.principalType,
                 principalName     : this.getPrincipalName(p.principal),
+                managementGroup   : this.getManagementGroupInfo(p)
             }
         })
     }
@@ -58,6 +59,7 @@ export class AzureRoleAssignmentsConverter {
                 roleDefinitionName  : p.roleDefinition.roleName,
                 principalType       : p.roleAssignment.principalType,
                 principalName       : this.getPrincipalName(p.principal),
+                managementGroup     : this.getManagementGroupInfo(p),
                 roleAssignmentStatus: p.roleAssignmentStatus
             }
         })
@@ -67,5 +69,18 @@ export class AzureRoleAssignmentsConverter {
         return principal?.type === 'User'
             ? (principal as ActiveDirectoryUser).userPrincipalName
             : principal?.displayName;
+    }
+
+    private getManagementGroupInfo(item: AzureRoleAssignment): string | undefined {
+        const managementGroupFromScope
+            = item.roleAssignment.scope !== undefined && item.roleAssignment.scope.startsWith('/providers/Microsoft.Management/managementGroups/')
+            ? item.roleAssignment.scope.replace('/providers/Microsoft.Management/managementGroups/', '')
+            : undefined;
+
+        const managementGroupText = item.managementGroupInfo?.displayName
+                                 ?? managementGroupFromScope 
+                                 ?? undefined;
+
+        return managementGroupText;
     }
 }

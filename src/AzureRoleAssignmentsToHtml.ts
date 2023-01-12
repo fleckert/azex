@@ -1,6 +1,7 @@
 import { AzureResourceId                            } from "./AzureResourceId";
 import { Html                                       } from "./Html";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
+import { RoleAssignmentHelper                       } from "./RoleAssignmentHelper";
 
 export class AzureRoleAssignmentsToHtml{
 
@@ -23,7 +24,9 @@ export class AzureRoleAssignmentsToHtml{
         lines.push('</head>');
         lines.push('<body>');
      
-        if (collection.filter(p => p.managementGroupInfo !== undefined)[0] !== undefined) {
+        const collectionManagementGroups = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment));
+
+        if (collectionManagementGroups.length > 0) {
             lines.push('<table class="table table-hover align-middle">');
             lines.push('<thead>');
             lines.push('  <tr>');
@@ -35,7 +38,7 @@ export class AzureRoleAssignmentsToHtml{
             lines.push('</thead>');
             lines.push('<tbody>');
 
-            for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid !== true)) {
+            for (const item of collectionManagementGroups) {
 
                 const tenantId                = item.tenantId;
                 const subscriptionId          = item.subscriptionId;
@@ -67,7 +70,9 @@ export class AzureRoleAssignmentsToHtml{
         lines.push('  </thead>');
         lines.push('  <tbody>');
 
-        for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid === true)) {
+        const collectionSubscription = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment) === false);
+
+        for (const item of collectionSubscription) {
 
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
@@ -108,27 +113,9 @@ export class AzureRoleAssignmentsToHtml{
         lines.push('</head>');
         lines.push('<body>');
 
-        // if (collection.filter(p => p.managementGroupInfo !== undefined)[0] !== undefined) {
-        //     // ManagementGroups are not supported on all subscriptions
-        //     lines.push("|ManagementGroup|Subscription|Role|Principal|");
-        //     lines.push("|-|-|-|-|");
+        const collectionManagementGroups = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment));
 
-        //     for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid !== true)) {
-
-        //         const tenantId                = item.tenantId;
-        //         const subscriptionId          = item.subscriptionId;
-        //         const subscriptionDisplayName = item.subscriptionName;
-
-        //         lines.push(
-        //             `|${Html.managementGroup(item)}` +
-        //             `|${Html.subscription(tenantId, subscriptionId, subscriptionDisplayName)}` +
-        //             `|${Html.roleDefinition(item)}`+
-        //             `|${Html.activeDirectoryPrincipal(item)}|`
-        //         );
-        //     }
-        // }
-
-        if (collection.filter(p => p.managementGroupInfo !== undefined)[0] !== undefined) {
+        if (collectionManagementGroups.length > 0) {
             lines.push('<table class="table table-hover align-middle">');
             lines.push('<thead>');
             lines.push('  <tr>');
@@ -140,7 +127,7 @@ export class AzureRoleAssignmentsToHtml{
             lines.push('</thead>');
             lines.push('<tbody>');
 
-            for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid !== true)) {
+            for (const item of collectionManagementGroups) {
 
                 const tenantId                = item.tenantId;
                 const subscriptionId          = item.subscriptionId;
@@ -159,27 +146,6 @@ export class AzureRoleAssignmentsToHtml{
 
         lines.push("");
 
-        // lines.push("|Status|Subscription|ResourceGroup|Resource|Instance|Role|Principal|");
-        // lines.push("|:-:|-|-|-|-|-|-|");
-
-        // for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid === true)) {
-
-        //     const tenantId                = item.tenantId;
-        //     const subscriptionId          = item.subscriptionId;
-        //     const subscriptionDisplayName = item.subscriptionName;
-        //     const resourceId              = new AzureResourceId(`${item.roleAssignment.scope}`);
-
-        //     lines.push(
-        //         `|${Html.azureRoleAssignmentStatus(item)}` +
-        //         `|${Html.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}` +
-        //         `|${Html.resourceGroup           (tenantId, subscriptionId, resourceId.resourceGroupName)}` +
-        //         `|${Html.providerNamespace       (resourceId.providerNamespace, resourceId.resourceType)}` +
-        //         `|${Html.resource                (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.providerNamespace, resourceId.resourceType, resourceId.name)}` +
-        //         `|${Html.roleDefinition          (item)}` +
-        //         `|${Html.activeDirectoryPrincipal(item)}|`
-        //     );
-        // }
-
         lines.push('<table class="table table-hover align-middle">');
         lines.push('  <thead>');
         lines.push('    <tr>');
@@ -194,7 +160,9 @@ export class AzureRoleAssignmentsToHtml{
         lines.push('  </thead>');
         lines.push('  <tbody>');
 
-        for (const item of collection.filter(p => new AzureResourceId(`${p.roleAssignment.scope}`).isValid === true)) {
+        const collectionSubscription = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment) === false);
+
+        for (const item of collectionSubscription) {
 
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
