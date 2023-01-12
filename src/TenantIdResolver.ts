@@ -1,8 +1,8 @@
 import { exec            } from "child_process";
 import { promisify       } from "util";
 import { TokenCredential } from "@azure/identity";
+import { validate        } from "uuid";
 import jwt_decode          from "jwt-decode";
-
 
 export class TenantIdResolver {
     constructor(readonly credential: TokenCredential) { }
@@ -59,7 +59,7 @@ export class TenantIdResolver {
         if (tenantId === null     ) { return false; }
         if (tenantId === ''       ) { return false; }
 
-        return true;
+        return validate(tenantId);
     }
 
     private async run(command: string): Promise<string | undefined> {
