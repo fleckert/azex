@@ -1,10 +1,10 @@
-import { AzureRoleAssignmentsConverter   } from "../AzureRoleAssignmentsConverter";
-import { AzureRoleAssignmentsResolver    } from "../AzureRoleAssignmentsResolver";
-import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
-import { AzureRoleAssignmentsToMarkdown2 } from "../AzureRoleAssignmentsToMarkdown2";
-import { TokenCredential                 } from "@azure/identity";
-import { writeFile                       } from "fs/promises";
-import { AzureRoleAssignmentsToHtml } from "../AzureRoleAssignmentsToHtml";
+import { AzureRoleAssignmentsConverter  } from "../AzureRoleAssignmentsConverter";
+import { AzureRoleAssignmentsResolver   } from "../AzureRoleAssignmentsResolver";
+import { AzureRoleAssignmentsSorter     } from "../AzureRoleAssignmentsSorter";
+import { AzureRoleAssignmentsToMarkdown } from "../AzureRoleAssignmentsToMarkdown";
+import { TokenCredential                } from "@azure/identity";
+import { writeFile                      } from "fs/promises";
+import { AzureRoleAssignmentsToHtml     } from "../AzureRoleAssignmentsToHtml";
 
 export class rbac_export {
     static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
@@ -35,14 +35,14 @@ export class rbac_export {
             await writeFile(`${path}-${subscriptionId}.names.json`, JSON.stringify(collection, null, 2));
             return p;
         })
-        .then(p => {
-            const content = new AzureRoleAssignmentsToMarkdown2().convert(p.roleAssignments);
-            writeFile(`${path}-${subscriptionId}.md`, content)
+        .then(async p => {
+            const content = new AzureRoleAssignmentsToMarkdown().convert(p.roleAssignments);
+            await writeFile(`${path}-${subscriptionId}.md`, content)
             return p;
         })
-        .then(p => {
+        .then(async p => {
             const content = new AzureRoleAssignmentsToHtml().convert(p.roleAssignments);
-            writeFile(`${path}-${subscriptionId}.html`, content)
+            await writeFile(`${path}-${subscriptionId}.html`, content)
             return p;
         })
         .then(p => {

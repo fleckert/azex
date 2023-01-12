@@ -3,7 +3,7 @@ import { Markdown                                   } from "./Markdown";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
 import { RoleAssignmentHelper                       } from "./RoleAssignmentHelper";
 
-export class AzureRoleAssignmentsToMarkdown2{
+export class AzureRoleAssignmentsToMarkdown{
 
     convert(collection: Array<AzureRoleAssignment>) : string {
 

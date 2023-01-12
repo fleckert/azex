@@ -1,6 +1,6 @@
 import { AzureRoleAssignmentsConverter   } from "../AzureRoleAssignmentsConverter";
 import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
-import { AzureRoleAssignmentsToMarkdown2 } from "../AzureRoleAssignmentsToMarkdown2";
+import { AzureRoleAssignmentsToMarkdown } from "../AzureRoleAssignmentsToMarkdown";
 import { AzureRoleAssignmentsVerifier    } from "../AzureRoleAssignmentsVerifier";
 import { TokenCredential                 } from "@azure/identity";
 import { readFile, writeFile             } from "fs/promises";
@@ -35,16 +35,14 @@ export class rbac_verify {
             await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
             return p;
         })
-        .then(p => {
-            const content = new AzureRoleAssignmentsToMarkdown2().convertEx(p);
-            writeFile(`${pathOut}-${subscriptionId}.md`, content)
-
+        .then(async p => {
+            const content = new AzureRoleAssignmentsToMarkdown().convertEx(p);
+            await writeFile(`${pathOut}-${subscriptionId}.md`, content);
             return p;
         })
-        .then(p => {
+        .then(async p => {
             const content = new AzureRoleAssignmentsToHtml().convertEx(p);
-            writeFile(`${pathOut}-${subscriptionId}.html`, content)
-
+            await writeFile(`${pathOut}-${subscriptionId}.html`, content);
             return p;
         })
         .then(p => {
