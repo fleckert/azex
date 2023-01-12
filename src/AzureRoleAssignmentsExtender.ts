@@ -1,4 +1,3 @@
-import { AuthorizationManagementClient } from "@azure/arm-authorization";
 import { ActiveDirectoryHelper         } from "./ActiveDirectoryHelper";
 import { RbacDefinition                } from "./models/RbacDefinition";
 import { RoleDefinitionHelper          } from "./RoleDefinitionHelper";
@@ -9,11 +8,10 @@ import { ActiveDirectoryPrincipal      } from "./models/ActiveDirectoryPrincipal
 
 export class AzureRoleAssignmentsExtender {
     async extend(
-        credential: TokenCredential, 
-        subscriptionId: string, 
+        credential     : TokenCredential, 
+        subscriptionId : string, 
         rbacDefinitions: Array<RbacDefinition>
     ): Promise<Array<RbacDefinition>> {
-        const authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
         
         const principalIds         = new Set(rbacDefinitions.filter(p => p.principalId        !== undefined).map(p => p.principalId!     ));
         const roleDefinitionsIds   = new Set(rbacDefinitions.filter(p => p.roleDefinitionId   !== undefined).map(p => p.roleDefinitionId!));
@@ -23,16 +21,14 @@ export class AzureRoleAssignmentsExtender {
         const principalGroupNames            = new Set(rbacDefinitions.filter(p => p.principalName !== undefined && p.principalType?.toLowerCase() === 'group'           ).map(p => p.principalName!));
         const principalServicePrincipalNames = new Set(rbacDefinitions.filter(p => p.principalName !== undefined && p.principalType?.toLowerCase() === 'serviceprincipal').map(p => p.principalName!));
 
-        const roleDefinitionsPromise = new RoleDefinitionHelper (authorizationManagementClient).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], [...roleDefinitionsNames]);
-        const principalsByIdPromise      = new ActiveDirectoryHelper(credential).getPrincipalsbyId([...principalIds]);
-        
+        const roleDefinitionsPromise                   = new RoleDefinitionHelper (credential, subscriptionId).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], [...roleDefinitionsNames]);
+        const principalsByIdPromise                    = new ActiveDirectoryHelper(credential).getPrincipalsbyId([...principalIds]);        
         const principalsByUserNamesPromise             = new ActiveDirectoryHelper(credential).getUsersByUserPrincipalName      ([...principalUserNames            ]);
         const principalsByGroupNamesPromise            = new ActiveDirectoryHelper(credential).getGroupsByDisplayName           ([...principalGroupNames           ]);
         const principalsByServicePrincipalNamesPromise = new ActiveDirectoryHelper(credential).getServicePrincipalsByDisplayName([...principalServicePrincipalNames]);
 
-        const principalsById      = await principalsByIdPromise;
-        const roleDefinitions = await roleDefinitionsPromise;
-
+        const principalsById                    = await principalsByIdPromise;
+        const roleDefinitions                   = await roleDefinitionsPromise;
         const principalsByUserNames             = await principalsByUserNamesPromise;
         const principalsByGroupNames            = await principalsByGroupNamesPromise;
         const principalsByServicePrincipalNames = await principalsByServicePrincipalNamesPromise;
@@ -46,12 +42,10 @@ export class AzureRoleAssignmentsExtender {
                                   ? this.resolvePrincipal(item.principalName, item.principalType, principalsByUserNames.items, principalsByGroupNames.items, principalsByServicePrincipalNames.items)
                                   : undefined;
 
-
             const principal = principalById ?? principalByName;
 
             const roleDefinition = roleDefinitions.filter(p => item.roleDefinitionId   !== undefined && item.roleDefinitionId  .toLowerCase() === p.id?.      toLowerCase())[0]
                                 ?? roleDefinitions.filter(p => item.roleDefinitionName !== undefined && item.roleDefinitionName.toLowerCase() === p.roleName?.toLowerCase())[0];
-
 
             collection.push({
                 scope             : item.scope,

@@ -1,18 +1,20 @@
-import { AuthorizationManagementClient } from "@azure/arm-authorization";
-import { ResourceManagementClient      } from "@azure/arm-resources";
-import { SubscriptionClient            } from "@azure/arm-subscriptions";
-import { ActiveDirectoryHelper         } from "./ActiveDirectoryHelper";
-import { AzureRoleAssignmentsResolver  } from "./AzureRoleAssignmentsResolver";
-import { AzureRoleAssignmentEx         } from "./models/AzureRoleAssignment";
-import { RbacDefinition                } from "./models/RbacDefinition";
-import { ResourcesHelper               } from "./ResourcesHelper";
-import { RoleDefinitionHelper          } from "./RoleDefinitionHelper";
-import { TenantsHelperJwtDecode        } from "./TenantsHelperJwtDecode";
-import { TokenCredential               } from "@azure/identity";
+import { ActiveDirectoryHelper        } from "./ActiveDirectoryHelper";
+import { AzureRoleAssignmentEx        } from "./models/AzureRoleAssignment";
+import { AzureRoleAssignmentsResolver } from "./AzureRoleAssignmentsResolver";
+import { RbacDefinition               } from "./models/RbacDefinition";
+import { ResourceManagementClient     } from "@azure/arm-resources";
+import { ResourcesHelper              } from "./ResourcesHelper";
+import { RoleDefinitionHelper         } from "./RoleDefinitionHelper";
+import { SubscriptionClient           } from "@azure/arm-subscriptions";
+import { TenantsHelperJwtDecode       } from "./TenantsHelperJwtDecode";
+import { TokenCredential              } from "@azure/identity";
 
 export class AzureRoleAssignmentsVerifier {
-    async verify(credential :TokenCredential, subscriptionId: string, rbacDefinitions: Array<RbacDefinition>) : Promise<Array<AzureRoleAssignmentEx>>{
-        const authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
+    async verify(
+        credential     : TokenCredential,
+        subscriptionId : string,
+        rbacDefinitions: Array<RbacDefinition>
+    ): Promise<Array<AzureRoleAssignmentEx>> {
         const resourceManagementClient      = new ResourceManagementClient     (credential, subscriptionId);
 
         const scopes             = new Set(rbacDefinitions.map(p => p.scope           ));
@@ -20,7 +22,7 @@ export class AzureRoleAssignmentsVerifier {
         const roleDefinitionsIds = new Set(rbacDefinitions.filter(p => p.roleDefinitionId !== undefined).map(p => p.roleDefinitionId!));
 
         const resourcesPromise            = new ResourcesHelper       (resourceManagementClient).getByIds([...scopes]);
-        const roleDefinitionsByIdsPromise = new RoleDefinitionHelper  (authorizationManagementClient).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], []);
+        const roleDefinitionsByIdsPromise = new RoleDefinitionHelper  (credential, subscriptionId).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], []);
         const principalsByIdsPromise      = new ActiveDirectoryHelper (credential).getPrincipalsbyId([...principalIds]);
         const subscriptionPromise         = new SubscriptionClient    (credential).subscriptions.get(subscriptionId);
         const tenantIdPromise             = new TenantsHelperJwtDecode(credential).getTenantId();

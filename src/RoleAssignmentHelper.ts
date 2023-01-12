@@ -1,11 +1,18 @@
 import { AuthorizationManagementClient } from "@azure/arm-authorization";
 import { PrincipalType, RoleAssignment } from "@azure/arm-authorization/esm/models";
+import { TokenCredential               } from "@azure/identity";
 import { v4 as uuidv4                  } from "uuid";
 
 export class RoleAssignmentHelper {
+
+  readonly authorizationManagementClient: AuthorizationManagementClient;
+
   constructor(
-    readonly authorizationManagementClient: AuthorizationManagementClient
-  ) {}
+    readonly credential    : TokenCredential,
+    readonly subscriptionId: string
+  ) {
+    this.authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
+  }
 
   async setRoleAssignment(
     scope           : string,
@@ -138,7 +145,13 @@ export class RoleAssignmentHelper {
     return roleAssignmentsAll;
   }
 
-  static isManagementGroupScope(roleAssignment: RoleAssignment | undefined) {
-    return roleAssignment?.scope?.startsWith('/providers/Microsoft.Management/managementGroups/');
+  static isManagementGroupScope(roleAssignment: RoleAssignment | undefined): boolean {
+    return roleAssignment?.scope?.startsWith('/providers/Microsoft.Management/managementGroups/') === true;
+  }
+
+  static getManagementGroupName(roleAssignment: RoleAssignment | undefined): string | undefined {
+    return this.isManagementGroupScope(roleAssignment)
+         ? roleAssignment?.scope?.replace('/providers/Microsoft.Management/managementGroups/', '')
+         : undefined;
   }
 }

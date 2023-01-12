@@ -1,10 +1,17 @@
 import { AuthorizationManagementClient } from "@azure/arm-authorization";
-import { RoleDefinition } from "@azure/arm-authorization/esm/models";
+import { RoleDefinition                } from "@azure/arm-authorization/esm/models";
+import { TokenCredential               } from "@azure/identity";
 
 export class RoleDefinitionHelper {
+
+    readonly authorizationManagementClient : AuthorizationManagementClient;
+
     constructor(
-        readonly authorizationManagementClient: AuthorizationManagementClient
-    ) { }
+        readonly credential: TokenCredential,
+        readonly subscriptionId: string
+    ) {
+        this.authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
+    }
 
 
     async getRoleDefinition(

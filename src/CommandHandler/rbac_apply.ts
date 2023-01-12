@@ -1,11 +1,10 @@
-import { AuthorizationManagementClient } from "@azure/arm-authorization";
-import { TokenCredential               } from "@azure/identity";
+import { AzureRoleAssignmentsConverter } from "../AzureRoleAssignmentsConverter";
+import { AzureRoleAssignmentsVerifier  } from "../AzureRoleAssignmentsVerifier";
 import { RbacDefinition                } from "../models/RbacDefinition";
 import { readFile                      } from "fs/promises";
 import { RoleAssignment                } from "@azure/arm-authorization/esm/models";
 import { RoleAssignmentHelper          } from "../RoleAssignmentHelper";
-import { AzureRoleAssignmentsVerifier  } from "../AzureRoleAssignmentsVerifier";
-import { AzureRoleAssignmentsConverter } from "../AzureRoleAssignmentsConverter";
+import { TokenCredential               } from "@azure/identity";
 
 export class rbac_apply {
     static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
@@ -16,9 +15,7 @@ export class rbac_apply {
         .then(async rbacDefinitions => {
 
             const roleAssignments = await new AzureRoleAssignmentsVerifier().verify(credential, subscriptionId, rbacDefinitions);
-
-            const authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
-            const roleAssignmentHelper = new RoleAssignmentHelper(authorizationManagementClient);
+            const roleAssignmentHelper = new RoleAssignmentHelper(credential, subscriptionId);
             
             const newRoleAssignments = new Array<RoleAssignment>();
             const newRoleAssignmentsFailed = new Array<RbacDefinition>();

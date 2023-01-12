@@ -1,33 +1,32 @@
-import { ActiveDirectoryGroup                     } from "./models/ActiveDirectoryGroup";
-import { ActiveDirectoryHelper                    } from "./ActiveDirectoryHelper";
-import { ActiveDirectoryPrincipal                 } from "./models/ActiveDirectoryPrincipal";
-import { ActiveDirectoryServicePrincipal          } from "./models/ActiveDirectoryServicePrincipal";
-import { ActiveDirectoryUser                      } from "./models/ActiveDirectoryUser";
-import { AuthorizationManagementClient            } from "@azure/arm-authorization";
-import { AzureResourceId                          } from "./AzureResourceId";
-import { AzureRoleAssignment                      } from "./models/AzureRoleAssignment";
-import { ManagementGroupInfo, ManagementGroupsAPI } from "@azure/arm-managementgroups";
-import { ManagementGroupsHelper                   } from "./ManagementGroupsHelper";
-import { RoleAssignment                           } from "@azure/arm-authorization/esm/models";
-import { RoleAssignmentHelper                     } from "./RoleAssignmentHelper";
-import { RoleDefinition                           } from "@azure/arm-resources";
-import { RoleDefinitionHelper                     } from "./RoleDefinitionHelper";
-import { SubscriptionClient, TenantIdDescription  } from "@azure/arm-subscriptions";
-import { TenantsHelperJwtDecode                   } from "./TenantsHelperJwtDecode";
-import { TokenCredential                          } from "@azure/identity";
+import { ActiveDirectoryGroup            } from "./models/ActiveDirectoryGroup";
+import { ActiveDirectoryHelper           } from "./ActiveDirectoryHelper";
+import { ActiveDirectoryPrincipal        } from "./models/ActiveDirectoryPrincipal";
+import { ActiveDirectoryServicePrincipal } from "./models/ActiveDirectoryServicePrincipal";
+import { ActiveDirectoryUser             } from "./models/ActiveDirectoryUser";
+import { AzureResourceId                 } from "./AzureResourceId";
+import { AzureRoleAssignment             } from "./models/AzureRoleAssignment";
+import { ManagementGroupInfo             } from "@azure/arm-managementgroups";
+import { ManagementGroupsHelper          } from "./ManagementGroupsHelper";
+import { RoleAssignment                  } from "@azure/arm-authorization/esm/models";
+import { RoleAssignmentHelper            } from "./RoleAssignmentHelper";
+import { RoleDefinition                  } from "@azure/arm-resources";
+import { RoleDefinitionHelper            } from "./RoleDefinitionHelper";
+import { SubscriptionClient              } from "@azure/arm-subscriptions";
+import { TenantsHelperJwtDecode          } from "./TenantsHelperJwtDecode";
+import { TokenCredential                 } from "@azure/identity";
 
 export class AzureRoleAssignmentsResolver {
-    async resolve(credential :TokenCredential, subscriptionId: string) 
-    : Promise<{roleAssignments : Array<AzureRoleAssignment>, failedRequests: Array<string>}> {
-        const authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
-        const managementGroupsAPI           = new ManagementGroupsAPI(credential);
+    async resolve(
+        credential    : TokenCredential, 
+        subscriptionId: string
+    ) : Promise<{roleAssignments : Array<AzureRoleAssignment>, failedRequests: Array<string>}> {
         const subscriptionClient            = new SubscriptionClient(credential);
 
-        const activeDirectoryHelper  = new ActiveDirectoryHelper (credential                   );
-        const roleDefinitionHelper   = new RoleDefinitionHelper  (authorizationManagementClient);
-        const managementGroupsHelper = new ManagementGroupsHelper(managementGroupsAPI          );
-        const roleAssignmentHelper   = new RoleAssignmentHelper  (authorizationManagementClient);
-        const tenantHelper           = new TenantsHelperJwtDecode(credential                   );
+        const activeDirectoryHelper  = new ActiveDirectoryHelper (credential                );
+        const roleDefinitionHelper   = new RoleDefinitionHelper  (credential, subscriptionId);
+        const managementGroupsHelper = new ManagementGroupsHelper(credential                );
+        const roleAssignmentHelper   = new RoleAssignmentHelper  (credential, subscriptionId);
+        const tenantHelper           = new TenantsHelperJwtDecode(credential                );
 
         const roleAssignments = await roleAssignmentHelper.listAllForScope(`/subscriptions/${subscriptionId}`);
     
@@ -53,9 +52,7 @@ export class AzureRoleAssignmentsResolver {
             failedRequests.push(`Unhandled roleAssignment, check roleAssignment.principalId[${roleAssignment.principalId}]`);
         }
 
-        const managementGroupIds  = Array.from(new Set(roleAssignments.filter(p => p.scope !== undefined)
-                                                                      .filter(p => p.scope!.startsWith('/providers/Microsoft.Management/managementGroups'))                                                                      
-                                                                      .map(p => p.scope!)));
+        const managementGroupIds  = Array.from(new Set(roleAssignments.filter(p => RoleAssignmentHelper.isManagementGroupScope(p)).map(p => p.scope!)));
 
         const roleDefinitionIds  = Array.from(new Set(roleAssignments.filter(p => p.roleDefinitionId !== undefined).map(p => p.roleDefinitionId!)));
 
@@ -65,7 +62,7 @@ export class AzureRoleAssignmentsResolver {
         const groupsPromise            = activeDirectoryHelper.getGroupsById           (groupIds           );
         const servicePrincipalsPromise = activeDirectoryHelper.getServicePrincipalsById(servicePrincipalIds);
         const managementGroups         = managementGroupsHelper.getByIds(managementGroupIds);
-        const tenantIdPromise          =  tenantHelper.getTenantId();
+        const tenantIdPromise          = tenantHelper.getTenantId();
 
         const usersResponses             = await usersPromise;
         const groupsResponses            = await groupsPromise;
