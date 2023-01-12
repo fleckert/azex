@@ -1,6 +1,6 @@
 import { ActiveDirectoryPrincipal                   } from "./models/ActiveDirectoryPrincipal";
 import { ActiveDirectoryUser                        } from "./models/ActiveDirectoryUser";
-import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
+import { AzureRoleAssignment, AzureRoleAssignmentEx, AzureRoleAssignmentHelper } from "./models/AzureRoleAssignment";
 import { RbacDefinition                             } from "./models/RbacDefinition";
 
 export class AzureRoleAssignmentsConverter {
@@ -45,6 +45,7 @@ export class AzureRoleAssignmentsConverter {
                 roleDefinitionName: p.roleDefinition.roleName,
                 principalType     : p.roleAssignment.principalType,
                 principalName     : this.getPrincipalName(p.principal),
+                managementGroup   : AzureRoleAssignmentHelper.getManagementGroupName(p)
             }
         })
     }
@@ -58,6 +59,7 @@ export class AzureRoleAssignmentsConverter {
                 roleDefinitionName  : p.roleDefinition.roleName,
                 principalType       : p.roleAssignment.principalType,
                 principalName       : this.getPrincipalName(p.principal),
+                managementGroup     : AzureRoleAssignmentHelper.getManagementGroupName(p),
                 roleAssignmentStatus: p.roleAssignmentStatus
             }
         })

@@ -1,9 +1,10 @@
-import { AzureRoleAssignmentsConverter   } from "../AzureRoleAssignmentsConverter";
-import { AzureRoleAssignmentsResolver    } from "../AzureRoleAssignmentsResolver";
-import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
-import { AzureRoleAssignmentsToMarkdown2 } from "../AzureRoleAssignmentsToMarkdown2";
-import { TokenCredential                 } from "@azure/identity";
-import { writeFile                       } from "fs/promises";
+import { AzureRoleAssignmentsConverter  } from "../AzureRoleAssignmentsConverter";
+import { AzureRoleAssignmentsResolver   } from "../AzureRoleAssignmentsResolver";
+import { AzureRoleAssignmentsToMarkdown } from "../Converters/AzureRoleAssignmentsToMarkdown";
+import { TokenCredential                } from "@azure/identity";
+import { writeFile                      } from "fs/promises";
+import { AzureRoleAssignmentsToHtml     } from "../Converters/AzureRoleAssignmentsToHtml";
+import { AzureRoleAssignmentHelper      } from "../models/AzureRoleAssignment";
 
 export class rbac_export {
     static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
@@ -12,7 +13,7 @@ export class rbac_export {
         new AzureRoleAssignmentsResolver()
         .resolve(credential, subscriptionId)
         .then(p => {
-            p.roleAssignments.sort(AzureRoleAssignmentsSorter.sort);
+            p.roleAssignments.sort(AzureRoleAssignmentHelper.sort);
             return p;
         })
         .then(async p => {
@@ -34,9 +35,14 @@ export class rbac_export {
             await writeFile(`${path}-${subscriptionId}.names.json`, JSON.stringify(collection, null, 2));
             return p;
         })
-        .then(p => {
-            const markDown = new AzureRoleAssignmentsToMarkdown2().convert(p.roleAssignments);
-            writeFile(`${path}-${subscriptionId}.md`, markDown)
+        .then(async p => {
+            const content = new AzureRoleAssignmentsToMarkdown().convert(p.roleAssignments);
+            await writeFile(`${path}-${subscriptionId}.md`, content)
+            return p;
+        })
+        .then(async p => {
+            const content = new AzureRoleAssignmentsToHtml().convert(p.roleAssignments);
+            await writeFile(`${path}-${subscriptionId}.html`, content)
             return p;
         })
         .then(p => {
@@ -56,6 +62,7 @@ export class rbac_export {
                     `${path}-${subscriptionId}.ext.json`,
                     `${path}-${subscriptionId}.names.json`,
                     `${path}-${subscriptionId}.md`,
+                    `${path}-${subscriptionId}.html`,
                 ],
                 failedRequests: p.failedRequests,
             });

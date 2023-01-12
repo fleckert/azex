@@ -1,10 +1,11 @@
-import { AzureRoleAssignmentsConverter   } from "../AzureRoleAssignmentsConverter";
-import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
-import { AzureRoleAssignmentsToMarkdown2 } from "../AzureRoleAssignmentsToMarkdown2";
-import { AzureRoleAssignmentsVerifier    } from "../AzureRoleAssignmentsVerifier";
-import { TokenCredential                 } from "@azure/identity";
-import { readFile, writeFile             } from "fs/promises";
-import { RbacDefinition                  } from "../models/RbacDefinition";
+import { AzureRoleAssignmentsConverter  } from "../AzureRoleAssignmentsConverter";
+import { AzureRoleAssignmentsToHtml     } from "../Converters/AzureRoleAssignmentsToHtml";
+import { AzureRoleAssignmentsToMarkdown } from "../Converters/AzureRoleAssignmentsToMarkdown";
+import { AzureRoleAssignmentsVerifier   } from "../AzureRoleAssignmentsVerifier";
+import { RbacDefinition                 } from "../models/RbacDefinition";
+import { readFile, writeFile            } from "fs/promises";
+import { TokenCredential                } from "@azure/identity";
+import { AzureRoleAssignmentHelper      } from "../models/AzureRoleAssignment";
 
 export class rbac_verify {
     static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) {
@@ -17,7 +18,7 @@ export class rbac_verify {
         }
         )
         .then(p => {
-            p.sort(AzureRoleAssignmentsSorter.sort);
+            p.sort(AzureRoleAssignmentHelper.sort);
             return p;
         })
         .then(async p => {
@@ -34,10 +35,14 @@ export class rbac_verify {
             await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
             return p;
         })
-        .then(p => {
-            const markDown = new AzureRoleAssignmentsToMarkdown2().convertEx(p);
-            writeFile(`${pathOut}-${subscriptionId}.md`, markDown)
-
+        .then(async p => {
+            const content = new AzureRoleAssignmentsToMarkdown().convertEx(p);
+            await writeFile(`${pathOut}-${subscriptionId}.md`, content);
+            return p;
+        })
+        .then(async p => {
+            const content = new AzureRoleAssignmentsToHtml().convertEx(p);
+            await writeFile(`${pathOut}-${subscriptionId}.html`, content);
             return p;
         })
         .then(p => {
@@ -56,6 +61,7 @@ export class rbac_verify {
                     `${pathOut}-${subscriptionId}.min.json`,
                     `${pathOut}-${subscriptionId}.ext.json`,
                     `${pathOut}-${subscriptionId}.md`,
+                    `${pathOut}-${subscriptionId}.html`,
                 ],
                 durationInSeconds,
             });
