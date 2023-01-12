@@ -70,7 +70,7 @@ export class ActiveDirectoryHelper {
         const failedRequests = new Array<string>();
 
         for (const id of ids) {
-            if (principals.filter(p => p.id === id)[0] === undefined) {
+            if (principals.find(p => p.id.toLocaleLowerCase() === id.toLowerCase()) !== undefined) {
                 failedRequests.push(id);
             }
         }

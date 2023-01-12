@@ -116,16 +116,12 @@ export class AzureRoleAssignmentsResolver {
             if (principalType    === undefined) { console.warn(`principalType[${   principalType   }] === undefined`); continue; }
 
             const roleDefinition = roleDefinitions.filter(p => p.id === roleDefinitionId)[0];
-            const principal : ActiveDirectoryPrincipal
-                            = users.filter(p => p.id === principalId)[0]
-                           ?? groups.filter(p => p.id === principalId)[0]
-                           ?? servicePrincipals.filter(p => p.id === principalId)[0];
+            const principal : ActiveDirectoryPrincipal | undefined
+                            = users            .find(p => p.id === principalId)
+                           ?? groups           .find(p => p.id === principalId)
+                           ?? servicePrincipals.find(p => p.id === principalId);
 
-            const managementGroupInfo = managementGroupInfos.filter(p => p.id === scope)[0];
-
-            const resourceId = scope?.startsWith('/subscriptions/') || scope?.startsWith('subscriptions/')
-                             ? new AzureResourceId(scope) 
-                             : undefined;
+            const managementGroupInfo = managementGroupInfos.find(p => p.id?.toLowerCase() === scope?.toLowerCase());
 
             collection.push({
                 principal,
