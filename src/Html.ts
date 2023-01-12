@@ -135,8 +135,8 @@ export class Html {
     static managementGroup(item: AzureRoleAssignment): string {
         
         const managementGroupText0
-            = `${item.roleAssignment.scope}` === `${item.managementGroupInfo?.id}` && item.managementGroupInfo !== undefined
-            ? `<a href="${AzurePortalLinks.managementGroupOverview(item.managementGroupInfo)}" target="_blank">${item.managementGroupInfo?.displayName}</a>`
+            = `${item.roleAssignment.scope}` === `${item.managementGroupInfo?.id}` && item.managementGroupInfo?.displayName !== undefined
+            ? Html.getLinkWithToolTip(item.managementGroupInfo.displayName, AzurePortalLinks.managementGroupOverview(item.managementGroupInfo), `show link to managementGroup '${item.managementGroupInfo.displayName}'`)
             : undefined;
 
         const managementGroupText1

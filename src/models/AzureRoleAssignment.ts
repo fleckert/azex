@@ -19,3 +19,19 @@ export interface AzureRoleAssignmentEx extends AzureRoleAssignment {
 }
 
 export type AzureRoleAssignmentStatus = 'okay' | 'missing-rbac'| 'missing-resource' | 'unexpected-rbac'
+
+export class AzureRoleAssignmentHelper {
+    static getManagementGroupName(item: AzureRoleAssignment): string | undefined {
+        const managementGroupFromScope
+            = item.roleAssignment.scope !== undefined && item.roleAssignment.scope.startsWith('/providers/Microsoft.Management/managementGroups/')
+            ? item.roleAssignment.scope.replace('/providers/Microsoft.Management/managementGroups/', '')
+            : undefined;
+
+        const managementGroupText
+            = item.managementGroupInfo?.displayName
+            ?? managementGroupFromScope
+            ?? undefined;
+
+        return managementGroupText;
+    }
+}
