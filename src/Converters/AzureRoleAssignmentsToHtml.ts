@@ -1,7 +1,7 @@
-import { AzureResourceId                            } from "./AzureResourceId";
+import { AzureResourceId                            } from "../AzureResourceId";
 import { Html                                       } from "./Html";
-import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
-import { RoleAssignmentHelper                       } from "./RoleAssignmentHelper";
+import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
+import { RoleAssignmentHelper                       } from "../RoleAssignmentHelper";
 
 export class AzureRoleAssignmentsToHtml{
 

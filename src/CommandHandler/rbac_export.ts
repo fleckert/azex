@@ -1,10 +1,10 @@
 import { AzureRoleAssignmentsConverter  } from "../AzureRoleAssignmentsConverter";
 import { AzureRoleAssignmentsResolver   } from "../AzureRoleAssignmentsResolver";
-import { AzureRoleAssignmentsSorter     } from "../AzureRoleAssignmentsSorter";
-import { AzureRoleAssignmentsToMarkdown } from "../AzureRoleAssignmentsToMarkdown";
+import { AzureRoleAssignmentsToMarkdown } from "../Converters/AzureRoleAssignmentsToMarkdown";
 import { TokenCredential                } from "@azure/identity";
 import { writeFile                      } from "fs/promises";
-import { AzureRoleAssignmentsToHtml     } from "../AzureRoleAssignmentsToHtml";
+import { AzureRoleAssignmentsToHtml     } from "../Converters/AzureRoleAssignmentsToHtml";
+import { AzureRoleAssignmentHelper      } from "../models/AzureRoleAssignment";
 
 export class rbac_export {
     static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
@@ -13,7 +13,7 @@ export class rbac_export {
         new AzureRoleAssignmentsResolver()
         .resolve(credential, subscriptionId)
         .then(p => {
-            p.roleAssignments.sort(AzureRoleAssignmentsSorter.sort);
+            p.roleAssignments.sort(AzureRoleAssignmentHelper.sort);
             return p;
         })
         .then(async p => {

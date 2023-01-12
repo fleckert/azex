@@ -1,7 +1,7 @@
-import { AzureResourceId                            } from "./AzureResourceId";
+import { AzureResourceId                            } from "../AzureResourceId";
 import { Markdown                                   } from "./Markdown";
-import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
-import { RoleAssignmentHelper                       } from "./RoleAssignmentHelper";
+import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
+import { RoleAssignmentHelper                       } from "../RoleAssignmentHelper";
 
 export class AzureRoleAssignmentsToMarkdown{
 

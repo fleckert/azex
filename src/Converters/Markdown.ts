@@ -1,10 +1,10 @@
-import { AzurePortalLinks                           } from "./AzurePortalLinks";
-import { ActiveDirectoryGroup                       } from "./models/ActiveDirectoryGroup";
-import { ActiveDirectoryServicePrincipal            } from "./models/ActiveDirectoryServicePrincipal";
-import { ActiveDirectoryUser                        } from "./models/ActiveDirectoryUser";
-import { AzureRoleAssignment, AzureRoleAssignmentEx } from "./models/AzureRoleAssignment";
+import { AzurePortalLinks                           } from "../AzurePortalLinks";
+import { ActiveDirectoryGroup                       } from "../models/ActiveDirectoryGroup";
+import { ActiveDirectoryServicePrincipal            } from "../models/ActiveDirectoryServicePrincipal";
+import { ActiveDirectoryUser                        } from "../models/ActiveDirectoryUser";
+import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
 
-export class Html {
+export class Markdown {
     private static readonly lineBreak = "&#013;";
 
     static activeDirectoryPrincipal(item: AzureRoleAssignment): string {
@@ -12,13 +12,13 @@ export class Html {
         const principalId = item.principal?.id ?? `${item.roleAssignment.principalId}`;
 
         if (item.principal?.type === 'ServicePrincipal' && item.principal as ActiveDirectoryServicePrincipal !== undefined) {
-            return Html.activeDirectoryServicePrincipal(item.principal as ActiveDirectoryServicePrincipal);
+            return Markdown.activeDirectoryServicePrincipal(item.principal as ActiveDirectoryServicePrincipal);
         }
         if (item.principal?.type === 'User' && item.principal as ActiveDirectoryUser !== undefined) {
-            return Html.activeDirectoryUser(item.principal as ActiveDirectoryUser);
+            return Markdown.activeDirectoryUser(item.principal as ActiveDirectoryUser);
         }
         if (item.principal?.type === 'Group' && item.principal as ActiveDirectoryGroup !== undefined) {
-            return Html.activeDirectoryGroup(item.principal as ActiveDirectoryGroup);
+            return Markdown.activeDirectoryGroup(item.principal as ActiveDirectoryGroup);
         }
         if (item.principal?.displayName !== undefined) {
             return `${item.principal.displayName}<br/>id ${principalId}`;
@@ -61,12 +61,12 @@ export class Html {
     }
 
     static getLinkWithToolTip(title: string, url: string, tooltip: string) {
-        return `<a href="${url}" title="${tooltip}" target="_blank">${title}</a>`;
+        return `[${title}](${url} "${tooltip}")`;
     }
 
     static subscription(tenantId: string, subscriptionId: string, subscriptionDisplayName: string | undefined): string {
         const markdown
-            = Html.getLinkWithToolTip(
+            = Markdown.getLinkWithToolTip(
                 subscriptionDisplayName ?? subscriptionId,
                 AzurePortalLinks.subscriptionOverview(tenantId, subscriptionId),
                 `show link to subscription '${subscriptionDisplayName ?? subscriptionId}'`);
@@ -78,7 +78,7 @@ export class Html {
         const markdown
             = resourceGroupName === undefined
             ? ''
-            : Html.getLinkWithToolTip(
+            : Markdown.getLinkWithToolTip(
                 resourceGroupName,
                 AzurePortalLinks.resourceGroupOverview(tenantId, subscriptionId, resourceGroupName),
                 `show link to resourceGroup '${resourceGroupName}'`);
@@ -90,7 +90,7 @@ export class Html {
         const markdown
             = providerNamespace === undefined || resourceType === undefined
             ? '' 
-            : Html.getLinkWithToolTip(
+            : Markdown.getLinkWithToolTip(
                 `${providerNamespace}<br/>${resourceType}`,
                 `https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/${providerNamespace}%2F${resourceType}`,
                 `show link to '${providerNamespace}/${resourceType}' resources`)
@@ -103,7 +103,7 @@ export class Html {
         const markdown
             = resourceGroupName ===undefined || providerNamespace === undefined || resourceType === undefined || name === undefined
             ? ''
-            : Html.getLinkWithToolTip(
+            : Markdown.getLinkWithToolTip(
                 name,
                 `https://portal.azure.com/#@${tenantId}/resource/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/${providerNamespace}/${resourceType}/${name}`,
                 `show link to '${name}'`)
@@ -118,7 +118,7 @@ export class Html {
             const url     = `https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles`;
             const tooltip = `${item.roleDefinition.description}${this.lineBreak}${this.lineBreak}show link to ${url}`;
 
-            return Html.getLinkWithToolTip(title, url, tooltip);
+            return Markdown.getLinkWithToolTip(title, url, tooltip);
         }
 
         if (item.roleDefinition.roleType === 'CustomRole') {
@@ -126,7 +126,7 @@ export class Html {
             const url     = `https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles`;
             const tooltip = `${item.roleDefinition.description}${this.lineBreak}${this.lineBreak}show link to ${url}`;
 
-            return Html.getLinkWithToolTip(title, url, tooltip);
+            return Markdown.getLinkWithToolTip(title, url, tooltip);
         }
 
         return `${item.roleDefinition.roleName}`;
@@ -135,8 +135,8 @@ export class Html {
     static managementGroup(item: AzureRoleAssignment): string {
         
         const managementGroupText0
-            = `${item.roleAssignment.scope}` === `${item.managementGroupInfo?.id}` && item.managementGroupInfo?.displayName !== undefined
-            ? Html.getLinkWithToolTip(item.managementGroupInfo.displayName, AzurePortalLinks.managementGroupOverview(item.managementGroupInfo), `show link to managementGroup '${item.managementGroupInfo.displayName}'`)
+            = `${item.roleAssignment.scope}` === `${item.managementGroupInfo?.id}` && item.managementGroupInfo !== undefined
+            ? `[${item.managementGroupInfo?.displayName}](${AzurePortalLinks.managementGroupOverview(item.managementGroupInfo)})`
             : undefined;
 
         const managementGroupText1

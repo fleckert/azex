@@ -1,11 +1,11 @@
-import { AzureRoleAssignmentsConverter   } from "../AzureRoleAssignmentsConverter";
-import { AzureRoleAssignmentsSorter      } from "../AzureRoleAssignmentsSorter";
-import { AzureRoleAssignmentsToMarkdown } from "../AzureRoleAssignmentsToMarkdown";
-import { AzureRoleAssignmentsVerifier    } from "../AzureRoleAssignmentsVerifier";
-import { TokenCredential                 } from "@azure/identity";
-import { readFile, writeFile             } from "fs/promises";
-import { RbacDefinition                  } from "../models/RbacDefinition";
-import { AzureRoleAssignmentsToHtml } from "../AzureRoleAssignmentsToHtml";
+import { AzureRoleAssignmentsConverter  } from "../AzureRoleAssignmentsConverter";
+import { AzureRoleAssignmentsToHtml     } from "../Converters/AzureRoleAssignmentsToHtml";
+import { AzureRoleAssignmentsToMarkdown } from "../Converters/AzureRoleAssignmentsToMarkdown";
+import { AzureRoleAssignmentsVerifier   } from "../AzureRoleAssignmentsVerifier";
+import { RbacDefinition                 } from "../models/RbacDefinition";
+import { readFile, writeFile            } from "fs/promises";
+import { TokenCredential                } from "@azure/identity";
+import { AzureRoleAssignmentHelper      } from "../models/AzureRoleAssignment";
 
 export class rbac_verify {
     static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) {
@@ -18,7 +18,7 @@ export class rbac_verify {
         }
         )
         .then(p => {
-            p.sort(AzureRoleAssignmentsSorter.sort);
+            p.sort(AzureRoleAssignmentHelper.sort);
             return p;
         })
         .then(async p => {
