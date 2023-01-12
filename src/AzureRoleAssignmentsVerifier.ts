@@ -68,7 +68,7 @@ export class AzureRoleAssignmentsVerifier {
             }) === undefined) {
                 const principal = principalsByIds.items.find(p => p.id.toLowerCase() === rbacDefinition.principalId?.toLowerCase());
 
-                const resourceExists = resources.items.some(p => `${p.id}`.toLowerCase() === rbacDefinition.scope.toLowerCase());
+                const resourceExists = resources.items.find(p => `${p.id}`.toLowerCase() === rbacDefinition.scope.toLowerCase()) !== undefined;
 
                 roleAssignmentEx.push({
                     roleAssignment: {
