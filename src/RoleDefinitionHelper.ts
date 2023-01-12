@@ -89,10 +89,10 @@ export class RoleDefinitionHelper {
         const roleDefinitions = await this.authorizationManagementClient.roleDefinitions.list(scope);
 
         for (const roleDefinition of roleDefinitions) {
-            if (roleDefinitionIds.filter(p => roleDefinition.id?.toLowerCase() === p.toLowerCase())[0] !== undefined) {
+            if (roleDefinitionIds.some(p => roleDefinition.id?.toLowerCase() === p.toLowerCase())) {
                 roleDefinitionsAll.push(roleDefinition);
             }
-            else if(roleDefinitionNames.filter(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase())[0] !== undefined){
+            else if (roleDefinitionNames.some(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase())) {
                 roleDefinitionsAll.push(roleDefinition);
             }
         }
@@ -103,10 +103,10 @@ export class RoleDefinitionHelper {
             const roleDefinitionsNext = await this.authorizationManagementClient.roleDefinitions.listNext(nextLink);
 
             for (const roleDefinition of roleDefinitionsNext) {
-                if (roleDefinitionIds.filter(p => roleDefinition.id === p)[0] !== undefined) {
+                if (roleDefinitionIds.some(p => roleDefinition.id === p)) {
                     roleDefinitionsAll.push(roleDefinition);
                 }
-                else if(roleDefinitionNames.filter(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase())[0] !== undefined){
+                else if(roleDefinitionNames.some(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase())){
                     roleDefinitionsAll.push(roleDefinition);
                 }
             }

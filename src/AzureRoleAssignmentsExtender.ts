@@ -36,7 +36,7 @@ export class AzureRoleAssignmentsExtender {
         const collection = new Array<RbacDefinition>();
 
         for (const item of rbacDefinitions) {
-            const principalById = principalsById.items.filter(p => item.principalId !== undefined && item.principalId?.toLowerCase() === p.id.toLowerCase())[0];
+            const principalById = principalsById.items.find(p => item.principalId !== undefined && item.principalId?.toLowerCase() === p.id.toLowerCase());
 
             const principalByName = principalById === undefined && item.principalName !== undefined && item.principalType !== undefined
                                   ? this.resolvePrincipal(item.principalName, item.principalType, principalsByUserNames.items, principalsByGroupNames.items, principalsByServicePrincipalNames.items)
@@ -44,12 +44,12 @@ export class AzureRoleAssignmentsExtender {
 
             const principal = principalById ?? principalByName;
 
-            const roleDefinition = roleDefinitions.filter(p => item.roleDefinitionId   !== undefined && item.roleDefinitionId  .toLowerCase() === p.id?.      toLowerCase())[0]
-                                ?? roleDefinitions.filter(p => item.roleDefinitionName !== undefined && item.roleDefinitionName.toLowerCase() === p.roleName?.toLowerCase())[0];
+            const roleDefinition = roleDefinitions.find(p => item.roleDefinitionId   !== undefined && item.roleDefinitionId  .toLowerCase() === p.id?.      toLowerCase())
+                                ?? roleDefinitions.find(p => item.roleDefinitionName !== undefined && item.roleDefinitionName.toLowerCase() === p.roleName?.toLowerCase());
 
             collection.push({
                 scope             : item.scope,
-                roleDefinitionId  : item.roleDefinitionId ?? roleDefinition.id,
+                roleDefinitionId  : item.roleDefinitionId ?? roleDefinition?.id,
                 principalId       : principal?.id,
                 roleDefinitionName: item.roleDefinitionName ?? roleDefinition?.roleName,
                 principalType     : principal?.type,
@@ -69,17 +69,17 @@ export class AzureRoleAssignmentsExtender {
     ): ActiveDirectoryPrincipal | undefined {
 
         {
-            const principal = principalType === 'User' ? users.filter(p => p.userPrincipalName.toLowerCase() === principalName.toLowerCase())[0] : undefined;
+            const principal = principalType === 'User' ? users.find(p => p.userPrincipalName.toLowerCase() === principalName.toLowerCase()) : undefined;
             if (principal !== undefined) { return principal; }
         }
 
         {
-            const principal = principalType === 'Group' ? groups.filter(p => p.displayName.toLowerCase() === principalName.toLowerCase())[0] : undefined;
+            const principal = principalType === 'Group' ? groups.find(p => p.displayName.toLowerCase() === principalName.toLowerCase()) : undefined;
             if (principal !== undefined) { return principal; }
         }
 
         {
-            const principal = principalType === 'ServicePrincipal' ? serviceprincipals.filter(p => p.displayName.toLowerCase() === principalName.toLowerCase())[0] : undefined;
+            const principal = principalType === 'ServicePrincipal' ? serviceprincipals.find(p => p.displayName.toLowerCase() === principalName.toLowerCase()) : undefined;
             if (principal !== undefined) { return principal; }
         }
 

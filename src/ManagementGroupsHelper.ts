@@ -19,7 +19,7 @@ export class ManagementGroupsHelper {
             const managementGroupInfoIterator = this.managementGroupsAPI.managementGroups.list();
 
             for await (const managementGroupInfo of managementGroupInfoIterator) {
-                if (groupIds.filter(p => managementGroupInfo.id === p)[0] !== undefined) {
+                if (groupIds.some(p => managementGroupInfo.id?.toLowerCase() === p.toLowerCase())) {
                     managementGroupInfos.push(managementGroupInfo);
                 }
             }
