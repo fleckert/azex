@@ -57,7 +57,8 @@ export class RoleDefinitionHelper {
         roleDefinition: RoleDefinition,
         roleName      : string
     ): boolean {
-        return roleDefinition.roleName === roleName;
+        // roleNames are not case-sensitive
+        return roleDefinition.roleName?.toLowerCase() === roleName.toLowerCase();
     }
 
     async listAllForScope(scope: string): Promise<Array<RoleDefinition>> {
