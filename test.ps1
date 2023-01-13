@@ -1,16 +1,17 @@
-npm run rbac-export-tst
-npm run rbac-export-tst-ns
-npm run rbac-export-tst-ns-np
-npm run rbac-verify-tst
-npm run rbac-verify-tst-ns
-npm run rbac-verify-tst-ns-np
-npm run rbac-extend-tst-min
-npm run rbac-extend-tst-min-ns
-npm run rbac-extend-tst-min-ns-np
-npm run rbac-extend-tst-ext
-npm run rbac-extend-tst-ext-ns
-npm run rbac-extend-tst-ext-ns-np
-npm run rbac-apply-tst-0
-npm run rbac-apply-tst-0-ns
-npm run rbac-apply-tst-1
-npm run rbac-apply-tst-1-ns
+Clear-Host
+
+Write-Host "--------------------------------" && npm run rbac-export-tst-ns
+Write-Host "--------------------------------" && npm run rbac-export-tst-ns-np
+Write-Host "--------------------------------" && npm run rbac-verify-tst
+Write-Host "--------------------------------" && npm run rbac-verify-tst-ns
+Write-Host "--------------------------------" && npm run rbac-verify-tst-ns-np
+Write-Host "--------------------------------" && npm run rbac-extend-tst-min
+Write-Host "--------------------------------" && npm run rbac-extend-tst-min-ns
+Write-Host "--------------------------------" && npm run rbac-extend-tst-min-ns-np
+Write-Host "--------------------------------" && npm run rbac-extend-tst-ext
+Write-Host "--------------------------------" && npm run rbac-extend-tst-ext-ns
+Write-Host "--------------------------------" && npm run rbac-extend-tst-ext-ns-np
+Write-Host "--------------------------------" && npm run rbac-apply-tst-0
+Write-Host "--------------------------------" && npm run rbac-apply-tst-0-ns
+Write-Host "--------------------------------" && npm run rbac-apply-tst-1
+Write-Host "--------------------------------" && npm run rbac-apply-tst-1-ns

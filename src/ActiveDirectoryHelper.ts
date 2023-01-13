@@ -57,8 +57,8 @@ export class ActiveDirectoryHelper {
         const serviceprincipals = await serviceprincipalsPromise;
 
         const principals = new Array<ActiveDirectoryPrincipal>();
-        principals.push(...users.items);
-        principals.push(...groups.items);
+        principals.push(...users.items            );
+        principals.push(...groups.items           );
         principals.push(...serviceprincipals.items);
 
         const failedRequests = new Array<string>();
