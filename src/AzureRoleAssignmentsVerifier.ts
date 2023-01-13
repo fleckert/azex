@@ -14,7 +14,7 @@ export class AzureRoleAssignmentsVerifier {
         credential     : TokenCredential,
         subscriptionId : string,
         rbacDefinitions: Array<RbacDefinition>
-    ): Promise<Array<AzureRoleAssignmentEx>> {
+    ): Promise<{ items: Array<AzureRoleAssignmentEx>, failedRequests: Array<string> }> {
         const resourceManagementClient      = new ResourceManagementClient     (credential, subscriptionId);
 
         const scopes             = new Set(rbacDefinitions.map(p => p.scope           ));
@@ -39,7 +39,9 @@ export class AzureRoleAssignmentsVerifier {
             throw new Error('tenantId === undefined')
         }
 
-        const roleAssignmentEx = new Array<AzureRoleAssignmentEx>();
+        const collection = new Array<AzureRoleAssignmentEx>();
+        const failedRequests = new Array<string>();
+        failedRequests.push(...principalsByIds.failedRequests);
 
         for (const roleAssignment of roleAssignmentsEx.roleAssignments) {
             const isPlanned = rbacDefinitions.find(p => {
@@ -48,7 +50,7 @@ export class AzureRoleAssignmentsVerifier {
                     &&                                     p.scope           .toLowerCase() === roleAssignment.roleAssignment?.scope?.           toLowerCase();
             }) !== undefined;
 
-            roleAssignmentEx.push({
+            collection.push({
                 roleAssignment      : roleAssignment.roleAssignment,
                 roleDefinition      : roleAssignment.roleDefinition,
                 principal           : roleAssignment.principal,
@@ -61,7 +63,7 @@ export class AzureRoleAssignmentsVerifier {
         }
 
         for (const rbacDefinition of rbacDefinitions) {
-            if (roleAssignmentEx.find(p => {
+            if (collection.find(p => {
                 return rbacDefinition.principalId      !== undefined && rbacDefinition.principalId     .toLowerCase() === p.roleAssignment?.principalId?.     toLowerCase()
                     && rbacDefinition.roleDefinitionId !== undefined && rbacDefinition.roleDefinitionId.toLowerCase() === p.roleAssignment?.roleDefinitionId?.toLowerCase()
                     &&                                                  rbacDefinition.scope           .toLowerCase() === p.roleAssignment?.scope?.           toLowerCase();
@@ -70,7 +72,7 @@ export class AzureRoleAssignmentsVerifier {
 
                 const resourceExists = resources.items.find(p => `${p.id}`.toLowerCase() === rbacDefinition.scope.toLowerCase()) !== undefined;
 
-                roleAssignmentEx.push({
+                collection.push({
                     roleAssignment: {
                         principalId     : principal?.id,
                         principalType   : principal?.type,
@@ -88,6 +90,6 @@ export class AzureRoleAssignmentsVerifier {
             }
         }
 
-        return roleAssignmentEx;
+        return {items: collection, failedRequests};
     }
 }

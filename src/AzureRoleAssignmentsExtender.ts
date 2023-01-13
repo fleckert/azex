@@ -11,7 +11,7 @@ export class AzureRoleAssignmentsExtender {
         credential     : TokenCredential, 
         subscriptionId : string, 
         rbacDefinitions: Array<RbacDefinition>
-    ): Promise<Array<RbacDefinition>> {
+    ): Promise<{ items: Array<RbacDefinition>, failedRequests: Array<string> }> {
         
         const principalIds         = new Set(rbacDefinitions.filter(p => p.principalId        !== undefined).map(p => p.principalId!     ));
         const roleDefinitionsIds   = new Set(rbacDefinitions.filter(p => p.roleDefinitionId   !== undefined).map(p => p.roleDefinitionId!));
@@ -27,13 +27,19 @@ export class AzureRoleAssignmentsExtender {
         const principalsByGroupNamesPromise            = new ActiveDirectoryHelper(credential).getGroupsByDisplayName           ([...principalGroupNames           ]);
         const principalsByServicePrincipalNamesPromise = new ActiveDirectoryHelper(credential).getServicePrincipalsByDisplayName([...principalServicePrincipalNames]);
 
-        const principalsById                    = await principalsByIdPromise;
         const roleDefinitions                   = await roleDefinitionsPromise;
+        const principalsById                    = await principalsByIdPromise;
         const principalsByUserNames             = await principalsByUserNamesPromise;
         const principalsByGroupNames            = await principalsByGroupNamesPromise;
         const principalsByServicePrincipalNames = await principalsByServicePrincipalNamesPromise;
 
-        const collection = new Array<RbacDefinition>();
+        const collection     = new Array<RbacDefinition>();
+        const failedRequests = new Array<string>();
+
+        failedRequests.push(...principalsById                   .failedRequests);
+        failedRequests.push(...principalsByUserNames            .failedRequests);
+        failedRequests.push(...principalsByGroupNames           .failedRequests);
+        failedRequests.push(...principalsByServicePrincipalNames.failedRequests);
 
         for (const item of rbacDefinitions) {
             const principalById = principalsById.items.find(p => item.principalId !== undefined && item.principalId?.toLowerCase() === p.id.toLowerCase());
@@ -47,17 +53,23 @@ export class AzureRoleAssignmentsExtender {
             const roleDefinition = roleDefinitions.find(p => item.roleDefinitionId   !== undefined && item.roleDefinitionId  .toLowerCase() === p.id?.      toLowerCase())
                                 ?? roleDefinitions.find(p => item.roleDefinitionName !== undefined && item.roleDefinitionName.toLowerCase() === p.roleName?.toLowerCase());
 
+            const roleDefinitionId   = roleDefinition?.id       ?? item.roleDefinitionId;
+            const principalId        = principal?.id            ?? item.principalId;
+            const roleDefinitionName = roleDefinition?.roleName ?? item.roleDefinitionName;
+            const principalType      = principal?.type          ?? item.principalType;
+            const principalName      = (principal as ActiveDirectoryUser)?.userPrincipalName ?? principal?.displayName ?? item.principalName;
+
             collection.push({
-                scope             : item.scope,
-                roleDefinitionId  : item.roleDefinitionId ?? roleDefinition?.id,
-                principalId       : principal?.id,
-                roleDefinitionName: item.roleDefinitionName ?? roleDefinition?.roleName,
-                principalType     : principal?.type,
-                principalName     : (principal as ActiveDirectoryUser)?.userPrincipalName ?? principal?.displayName
+                scope: item.scope,
+                roleDefinitionId,
+                principalId ,
+                roleDefinitionName,
+                principalType,
+                principalName
             });
         }
 
-        return collection;
+        return { items: collection, failedRequests };
     }
 
     resolvePrincipal(

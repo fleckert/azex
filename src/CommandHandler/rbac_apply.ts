@@ -19,7 +19,7 @@ export class rbac_apply {
             
             const newRoleAssignments = new Array<RoleAssignment>();
             const newRoleAssignmentsFailed = new Array<RbacDefinition>();
-            const roleAssignmentsMissingRbac = roleAssignments.filter(p => p.roleAssignmentStatus === 'missing-rbac');
+            const roleAssignmentsMissingRbac = roleAssignments.items.filter(p => p.roleAssignmentStatus === 'missing-rbac');
             for (const item of roleAssignmentsMissingRbac) {
                 if (item.roleAssignment.scope === undefined) {
                     newRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));
@@ -52,7 +52,7 @@ export class rbac_apply {
 
             const deletedRoleAssignments = new Array<RoleAssignment>();
             const deletedRoleAssignmentsFailed = new Array<RbacDefinition>();
-            const roleAssignmentsUnexpectedRbac = roleAssignments.filter(p => p.roleAssignmentStatus === 'unexpected-rbac');
+            const roleAssignmentsUnexpectedRbac = roleAssignments.items.filter(p => p.roleAssignmentStatus === 'unexpected-rbac');
             for (const item of roleAssignmentsUnexpectedRbac) {
                 if (item.roleAssignment.scope === undefined) {
                     deletedRoleAssignmentsFailed.push(...new AzureRoleAssignmentsConverter().mapExtendend([item]));

@@ -25,6 +25,8 @@ interface BatchGetRequest {
 
 export class ActiveDirectoryHelper {
 
+    private readonly microsoftGraphV1Endpoint = 'https://graph.microsoft.com/v1.0';
+
     private readonly urlBlank = '%20';
     private readonly urlHash  = '%23';
 
@@ -36,14 +38,6 @@ export class ActiveDirectoryHelper {
     constructor(
         readonly credential: TokenCredential
     ) { }
-
-    private async getToken(): Promise<string> {
-        const accessToken = await this.credential.getToken("https://graph.microsoft.com/.default");
-
-        if (accessToken === null) { throw "Failed to retrieve accessToken for https://graph.microsoft.com/.default."; }
-
-        return accessToken.token;
-    }
 
     async getUsersById            (ids: string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched            (ids); }
     async getGroupsById           (ids: string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByIdBatched           (ids); }
@@ -63,15 +57,15 @@ export class ActiveDirectoryHelper {
         const serviceprincipals = await serviceprincipalsPromise;
 
         const principals = new Array<ActiveDirectoryPrincipal>();
-        principals.push(...users.items);
-        principals.push(...groups.items);
+        principals.push(...users.items            );
+        principals.push(...groups.items           );
         principals.push(...serviceprincipals.items);
 
         const failedRequests = new Array<string>();
 
         for (const id of ids) {
-            if (principals.find(p => p.id.toLocaleLowerCase() === id.toLowerCase()) !== undefined) {
-                failedRequests.push(id);
+            if (principals.find(p => p.id.toLocaleLowerCase() === id.toLowerCase()) === undefined) {
+                failedRequests.push(`${this.microsoftGraphV1Endpoint} - Failed to resolve id '${id}'.`);
             }
         }
 
@@ -81,93 +75,73 @@ export class ActiveDirectoryHelper {
     private async getServicePrincipalsByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
         return this.getBatched<ActiveDirectoryServicePrincipal>(
             ids.map(p => `/serviceprincipals/${p}?${this.selectServicePrincipal}`),
-            p => {
-                return {
-                    type                : 'ServicePrincipal',
-                    id                  : p.body.id,
-                    displayName         : p.body.displayName,
-                    appId               : p.body.appId,
-                    servicePrincipalType: p.body.servicePrincipalType
-                }
-            });
+            p => { p.type = 'ServicePrincipal'; return p; }
+        );
     }
 
     private async getServicePrincipalsByDisplayNameBatched(displayNames: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
-        return this.getBatchedValue<ActiveDirectoryServicePrincipal>(
-            displayNames.map(p => `/serviceprincipals?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`),
-            p => {
-                return {
-                    type                : 'ServicePrincipal',
-                    id                  : p.body.value[0].id,
-                    displayName         : p.body.value[0].displayName,
-                    appId               : p.body.value[0].appId,
-                    servicePrincipalType: p.body.value[0].servicePrincipalType
-                }
-            });
+        const getUrl = (displayName : string) => `/serviceprincipals?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${displayName.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
+        
+        const result = await this.getBatchedValue<ActiveDirectoryServicePrincipal>(
+            displayNames.map(getUrl),
+            p => { p.type = 'ServicePrincipal'; return p; }
+        );
+
+        // servicePrincipalNames may not be unique, check for duplicates
+        const resultChecked = {items: new Array<ActiveDirectoryServicePrincipal>(), failedRequests: new Array<string>()};
+        resultChecked.failedRequests.push(...result.failedRequests);
+
+        const servicePrincipalDisplayNames = new Set(result.items.map(p => p.displayName));
+
+        for (const displayName of servicePrincipalDisplayNames) {
+            const itemsForDisplayName = result.items.filter(p => p.displayName === displayName);
+
+            if(itemsForDisplayName.length === 1){
+                resultChecked.items.push(itemsForDisplayName[0]);
+            }
+            else{
+                resultChecked.failedRequests.push(`${this.microsoftGraphV1Endpoint}${getUrl(displayName)} - displayName '${displayName}' is not unique`);
+            }
+        }
+
+        return resultChecked;
     }
 
     private async getUsersByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryUser>, failedRequests: Array<string>}> 
     {
         return this.getBatched<ActiveDirectoryUser>(
             ids.map(p => `/users/${p}?${this.selectUser}`),
-            p => {
-                return {
-                    type             : 'User',
-                    id               : p.body.id,
-                    displayName      : p.body.displayName,
-                    userPrincipalName: p.body.userPrincipalName
-                }
-            });
+            p => { p.type = 'User'; return p; }
+        );
     }
 
     private async getUsersByUserPrincipalNameBatched(userPrincipalNames: string[]): Promise<{items: Array<ActiveDirectoryUser>, failedRequests: Array<string>}> 
     {
         return this.getBatchedValue<ActiveDirectoryUser>(
             userPrincipalNames.map(p => `/users?$filter=userPrincipalName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectUser}`),
-            p => {
-                return {
-                    type             : 'User',
-                    id               : p.body.value[0].id,
-                    displayName      : p.body.value[0].displayName,
-                    userPrincipalName: p.body.value[0].userPrincipalName
-                }
-            });
+            p => { p.type = 'User'; return p; }
+        );
     }
 
     private async getGroupsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
         return this.getBatchedValue<ActiveDirectoryGroup>(
             displayNames.map(p => `/groups?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectGroup}`),
-            p => {
-                return {
-                    type       : 'Group',
-                    id         : p.body.value[0].id,
-                    displayName: p.body.value[0].displayName
-                }
-            });
+            p => { p.type = 'Group'; return p; }
+        );
     }
 
     private async getGroupsByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
         return this.getBatched<ActiveDirectoryGroup>(
             ids.map(p => `/groups/${p}?${this.selectGroup}`),
-            p => {
-                return {
-                    type       : 'Group',
-                    id         : p.body.id,
-                    displayName: p.body.displayName
-                }
-            });
+            p => { p.type = 'Group'; return p; }
+        );
     }
 
-    private async getBatched<T>(urls: string[], mapper: (b: BatchResponse<T>) => T): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+    private async getBatched<T>(urls: string[], mapper: (b: T) => T): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
 
         const requestsAll = this.getBatchGetRequests(urls);
 
-        const token = await this.getToken();
-
-        const headers = {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-        }
+        const headers = await this.getHeaders();
 
         const collectionOk     = new Array<T     >();
         const collectionFailed = new Array<string>();
@@ -176,44 +150,39 @@ export class ActiveDirectoryHelper {
             try {
                 const data = JSON.stringify({ requests: requests });
             
-                const response = await axios.post("https://graph.microsoft.com/v1.0/\$batch", data, { headers });
+                const response = await axios.post(`${this.microsoftGraphV1Endpoint}/\$batch`, data, { headers });
 
                 if (response.status === 200) {
                     const itemsInResponse = response.data.responses as BatchResponse<T>[];
 
-                    const itemsOk = itemsInResponse.filter(p => p.status === 200).map(mapper);
+                    const itemsOk = itemsInResponse.filter(p => p.status === 200).map(p => mapper(p.body));
 
                     collectionOk.push(...itemsOk);
 
                     const failedRequestIds = itemsInResponse.filter(p => p.status !== 200).map(p => p.id);
 
                     for (const failedRequestId of failedRequestIds) {
-                        const failedRequestUrl = requests.filter(p => `${p.id}` === `${failedRequestId}`).map(p => p.url)[0];
-                        collectionFailed.push(failedRequestUrl);
+                        const failedRequest = requests.find(p => `${p.id}` === `${failedRequestId}`);
+                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${failedRequest?.url}`);
                     }
                 }
                 else {
-                    collectionFailed.push(...requests.map(p => p.url));
+                    collectionFailed.push(...requests.map(p => `${this.microsoftGraphV1Endpoint}${p.url}`));
                 }
             }
             catch {
-                collectionFailed.push(...requests.map(p => p.url));
+                collectionFailed.push(...requests.map(p => `${this.microsoftGraphV1Endpoint}${p.url}`));
             }
         }
         
         return { items: collectionOk, failedRequests: collectionFailed };
     }
 
-    private async getBatchedValue<T>(urls: string[], mapper: (b: BatchResponseValue<T>) => T): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+    private async getBatchedValue<T>(urls: string[], mapper: (b: T) => T): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
 
         const requestsAll = this.getBatchGetRequests(urls);
 
-        const token = await this.getToken();
-
-        const headers = {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-        }
+        const headers = await this.getHeaders();
 
         const collectionOk     = new Array<T     >();
         const collectionFailed = new Array<string>();
@@ -222,32 +191,53 @@ export class ActiveDirectoryHelper {
             try {
                 const data = JSON.stringify({ requests: requests });
             
-                const response = await axios.post("https://graph.microsoft.com/v1.0/\$batch", data, { headers });
+                const response = await axios.post(`${this.microsoftGraphV1Endpoint}/\$batch`, data, { headers });
 
                 if (response.status === 200) {
                     const itemsInResponse = response.data.responses as BatchResponseValue<T>[];
 
-                    const itemsOk = itemsInResponse.filter(p => p.status === 200).map(mapper);
-
-                    collectionOk.push(...itemsOk);
+                    for(var items of itemsInResponse.filter(p => p.status === 200)){
+                        // items.body.value is an Array<T>
+                        for (const item of items.body.value) {
+                            collectionOk.push(mapper(item));
+                        }
+                    }
 
                     const failedRequestIds = itemsInResponse.filter(p => p.status !== 200).map(p => p.id);
 
                     for (const failedRequestId of failedRequestIds) {
-                        const failedRequestUrl = requests.filter(p => `${p.id}` === `${failedRequestId}`).map(p => p.url)[0];
-                        collectionFailed.push(failedRequestUrl);
+                        const failedRequest = requests.find(p => `${p.id}` === `${failedRequestId}`);
+                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${failedRequest?.url}`);
                     }
                 }
                 else {
-                    collectionFailed.push(...requests.map(p => p.url));
+                    collectionFailed.push(...requests.map(p => `${this.microsoftGraphV1Endpoint}${p.url}`));
                 }
             }
             catch {
-                collectionFailed.push(...requests.map(p => p.url));
+                collectionFailed.push(...requests.map(p => `${this.microsoftGraphV1Endpoint}${p.url}`));
             }
         }
         
         return { items: collectionOk, failedRequests: collectionFailed };
+    }
+
+    private async getHeaders() {
+        const token = await this.getToken();
+
+        const headers = {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+        };
+        return headers;
+    }
+
+    private async getToken(): Promise<string> {
+        const accessToken = await this.credential.getToken("https://graph.microsoft.com/.default");
+
+        if (accessToken === null) { throw "Failed to retrieve accessToken for https://graph.microsoft.com/.default."; }
+
+        return accessToken.token;
     }
 
     private getBatchGetRequests(urls: string[]): Array<Array<BatchGetRequest>> {

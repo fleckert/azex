@@ -18,30 +18,30 @@ export class rbac_verify {
         }
         )
         .then(p => {
-            p.sort(AzureRoleAssignmentHelper.sort);
+            p.items.sort(AzureRoleAssignmentHelper.sort);
             return p;
         })
         .then(async p => {
-            await writeFile(`${pathOut}-${subscriptionId}.full.json`, JSON.stringify(p, null, 2));
+            await writeFile(`${pathOut}-${subscriptionId}.full.json`, JSON.stringify(p.items, null, 2));
             return p;
         })
         .then(async p => {
-            const collection = new AzureRoleAssignmentsConverter().mapMinimalEx(p);
+            const collection = new AzureRoleAssignmentsConverter().mapMinimalEx(p.items);
             await writeFile(`${pathOut}-${subscriptionId}.min.json`, JSON.stringify(collection, null, 2));
             return p;
         })
         .then(async p => {
-            const collection = new AzureRoleAssignmentsConverter().mapExtendendEx(p);
+            const collection = new AzureRoleAssignmentsConverter().mapExtendendEx(p.items);
             await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
             return p;
         })
         .then(async p => {
-            const content = new AzureRoleAssignmentsToMarkdown().convertEx(p);
+            const content = new AzureRoleAssignmentsToMarkdown().convertEx(p.items);
             await writeFile(`${pathOut}-${subscriptionId}.md`, content);
             return p;
         })
         .then(async p => {
-            const content = new AzureRoleAssignmentsToHtml().convertEx(p);
+            const content = new AzureRoleAssignmentsToHtml().convertEx(p.items);
             await writeFile(`${pathOut}-${subscriptionId}.html`, content);
             return p;
         })
@@ -56,6 +56,7 @@ export class rbac_verify {
                     pathIn,
                     pathOut
                 },
+                durationInSeconds,
                 files: [
                     `${pathOut}-${subscriptionId}.full.json`,
                     `${pathOut}-${subscriptionId}.min.json`,
@@ -63,7 +64,7 @@ export class rbac_verify {
                     `${pathOut}-${subscriptionId}.md`,
                     `${pathOut}-${subscriptionId}.html`,
                 ],
-                durationInSeconds,
+                failedRequests: p.failedRequests,
             });
         })
         .catch(p => console.error(p));
