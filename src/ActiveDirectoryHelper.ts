@@ -93,17 +93,30 @@ export class ActiveDirectoryHelper {
     }
 
     private async getServicePrincipalsByDisplayNameBatched(displayNames: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
-        return this.getBatchedValue<ActiveDirectoryServicePrincipal>(
-            displayNames.map(p => `/serviceprincipals?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`),
-            p => {
-                return {
-                    type                : 'ServicePrincipal',
-                    id                  : p.body.value[0].id,
-                    displayName         : p.body.value[0].displayName,
-                    appId               : p.body.value[0].appId,
-                    servicePrincipalType: p.body.value[0].servicePrincipalType
-                }
-            });
+        const getUrl = (displayName : string) => `/serviceprincipals?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${displayName.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
+        
+        const result = await this.getBatchedValueAll<ActiveDirectoryServicePrincipal>(
+            displayNames.map(getUrl),
+        );
+
+        // servicePrincipalNames may not be unique, check for duplicates
+        const resultChecked = {items: new Array<ActiveDirectoryServicePrincipal>(), failedRequests: new Array<string>()};
+        resultChecked.failedRequests.push(...result.failedRequests);
+
+        const servicePrincipalDisplayNames = new Set(result.items.map(p => p.displayName));
+
+        for (const displayName of servicePrincipalDisplayNames) {
+            const itemsForDisplayName = result.items.filter(p => p.displayName === displayName);
+
+            if(itemsForDisplayName.length === 1){
+                resultChecked.items.push(itemsForDisplayName[0]);
+            }
+            else{
+                resultChecked.failedRequests.push(`https://graph.microsoft.com/v1.0${getUrl(displayName)} - displayName '${displayName}' is not unique`);
+            }
+        }
+
+        return resultChecked;
     }
 
     private async getUsersByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryUser>, failedRequests: Array<string>}> 
@@ -230,6 +243,55 @@ export class ActiveDirectoryHelper {
                     const itemsOk = itemsInResponse.filter(p => p.status === 200).map(mapper);
 
                     collectionOk.push(...itemsOk);
+
+                    const failedRequestIds = itemsInResponse.filter(p => p.status !== 200).map(p => p.id);
+
+                    for (const failedRequestId of failedRequestIds) {
+                        const failedRequestUrl = requests.filter(p => `${p.id}` === `${failedRequestId}`).map(p => p.url)[0];
+                        collectionFailed.push(failedRequestUrl);
+                    }
+                }
+                else {
+                    collectionFailed.push(...requests.map(p => p.url));
+                }
+            }
+            catch {
+                collectionFailed.push(...requests.map(p => p.url));
+            }
+        }
+        
+        return { items: collectionOk, failedRequests: collectionFailed };
+    }
+
+    private async getBatchedValueAll<T>(urls: string[]): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+
+        const requestsAll = this.getBatchGetRequests(urls);
+
+        const token = await this.getToken();
+
+        const headers = {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+        }
+
+        const collectionOk     = new Array<T     >();
+        const collectionFailed = new Array<string>();
+
+        for (const requests of requestsAll) {
+            try {
+                const data = JSON.stringify({ requests: requests });
+            
+                const response = await axios.post("https://graph.microsoft.com/v1.0/\$batch", data, { headers });
+
+                if (response.status === 200) {
+                    const itemsInResponse = response.data.responses as BatchResponseValue<T>[];
+
+                    for(var items of itemsInResponse.filter(p => p.status === 200)){
+                        // items.body.value is an Array<T>
+                        for (const item of items.body.value) {
+                            collectionOk.push(item);
+                        }
+                    }
 
                     const failedRequestIds = itemsInResponse.filter(p => p.status !== 200).map(p => p.id);
 
