@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ActiveDirectoryApplication      } from "./models/ActiveDirectoryApplication";
 import { ActiveDirectoryGroup            } from "./models/ActiveDirectoryGroup";
 import { ActiveDirectoryPrincipal        } from "./models/ActiveDirectoryPrincipal";
 import { ActiveDirectoryServicePrincipal } from "./models/ActiveDirectoryServicePrincipal";
@@ -39,13 +40,15 @@ export class ActiveDirectoryHelper {
         readonly credential: TokenCredential
     ) { }
 
-    async getUsersById            (ids: string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched            (ids); }
-    async getGroupsById           (ids: string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByIdBatched           (ids); }
-    async getServicePrincipalsById(ids: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByIdBatched(ids); }
+    async getUsersById                     (ids                : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched                     (ids                ); }
+    async getGroupsById                    (ids                : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByIdBatched                    (ids                ); }
+    async getServicePrincipalsById         (ids                : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByIdBatched         (ids                ); }
 
-    async getUsersByUserPrincipalName      (userPrincipalNames   : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByUserPrincipalNameBatched      (userPrincipalNames   ); }
-    async getGroupsByDisplayName           (groupNames           : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByDisplayNameBatched           (groupNames           ); }
-    async getServicePrincipalsByDisplayName(servicePrincipalNames: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByDisplayNameBatched(servicePrincipalNames); }
+    async getUsersByUserPrincipalName      (userPrincipalNames : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByUserPrincipalNameBatched      (userPrincipalNames ); }
+    async getGroupsByDisplayName           (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByDisplayNameBatched           (displayNames       ); }
+    async getServicePrincipalsByDisplayName(displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByDisplayNameBatched(displayNames       ); }
+    async getServicePrincipalsByAppIds     (appIds             : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByAppIdBatched      (appIds             ); }
+    async getApplicationsByDisplayName     (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryApplication     >, failedRequests: Array<string> }> { return this.getApplicationsByDisplayNameBatched     (displayNames       ); }
 
     async getPrincipalsbyId(ids: string[]): Promise<{ items: Array<ActiveDirectoryPrincipal>, failedRequests: Array<string>}> {
         const usersPromise             = this.getUsersById            (ids);
@@ -72,6 +75,130 @@ export class ActiveDirectoryHelper {
         return { items: principals, failedRequests };
     }
 
+    async createUser(
+        accountEnabled   : boolean,
+        displayName      : string,
+        mailNickname     : string,
+        userPrincipalName: string,
+        passwordProfile: {
+            forceChangePasswordNextSignIn: boolean,
+            password                     : string
+        }
+    ): Promise<{ item: ActiveDirectoryUser | undefined; error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/graph/api/user-post-users
+        
+        const headers = await this.getHeaders();
+
+        const data = JSON.stringify({
+            accountEnabled,
+            displayName,
+            mailNickname,
+            userPrincipalName,
+            passwordProfile
+        });
+
+        try {
+            const response = await axios.post(`${this.microsoftGraphV1Endpoint}/users`, data, { headers });
+
+            if (response.status === 201) {
+                const user = response.data as ActiveDirectoryUser;
+                user.type = 'User';
+                return { item: user, error: undefined };
+            }
+            else {
+                return { item: undefined, error: new Error("Failed to create user.") };
+            }
+        }
+        catch (error: any) {
+            return { item: undefined, error: new Error(error.response.data.error.message)};
+        }
+    }
+
+    async createGroup(
+        displayName : string,
+        mailEnabled : boolean,
+        mailNickname: string
+    ): Promise<{ item: ActiveDirectoryGroup | undefined; error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/graph/api/group-post-groups
+        
+        const headers = await this.getHeaders();
+
+        const data = JSON.stringify({
+            displayName,
+            mailEnabled,
+            mailNickname,
+            securityEnabled: true
+          });
+
+        try {
+            const response = await axios.post(`${this.microsoftGraphV1Endpoint}/groups`, data, { headers });
+
+            if (response.status === 201) {
+                const group = response.data as ActiveDirectoryGroup;
+                group.type = 'Group';
+                return { item: group, error: undefined };
+            }
+            else {
+                return { item: undefined, error: new Error("Failed to create group.") };
+            }
+        }
+        catch (error: any) {
+            return { item: undefined, error: new Error(error.response.data.error.message)};
+        }
+    }
+
+    async createApplication(
+        displayName : string
+    ): Promise<{ item: ActiveDirectoryApplication | undefined; error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/graph/api/application-post-applications
+        
+        const headers = await this.getHeaders();
+
+        const data = JSON.stringify({ displayName });
+
+        try {
+            const response = await axios.post(`${this.microsoftGraphV1Endpoint}/applications`, data, { headers });
+
+            if (response.status === 201) {
+                const application = response.data as ActiveDirectoryServicePrincipal;
+                application.type = 'Application';
+                return { item: application, error: undefined };
+            }
+            else {
+                return { item: undefined, error: new Error("Failed to create application.") };
+            }
+        }
+        catch (error: any) {
+            return { item: undefined, error: new Error(error.response.data.error.message)};
+        }
+    }
+
+    async createServicePrincipal(
+        appId : string
+    ): Promise<{ item: ActiveDirectoryServicePrincipal | undefined; error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/graph/api/serviceprincipal-post-serviceprincipals
+        
+        const headers = await this.getHeaders();
+
+        const data = JSON.stringify({ appId });
+
+        try {
+            const response = await axios.post(`${this.microsoftGraphV1Endpoint}/servicePrincipals`, data, { headers });
+
+            if (response.status === 201) {
+                const servicePrincipal = response.data as ActiveDirectoryServicePrincipal;
+                servicePrincipal.type = 'ServicePrincipal';
+                return { item: servicePrincipal, error: undefined };
+            }
+            else {
+                return { item: undefined, error: new Error("Failed to create group.") };
+            }
+        }
+        catch (error: any) {
+            return { item: undefined, error: new Error(error.response.data.error.message)};
+        }
+    }
+
     private async getServicePrincipalsByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
         return this.getBatched<ActiveDirectoryServicePrincipal>(
             ids.map(p => `/serviceprincipals/${p}?${this.selectServicePrincipal}`),
@@ -94,6 +221,45 @@ export class ActiveDirectoryHelper {
         const servicePrincipalDisplayNames = new Set(result.items.map(p => p.displayName));
 
         for (const displayName of servicePrincipalDisplayNames) {
+            const itemsForDisplayName = result.items.filter(p => p.displayName === displayName);
+
+            if(itemsForDisplayName.length === 1){
+                resultChecked.items.push(itemsForDisplayName[0]);
+            }
+            else{
+                resultChecked.failedRequests.push(`${this.microsoftGraphV1Endpoint}${getUrl(displayName)} - displayName '${displayName}' is not unique`);
+            }
+        }
+
+        return resultChecked;
+    }
+
+    private async getServicePrincipalsByAppIdBatched(appIds: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> {
+        const getUrl = (appId: string) => `/serviceprincipals?$filter=appId${this.urlBlank}eq${this.urlBlank}'${appId.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
+
+        const { items, failedRequests } = await this.getBatchedValue<ActiveDirectoryServicePrincipal>(
+            appIds.map(getUrl),
+            p => { p.type = 'ServicePrincipal'; return p; }
+        );
+
+        return { items, failedRequests };
+    }
+
+    private async getApplicationsByDisplayNameBatched(displayNames: string[]): Promise<{items: Array<ActiveDirectoryApplication>, failedRequests: Array<string>}>{
+        const getUrl = (displayName : string) => `/applications?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${displayName.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
+        
+        const result = await this.getBatchedValue<ActiveDirectoryApplication>(
+            displayNames.map(getUrl),
+            p => { p.type = 'Application'; return p; }
+        );
+
+        // applicationNames may not be unique, check for duplicates
+        const resultChecked = {items: new Array<ActiveDirectoryApplication>(), failedRequests: new Array<string>()};
+        resultChecked.failedRequests.push(...result.failedRequests);
+
+        const applicationDisplayNames = new Set(result.items.map(p => p.displayName));
+
+        for (const displayName of applicationDisplayNames) {
             const itemsForDisplayName = result.items.filter(p => p.displayName === displayName);
 
             if(itemsForDisplayName.length === 1){
@@ -237,6 +403,7 @@ export class ActiveDirectoryHelper {
 
         if (accessToken === null) { throw "Failed to retrieve accessToken for https://graph.microsoft.com/.default."; }
 
+        /// resolve domain from upn
         return accessToken.token;
     }
 
