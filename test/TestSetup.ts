@@ -6,13 +6,12 @@ import { ActiveDirectoryUser             } from "../src/models/ActiveDirectoryUs
 import { v4 as uuidv4                    } from "uuid";
 
 export class TestSetup {
-    static async ensureTestUsersExist(activeDirectoryHelper: ActiveDirectoryHelper, names: Array<string>, domain: string):
-        Promise<{
+    static async ensureTestUsersExist(activeDirectoryHelper: ActiveDirectoryHelper, names: Array<string>, domain: string)
+        : Promise<{
             existingItems: Array<ActiveDirectoryUser>,
             newItems: Array<ActiveDirectoryUser>,
             errors: Array<Error>
         }> {
-
         const getCreateUserObject = (name: string, domain: string) => {
             return {
                 accountEnabled: false,
