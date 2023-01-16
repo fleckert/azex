@@ -38,6 +38,6 @@ export class rbac_extend {
                 failedRequests: p.failedRequests,
             });
         })
-        .catch(p => console.error(p));
+        .catch(p => { console.error(p); throw p; });
     }
 }

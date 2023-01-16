@@ -90,8 +90,8 @@ export class rbac_apply {
                             path
                         },
                         durationInSeconds,
-                        newRoleAssignmentsFailed    : p.newRoleAssignmentsFailed,
                         newRoleAssignments          : p.newRoleAssignments,
+                        newRoleAssignmentsFailed    : p.newRoleAssignmentsFailed,
                         deletedRoleAssignments      : p.deletedRoleAssignments,
                         deletedRoleAssignmentsFailed: p.deletedRoleAssignmentsFailed
                     }, 
@@ -100,6 +100,6 @@ export class rbac_apply {
                 )
             );
         })
-        .catch(p => console.error(p));
+        .catch(p => { console.error(p); throw p; });
     }
 }

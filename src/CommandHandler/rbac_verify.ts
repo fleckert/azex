@@ -67,6 +67,6 @@ export class rbac_verify {
                 failedRequests: p.failedRequests,
             });
         })
-        .catch(p => console.error(p));
+        .catch(p => { console.error(p); throw p; });
     }
 }
