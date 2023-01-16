@@ -1,8 +1,8 @@
 import path from "path";
-import { rbac_export                 } from "../src/CommandHandler/rbac_export";
-import { SubscriptionIdResolver      } from "../src/SubscriptionIdResolver";
-import { TestConfigurationProvider   } from "./TestConfigurationProvider";
-import { TestTokenCredentialProvider } from "./TestTokenCredentialProvider";
+import { rbac_export                 } from "../../src/CommandHandler/rbac_export";
+import { SubscriptionIdResolver      } from "../../src/SubscriptionIdResolver";
+import { TestConfigurationProvider   } from "../TestConfigurationProvider";
+import { TestTokenCredentialProvider } from "../TestTokenCredentialProvider";
 
 
 test('rbac_export', async () => {
