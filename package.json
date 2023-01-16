@@ -9,25 +9,10 @@
   "scripts": {
     "test": "jest --config ./jest.config.js",
     "build": "rimraf ./build && tsc",
-    "rbac-export-tst": "npm run build && node build/src/index.js rbac export --out ./temp/rbac-export --subscription a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17",
-    "rbac-export-tst-ns": "npm run build && node build/src/index.js rbac export --out ./temp/rbac-export",
-    "rbac-export-tst-ns-np": "npm run build && node build/src/index.js rbac export",
-    "rbac-verify-tst": "npm run build && node build/src/index.js rbac verify --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.min.json --out ./temp/rbac-verify --subscription a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17",
-    "rbac-verify-tst-ns": "npm run build && node build/src/index.js rbac verify --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.min.json --out ./temp/rbac-verify",
-    "rbac-verify-tst-ns-np": "npm run build && node build/src/index.js rbac verify --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.min.json",
-    "rbac-extend-tst-min": "npm run build && node build/src/index.js rbac extend --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.min.json --out ./temp/rbac-extend --subscription a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17",
-    "rbac-extend-tst-min-ns": "npm run build && node build/src/index.js rbac extend --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.min.json --out ./temp/rbac-extend",
-    "rbac-extend-tst-min-ns-np": "npm run build && node build/src/index.js rbac extend --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.min.json",
-    "rbac-extend-tst-ext": "npm run build && node build/src/index.js rbac extend --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.no-ids.json --out ./temp/rbac-extend --subscription a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17",
-    "rbac-extend-tst-ext-ns": "npm run build && node build/src/index.js rbac extend --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.no-ids.json --out ./temp/rbac-extend",
-    "rbac-extend-tst-ext-ns-np": "npm run build && node build/src/index.js rbac extend --path ./temp/rbac-export-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17.no-ids.json",
-    "rbac-apply-tst-0": "npm run build && node build/src/index.js rbac apply  --path ./temp/rbac-apply-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17-0.min.json --subscription a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17",
-    "rbac-apply-tst-0-ns": "npm run build && node build/src/index.js rbac apply  --path ./temp/rbac-apply-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17-0.min.json",
-    "rbac-apply-tst-1": "npm run build && node build/src/index.js rbac apply  --path ./temp/rbac-apply-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17-1.min.json --subscription a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17",
-    "rbac-apply-tst-1-ns": "npm run build && node build/src/index.js rbac apply  --path ./temp/rbac-apply-a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17-1.min.json"
+    "rbac-export": "npm run build && node build/src/index.js rbac export"
   },
   "author": "florian.eckert",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@azure/arm-authorization": "^8.4.1",
     "@azure/arm-managementgroups": "^2.0.2",
