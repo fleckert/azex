@@ -1,4 +1,4 @@
-import { ActiveDirectoryPrincipal                   } from "./models/ActiveDirectoryPrincipal";
+import { ActiveDirectoryEntity                      } from "./models/ActiveDirectoryEntity";
 import { ActiveDirectoryUser                        } from "./models/ActiveDirectoryUser";
 import { AzureRoleAssignment, AzureRoleAssignmentEx, AzureRoleAssignmentHelper } from "./models/AzureRoleAssignment";
 import { RbacDefinition                             } from "./models/RbacDefinition";
@@ -65,7 +65,7 @@ export class AzureRoleAssignmentsConverter {
         })
     }
 
-    private getPrincipalName(principal: ActiveDirectoryPrincipal | undefined) : string | undefined{
+    private getPrincipalName(principal: ActiveDirectoryEntity | undefined) : string | undefined{
         return principal?.type === 'User'
             ? (principal as ActiveDirectoryUser).userPrincipalName
             : principal?.displayName;

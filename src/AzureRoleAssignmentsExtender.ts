@@ -1,10 +1,10 @@
+import { ActiveDirectoryEntity         } from "./models/ActiveDirectoryEntity";
+import { ActiveDirectoryGroup          } from "./models/ActiveDirectoryGroup";
 import { ActiveDirectoryHelper         } from "./ActiveDirectoryHelper";
+import { ActiveDirectoryUser           } from "./models/ActiveDirectoryUser";
 import { RbacDefinition                } from "./models/RbacDefinition";
 import { RoleDefinitionHelper          } from "./RoleDefinitionHelper";
 import { TokenCredential               } from "@azure/identity";
-import { ActiveDirectoryUser           } from "./models/ActiveDirectoryUser";
-import { ActiveDirectoryGroup          } from "./models/ActiveDirectoryGroup";
-import { ActiveDirectoryPrincipal      } from "./models/ActiveDirectoryPrincipal";
 
 export class AzureRoleAssignmentsExtender {
     async extend(
@@ -77,8 +77,8 @@ export class AzureRoleAssignmentsExtender {
         principalType    : string,
         users            : Array<ActiveDirectoryUser>,
         groups           : Array<ActiveDirectoryGroup>,
-        serviceprincipals: Array<ActiveDirectoryPrincipal>
-    ): ActiveDirectoryPrincipal | undefined {
+        serviceprincipals: Array<ActiveDirectoryEntity>
+    ): ActiveDirectoryEntity | undefined {
 
         {
             const principal = principalType === 'User' ? users.find(p => p.userPrincipalName.toLowerCase() === principalName.toLowerCase()) : undefined;

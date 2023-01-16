@@ -1,10 +1,10 @@
 import axios from "axios";
-import { ActiveDirectoryApplication      } from "./models/ActiveDirectoryApplication";
-import { ActiveDirectoryGroup            } from "./models/ActiveDirectoryGroup";
-import { ActiveDirectoryPrincipal        } from "./models/ActiveDirectoryPrincipal";
-import { ActiveDirectoryServicePrincipal } from "./models/ActiveDirectoryServicePrincipal";
-import { ActiveDirectoryUser             } from "./models/ActiveDirectoryUser";
-import { TokenCredential                 } from "@azure/identity";
+import { ActiveDirectoryApplication                                        } from "./models/ActiveDirectoryApplication";
+import { ActiveDirectoryGroup                                              } from "./models/ActiveDirectoryGroup";
+import { ActiveDirectoryEntity, ActiveDirectoryEntitySorterByDisplayName   } from "./models/ActiveDirectoryEntity";
+import { ActiveDirectoryServicePrincipal                                   } from "./models/ActiveDirectoryServicePrincipal";
+import { ActiveDirectoryUser, ActiveDirectoryUserSorterByUserPrincipalName } from "./models/ActiveDirectoryUser";
+import { TokenCredential                                                   } from "@azure/identity";
 
 interface BatchResponse<T> {
     id    : number
@@ -40,17 +40,17 @@ export class ActiveDirectoryHelper {
         readonly credential: TokenCredential
     ) { }
 
-    async getUsersById                     (ids                : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched                     (ids                ); }
-    async getGroupsById                    (ids                : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByIdBatched                    (ids                ); }
-    async getServicePrincipalsById         (ids                : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByIdBatched         (ids                ); }
+    getUsersById                     (ids                : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched                     (ids                ); }
+    getGroupsById                    (ids                : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByIdBatched                    (ids                ); }
+    getServicePrincipalsById         (ids                : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByIdBatched         (ids                ); }
 
-    async getUsersByUserPrincipalName      (userPrincipalNames : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByUserPrincipalNameBatched      (userPrincipalNames ); }
-    async getGroupsByDisplayName           (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByDisplayNameBatched           (displayNames       ); }
-    async getServicePrincipalsByDisplayName(displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByDisplayNameBatched(displayNames       ); }
-    async getServicePrincipalsByAppIds     (appIds             : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByAppIdBatched      (appIds             ); }
-    async getApplicationsByDisplayName     (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryApplication     >, failedRequests: Array<string> }> { return this.getApplicationsByDisplayNameBatched     (displayNames       ); }
+    getUsersByUserPrincipalName      (userPrincipalNames : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByUserPrincipalNameBatched      (userPrincipalNames ); }
+    getGroupsByDisplayName           (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByDisplayNameBatched           (displayNames       ); }
+    getServicePrincipalsByDisplayName(displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByDisplayNameBatched(displayNames       ); }
+    getServicePrincipalsByAppIds     (appIds             : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByAppIdBatched      (appIds             ); }
+    getApplicationsByDisplayName     (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryApplication     >, failedRequests: Array<string> }> { return this.getApplicationsByDisplayNameBatched     (displayNames       ); }
 
-    async getPrincipalsbyId(ids: string[]): Promise<{ items: Array<ActiveDirectoryPrincipal>, failedRequests: Array<string>}> {
+    async getPrincipalsbyId(ids: string[]): Promise<{ items: Array<ActiveDirectoryEntity>, failedRequests: Array<string>}> {
         const usersPromise             = this.getUsersById            (ids);
         const groupsPromise            = this.getGroupsById           (ids);
         const serviceprincipalsPromise = this.getServicePrincipalsById(ids);
@@ -59,7 +59,7 @@ export class ActiveDirectoryHelper {
         const groups            = await groupsPromise;
         const serviceprincipals = await serviceprincipalsPromise;
 
-        const principals = new Array<ActiveDirectoryPrincipal>();
+        const principals = new Array<ActiveDirectoryEntity>();
         principals.push(...users.items            );
         principals.push(...groups.items           );
         principals.push(...serviceprincipals.items);
@@ -199,10 +199,11 @@ export class ActiveDirectoryHelper {
         }
     }
 
-    private async getServicePrincipalsByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
+    private getServicePrincipalsByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
         return this.getBatched<ActiveDirectoryServicePrincipal>(
             ids.map(p => `/serviceprincipals/${p}?${this.selectServicePrincipal}`),
-            p => { p.type = 'ServicePrincipal'; return p; }
+            p => { p.type = 'ServicePrincipal'; return p; },
+            ActiveDirectoryEntitySorterByDisplayName
         );
     }
 
@@ -211,7 +212,8 @@ export class ActiveDirectoryHelper {
         
         const result = await this.getBatchedValue<ActiveDirectoryServicePrincipal>(
             displayNames.map(getUrl),
-            p => { p.type = 'ServicePrincipal'; return p; }
+            p => { p.type = 'ServicePrincipal'; return p; },
+            ActiveDirectoryEntitySorterByDisplayName
         );
 
         // servicePrincipalNames may not be unique, check for duplicates
@@ -234,15 +236,14 @@ export class ActiveDirectoryHelper {
         return resultChecked;
     }
 
-    private async getServicePrincipalsByAppIdBatched(appIds: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> {
+    private getServicePrincipalsByAppIdBatched(appIds: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> {
         const getUrl = (appId: string) => `/serviceprincipals?$filter=appId${this.urlBlank}eq${this.urlBlank}'${appId.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
 
-        const { items, failedRequests } = await this.getBatchedValue<ActiveDirectoryServicePrincipal>(
+        return this.getBatchedValue<ActiveDirectoryServicePrincipal>(
             appIds.map(getUrl),
-            p => { p.type = 'ServicePrincipal'; return p; }
+            p => { p.type = 'ServicePrincipal'; return p; },
+            ActiveDirectoryEntitySorterByDisplayName
         );
-
-        return { items, failedRequests };
     }
 
     private async getApplicationsByDisplayNameBatched(displayNames: string[]): Promise<{items: Array<ActiveDirectoryApplication>, failedRequests: Array<string>}>{
@@ -250,7 +251,8 @@ export class ActiveDirectoryHelper {
         
         const result = await this.getBatchedValue<ActiveDirectoryApplication>(
             displayNames.map(getUrl),
-            p => { p.type = 'Application'; return p; }
+            p => { p.type = 'Application'; return p; },
+            ActiveDirectoryEntitySorterByDisplayName
         );
 
         // applicationNames may not be unique, check for duplicates
@@ -273,37 +275,40 @@ export class ActiveDirectoryHelper {
         return resultChecked;
     }
 
-    private async getUsersByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryUser>, failedRequests: Array<string>}> 
+    private getUsersByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryUser>, failedRequests: Array<string>}> 
     {
         return this.getBatched<ActiveDirectoryUser>(
             ids.map(p => `/users/${p}?${this.selectUser}`),
-            p => { p.type = 'User'; return p; }
+            p => { p.type = 'User'; return p; },
+            ActiveDirectoryUserSorterByUserPrincipalName
         );
     }
 
-    private async getUsersByUserPrincipalNameBatched(userPrincipalNames: string[]): Promise<{items: Array<ActiveDirectoryUser>, failedRequests: Array<string>}> 
-    {
+    private getUsersByUserPrincipalNameBatched(userPrincipalNames: string[]): Promise<{ items: Array<ActiveDirectoryUser>, failedRequests: Array<string> }> {
         return this.getBatchedValue<ActiveDirectoryUser>(
             userPrincipalNames.map(p => `/users?$filter=userPrincipalName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectUser}`),
-            p => { p.type = 'User'; return p; }
+            p => { p.type = 'User'; return p; },
+            ActiveDirectoryUserSorterByUserPrincipalName
         );
     }
 
-    private async getGroupsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
+    private getGroupsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
         return this.getBatchedValue<ActiveDirectoryGroup>(
             displayNames.map(p => `/groups?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectGroup}`),
-            p => { p.type = 'Group'; return p; }
+            p => { p.type = 'Group'; return p; },
+            ActiveDirectoryEntitySorterByDisplayName
         );
     }
 
-    private async getGroupsByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
+    private getGroupsByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
         return this.getBatched<ActiveDirectoryGroup>(
             ids.map(p => `/groups/${p}?${this.selectGroup}`),
-            p => { p.type = 'Group'; return p; }
+            p => { p.type = 'Group'; return p; },
+            ActiveDirectoryEntitySorterByDisplayName
         );
     }
 
-    private async getBatched<T>(urls: string[], mapper: (b: T) => T): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+    private async getBatched<T>(urls: string[], mapper: (b: T) => T, sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
 
         const requestsAll = this.getBatchGetRequests(urls);
 
@@ -340,11 +345,14 @@ export class ActiveDirectoryHelper {
                 collectionFailed.push(...requests.map(p => `${this.microsoftGraphV1Endpoint}${p.url}`));
             }
         }
-        
+
+        collectionOk.sort(sorter);
+        collectionFailed.sort();
+
         return { items: collectionOk, failedRequests: collectionFailed };
     }
 
-    private async getBatchedValue<T>(urls: string[], mapper: (b: T) => T): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+    private async getBatchedValue<T>(urls: string[], mapper: (b: T) => T, sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
 
         const requestsAll = this.getBatchGetRequests(urls);
 
@@ -384,7 +392,10 @@ export class ActiveDirectoryHelper {
                 collectionFailed.push(...requests.map(p => `${this.microsoftGraphV1Endpoint}${p.url}`));
             }
         }
-        
+
+        collectionOk.sort(sorter);
+        collectionFailed.sort();
+
         return { items: collectionOk, failedRequests: collectionFailed };
     }
 

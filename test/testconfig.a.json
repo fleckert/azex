@@ -23,5 +23,10 @@
         "zzz-test-app-3",
         "zzz-test-app-4",
         "zzz-test-app-5"
-    ]
+    ],
+    "azureResources":{
+        "resourceGroup":{
+            "name": "zzz-test-rbac-000"
+        }
+    }
 }

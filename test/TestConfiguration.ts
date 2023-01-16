@@ -3,4 +3,9 @@ export interface TestConfiguration {
     userNames            : Array<string>;
     groupNames           : Array<string>;
     servicePrincipalNames: Array<string>;
+    azureResources: {
+        resourceGroup: {
+            name: string
+        }
+    }
 }
