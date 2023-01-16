@@ -1,8 +1,10 @@
-import { DefaultAzureCredential } from "@azure/identity";
-import { ActiveDirectoryHelper } from "../src/ActiveDirectoryHelper";
+import { ActiveDirectoryHelper       } from "../src/ActiveDirectoryHelper";
+import { TestTokenCredentialProvider } from "./TestTokenCredentialProvider";
 
 export class TestActiveDirectoryHelper {
     static get(): ActiveDirectoryHelper {
-        return new ActiveDirectoryHelper(new DefaultAzureCredential());
+        const credential = TestTokenCredentialProvider.get();
+
+        return new ActiveDirectoryHelper(credential);
     }
 }

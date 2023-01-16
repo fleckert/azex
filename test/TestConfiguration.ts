@@ -7,5 +7,6 @@ export interface TestConfiguration {
         resourceGroup: {
             name: string
         }
-    }
+    },
+    subscription: string | undefined
 }

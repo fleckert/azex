@@ -7,10 +7,10 @@ import { RoleAssignmentHelper          } from "../RoleAssignmentHelper";
 import { TokenCredential               } from "@azure/identity";
 
 export class rbac_apply {
-    static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
+    static handle(credential: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
         const startDate = new Date();
 
-        readFile(path)
+        return readFile(path)
         .then(p => JSON.parse(p.toString()) as RbacDefinition[])
         .then(async rbacDefinitions => {
 

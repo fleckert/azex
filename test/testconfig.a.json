@@ -1,5 +1,5 @@
 {
-    "domain": "<fill-in>.onmicrosoft.com",
+    "domain": "floeckertlive.onmicrosoft.com",
     "userNames": [
         "zzz-test-user-0",
         "zzz-test-user-1",
@@ -28,5 +28,6 @@
         "resourceGroup":{
             "name": "zzz-test-rbac-000"
         }
-    }
+    },
+    "subscription": ""
 }

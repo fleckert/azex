@@ -4,10 +4,10 @@ import { RbacDefinition, RbacDefinitionHelper } from "../models/RbacDefinition";
 import { readFile, writeFile                  } from "fs/promises";
 
 export class rbac_extend {
-    static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) {
+    static handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) : Promise<void> {
         const startDate = new Date();
 
-        readFile(pathIn)
+        return readFile(pathIn)
         .then(p => JSON.parse(p.toString()) as RbacDefinition[])
         .then(p => {
             return new AzureRoleAssignmentsExtender().extend(credential, subscriptionId, p);

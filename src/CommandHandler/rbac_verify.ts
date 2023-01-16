@@ -8,10 +8,10 @@ import { TokenCredential                } from "@azure/identity";
 import { AzureRoleAssignmentHelper      } from "../models/AzureRoleAssignment";
 
 export class rbac_verify {
-    static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) {
+    static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) : Promise<void> {
         const startDate = new Date();
 
-        readFile(pathIn)
+        return readFile(pathIn)
         .then(p => JSON.parse(p.toString()) as RbacDefinition[])
         .then(p => {
             return new AzureRoleAssignmentsVerifier().verify(credential, subscriptionId, p);
