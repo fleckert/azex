@@ -17,17 +17,18 @@ This is a hobby project
 
 |[Authentication](/docs/authentication/readme.md)| |
 |-|-|
-|Authenticate via the Azure CLI|[link](/docs/authentication/readme.md#authenticate-via-the-azure-cli)|
-|Authenticate via Azure PowerShell|[link](/docs/authentication/readme.md#authenticate-via-azure-powershell)|
+|Authenticate via the Azure CLI|[how to...](/docs/authentication/readme.md#authenticate-via-the-azure-cli)|
+|Authenticate via Azure PowerShell|[how to...](/docs/authentication/readme.md#authenticate-via-azure-powershell)|
 |Authenticate with Environment variables|[Service principal with secret](/docs/authentication/readme.md#service-principal-with-secret)<br/>[Service principal with certificate](/docs/authentication/readme.md#service-principal-with-certificate)<br/>[Username and password](/docs/authentication/readme.md#username-and-password)|
-|Authenticate with DeviceLogin|[link](/docs/authentication/readme.md#authenticate-with-devicelogin)|
+|Authenticate with DeviceLogin|[how to...](/docs/authentication/readme.md#authenticate-with-devicelogin)|
 
 <br/>
 
 |[Configuration](/docs/configuration/index.md)| |
 |-|-|
-|[subscription](/docs/configuration/subscription.md)| how the subscription id is resolved |
-|[tenantId](/docs/configuration/tenantId.md)| how the tenant id is resolved |
+|[subscription](/docs/configuration/subscription.md)| how the Azure subscription id is resolved |
+|[tenantId](/docs/configuration/tenantId.md)| how the Azure Active Directory tenant id is resolved |
+|[Environment Variables](/docs/configuration/environment-variables.md)| what environment variables are used |
 
 <br/>
 
