@@ -4,40 +4,32 @@ import { RbacDefinition, RbacDefinitionHelper } from "../models/RbacDefinition";
 import { readFile, writeFile                  } from "fs/promises";
 
 export class rbac_extend {
-    static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) {
+    static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string): Promise<void> {
         const startDate = new Date();
 
-        readFile(pathIn)
-        .then(p => JSON.parse(p.toString()) as RbacDefinition[])
-        .then(p => {
-            return new AzureRoleAssignmentsExtender().extend(credential, subscriptionId, p);
-        })
-        .then(p => {
-            p.items.sort(RbacDefinitionHelper.sort);
-            return p;
-        })
-        .then(async p => {
-            await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(p.items, null, 2));
-            return p;
-        })
-        .then(p => {
-            const endDate = new Date();
+        try {
+            const content = await readFile(pathIn);
+            const rbacDefinitions = JSON.parse(content.toString()) as RbacDefinition[];
+            const rbacDefinitionsExtended = await new AzureRoleAssignmentsExtender().extend(credential, subscriptionId, rbacDefinitions);
+            rbacDefinitionsExtended.items.sort(RbacDefinitionHelper.sort);
 
-            const durationInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
+            await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(rbacDefinitionsExtended.items, null, 2));
 
             console.log({
-                parameters:{
+                parameters: {
                     subscriptionId,
                     pathIn,
                     pathOut
                 },
-                durationInSeconds,
+                durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
                 files: [
                     `${pathOut}-${subscriptionId}.ext.json`
                 ],
-                failedRequests: p.failedRequests,
+                failedRequests: rbacDefinitionsExtended.failedRequests,
             });
-        })
-        .catch(p => console.error(p));
+        } catch (e: any) {
+            console.error(e);
+            throw e;
+        }
     }
 }

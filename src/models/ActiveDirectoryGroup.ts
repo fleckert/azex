@@ -1,5 +1,5 @@
-import { ActiveDirectoryPrincipal } from "./ActiveDirectoryPrincipal";
+import { ActiveDirectoryEntity } from "./ActiveDirectoryEntity";
 
 
-export interface ActiveDirectoryGroup extends ActiveDirectoryPrincipal {
+export interface ActiveDirectoryGroup extends ActiveDirectoryEntity {
 }

@@ -1,6 +1,6 @@
+import { ActiveDirectoryEntity           } from "./models/ActiveDirectoryEntity";
 import { ActiveDirectoryGroup            } from "./models/ActiveDirectoryGroup";
 import { ActiveDirectoryHelper           } from "./ActiveDirectoryHelper";
-import { ActiveDirectoryPrincipal        } from "./models/ActiveDirectoryPrincipal";
 import { ActiveDirectoryServicePrincipal } from "./models/ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser             } from "./models/ActiveDirectoryUser";
 import { AzureResourceId                 } from "./AzureResourceId";
@@ -116,7 +116,7 @@ export class AzureRoleAssignmentsResolver {
             if (principalType    === undefined) { console.warn(`principalType[${   principalType   }] === undefined`); continue; }
 
             const roleDefinition = roleDefinitions.filter(p => p.id === roleDefinitionId)[0];
-            const principal : ActiveDirectoryPrincipal | undefined
+            const principal : ActiveDirectoryEntity | undefined
                             = users            .find(p => p.id === principalId)
                            ?? groups           .find(p => p.id === principalId)
                            ?? servicePrincipals.find(p => p.id === principalId);

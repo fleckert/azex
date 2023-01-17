@@ -1,0 +1,33 @@
+{
+    "domain": "<fill-in>.onmicrosoft.com",
+    "userNames": [
+        "zzz-test-user-0",
+        "zzz-test-user-1",
+        "zzz-test-user-2",
+        "zzz-test-user-3",
+        "zzz-test-user-4",
+        "zzz-test-user-5"
+    ],
+    "groupNames": [
+        "zzz-test-group-0",
+        "zzz-test-group-1",
+        "zzz-test-group-2",
+        "zzz-test-group-3",
+        "zzz-test-group-4",
+        "zzz-test-group-5"
+    ],
+    "servicePrincipalNames": [
+        "zzz-test-app-0",
+        "zzz-test-app-1",
+        "zzz-test-app-2",
+        "zzz-test-app-3",
+        "zzz-test-app-4",
+        "zzz-test-app-5"
+    ],
+    "azureResources":{
+        "resourceGroup":{
+            "name": "zzz-test-rbac-000"
+        }
+    },
+    "subscription": ""
+}

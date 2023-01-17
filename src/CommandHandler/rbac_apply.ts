@@ -7,17 +7,16 @@ import { RoleAssignmentHelper          } from "../RoleAssignmentHelper";
 import { TokenCredential               } from "@azure/identity";
 
 export class rbac_apply {
-    static async handle(credential: TokenCredential, subscriptionId: string, path: string) {
+    static async handle(credential: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
         const startDate = new Date();
 
-        readFile(path)
-        .then(p => JSON.parse(p.toString()) as RbacDefinition[])
-        .then(async rbacDefinitions => {
-
+        try {
+            const content = await readFile(path);
+            const rbacDefinitions = JSON.parse(content.toString()) as RbacDefinition[];
             const roleAssignments = await new AzureRoleAssignmentsVerifier().verify(credential, subscriptionId, rbacDefinitions);
             const roleAssignmentHelper = new RoleAssignmentHelper(credential, subscriptionId);
-            
-            const newRoleAssignments = new Array<RoleAssignment>();
+
+            const newRoleAssignments       = new Array<RoleAssignment>();
             const newRoleAssignmentsFailed = new Array<RbacDefinition>();
             const roleAssignmentsMissingRbac = roleAssignments.items.filter(p => p.roleAssignmentStatus === 'missing-rbac');
             for (const item of roleAssignmentsMissingRbac) {
@@ -50,7 +49,7 @@ export class rbac_apply {
                 }
             }
 
-            const deletedRoleAssignments = new Array<RoleAssignment>();
+            const deletedRoleAssignments       = new Array<RoleAssignment>();
             const deletedRoleAssignmentsFailed = new Array<RbacDefinition>();
             const roleAssignmentsUnexpectedRbac = roleAssignments.items.filter(p => p.roleAssignmentStatus === 'unexpected-rbac');
             for (const item of roleAssignmentsUnexpectedRbac) {
@@ -75,31 +74,26 @@ export class rbac_apply {
                 }
             }
 
-            return {newRoleAssignments, newRoleAssignmentsFailed, deletedRoleAssignments, deletedRoleAssignmentsFailed};
-        })
-        .then(p => {
-            const endDate = new Date();
-
-            const durationInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
-
             console.log(
                 JSON.stringify(
                     {
-                        parameters:{
+                        parameters: {
                             subscriptionId,
                             path
                         },
-                        durationInSeconds,
-                        newRoleAssignmentsFailed    : p.newRoleAssignmentsFailed,
-                        newRoleAssignments          : p.newRoleAssignments,
-                        deletedRoleAssignments      : p.deletedRoleAssignments,
-                        deletedRoleAssignmentsFailed: p.deletedRoleAssignmentsFailed
-                    }, 
-                    null, 
+                        durationInSeconds : (new Date().getTime() - startDate.getTime()) / 1000,
+                        newRoleAssignments,
+                        newRoleAssignmentsFailed,
+                        deletedRoleAssignments,
+                        deletedRoleAssignmentsFailed
+                    },
+                    null,
                     2
                 )
             );
-        })
-        .catch(p => console.error(p));
+        } catch (e:any) {
+            console.error(e); 
+            throw e;
+        }
     }
 }

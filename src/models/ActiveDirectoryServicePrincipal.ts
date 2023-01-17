@@ -1,7 +1,7 @@
-import { ActiveDirectoryPrincipal } from "./ActiveDirectoryPrincipal";
+import { ActiveDirectoryEntity } from "./ActiveDirectoryEntity";
 
 
-export interface ActiveDirectoryServicePrincipal extends ActiveDirectoryPrincipal {
+export interface ActiveDirectoryServicePrincipal extends ActiveDirectoryEntity {
     appId: string;
     servicePrincipalType: string;
 }
