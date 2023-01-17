@@ -1,6 +1,13 @@
+## Motivation
+
+This is a hobby project
+- to gain experience with the [Azure SDK for JavaScript](https://github.com/Azure/azure-sdk-for-js) and the [Node](https://nodejs.org) ecosystem and 
+- to provide command line functionality with Azure related helpers (az with extensions)
+
+
 ## Authentication
 
-see [Authentication](/docs/authentication.md)
+see [Authentication](/docs/authentication/readme.md)
 
 
 
@@ -23,3 +30,6 @@ see [Configuration](/docs/configuration/index.md)
 |[rbac verify](/docs/commands/rbac/verify.md)|`azex rbac verify --path path-to-rbac-definitions.json [--subscription ...] [--out ...]`|
 |[rbac apply ](/docs/commands/rbac/apply.md )|`azex rbac apply --path path-to-rbac-definitions.json [--subscription ...]`|
 
+## Testing
+
+see [Testing](/docs//testing/readme.md)
