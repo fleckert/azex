@@ -1,10 +1,3 @@
-## Motivation
-
-This is a hobby project
-- to gain experience with the [Azure SDK for JavaScript](https://github.com/Azure/azure-sdk-for-js) and the [Node](https://nodejs.org) ecosystem and 
-- to provide command line functionality with Azure related helpers (az with extensions)
-
-<br/>
 
 | [Commands](/docs/commands/readme.md) | |
 |-|-|
@@ -17,10 +10,10 @@ This is a hobby project
 
 |[Authentication](/docs/authentication/readme.md)| |
 |-|-|
-|Authenticate via the Azure CLI|[how to...](/docs/authentication/readme.md#authenticate-via-the-azure-cli)|
-|Authenticate via Azure PowerShell|[how to...](/docs/authentication/readme.md#authenticate-via-azure-powershell)|
-|Authenticate with Environment variables|[Service principal with secret](/docs/authentication/readme.md#service-principal-with-secret)<br/>[Service principal with certificate](/docs/authentication/readme.md#service-principal-with-certificate)<br/>[Username and password](/docs/authentication/readme.md#username-and-password)|
-|Authenticate with DeviceLogin|[how to...](/docs/authentication/readme.md#authenticate-with-devicelogin)|
+|Azure CLI|[how to...](/docs/authentication/readme.md#authenticate-via-the-azure-cli)|
+|Azure PowerShell|[how to...](/docs/authentication/readme.md#authenticate-via-azure-powershell)|
+|Environment variables|[Service principal with secret](/docs/authentication/readme.md#service-principal-with-secret)<br/>[Service principal with certificate](/docs/authentication/readme.md#service-principal-with-certificate)<br/>[Username and password](/docs/authentication/readme.md#username-and-password)|
+| DeviceLogin|[how to...](/docs/authentication/readme.md#authenticate-with-devicelogin)|
 
 <br/>
 
@@ -36,3 +29,15 @@ This is a hobby project
 |-|-|
 |[Installation](/docs//installation/readme.md)| `npm install && npm run build && npm install -g`|
 |[Testing](/docs//testing/readme.md)| `npm run test` |
+
+<br/>
+
+|Motivation ||
+|-|-|
+| this is a hobby project                                                                        | #1 motivation, play around, it might be useful, it might not be ... it is fun to hack on this project  |
+| gain experience with the [Azure SDK for JavaScript](https://github.com/Azure/azure-sdk-for-js) | I am experienced in [.Net](https://dotnet.microsoft.com/), [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/), [Azure PowerShell](https://learn.microsoft.com/en-us/powershell/azure/get-started-azureps), [ARM](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/), [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview?tabs=bicep), [Terraform](https://learn.microsoft.com/en-us/azure/developer/terraform/overview), ...|
+| provide command line functionality with Azure related helpers                                  | these helpers are opinionated... product owner, sponsor, development, testing, ... all (we/myself and I) share the same opinion |
+
+
+happy hacking,
+Florian
