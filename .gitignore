@@ -2,3 +2,6 @@ node_modules
 build
 temp
 
+test/CommandHandler/rbac/out/**.json
+test/CommandHandler/rbac/out/**.html
+test/CommandHandler/rbac/out/**.md

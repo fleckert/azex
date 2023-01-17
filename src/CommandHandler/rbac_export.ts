@@ -7,55 +7,28 @@ import { AzureRoleAssignmentsToHtml     } from "../Converters/AzureRoleAssignmen
 import { AzureRoleAssignmentHelper      } from "../models/AzureRoleAssignment";
 
 export class rbac_export {
-    static handle(credential: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
+    static async handle(credential: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
         const startDate = new Date();
 
-        return new AzureRoleAssignmentsResolver()
-        .resolve(credential, subscriptionId)
-        .then(p => {
-            p.roleAssignments.sort(AzureRoleAssignmentHelper.sort);
-            return p;
-        })
-        .then(async p => {
-            await writeFile(`${path}-${subscriptionId}.full.json`, JSON.stringify(p, null, 2));
-            return p;
-        })
-        .then(async p => {
-            const collection = new AzureRoleAssignmentsConverter().mapMinimal(p.roleAssignments);
-            await writeFile(`${path}-${subscriptionId}.min.json`, JSON.stringify(collection, null, 2));
-            return p;
-        })
-        .then(async p => {
-            const collection = new AzureRoleAssignmentsConverter().mapExtendend(p.roleAssignments);
-            await writeFile(`${path}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
-            return p;
-        })
-        .then(async p => {
-            const collection = new AzureRoleAssignmentsConverter().mapMinimalNoIds(p.roleAssignments);
-            await writeFile(`${path}-${subscriptionId}.names.json`, JSON.stringify(collection, null, 2));
-            return p;
-        })
-        .then(async p => {
-            const content = new AzureRoleAssignmentsToMarkdown().convert(p.roleAssignments);
-            await writeFile(`${path}-${subscriptionId}.md`, content)
-            return p;
-        })
-        .then(async p => {
-            const content = new AzureRoleAssignmentsToHtml().convert(p.roleAssignments);
-            await writeFile(`${path}-${subscriptionId}.html`, content)
-            return p;
-        })
-        .then(p => {
-            const endDate = new Date();
+        try {
+            const result = await new AzureRoleAssignmentsResolver().resolve(credential, subscriptionId);
+            result.roleAssignments.sort(AzureRoleAssignmentHelper.sort);
 
-            const durationInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
+            await Promise.all([
+                writeFile(`${path}-${subscriptionId}.full.json` , JSON.stringify(result                                                                     , null, 2)),
+                writeFile(`${path}-${subscriptionId}.min.json`  , JSON.stringify(new AzureRoleAssignmentsConverter().mapMinimal     (result.roleAssignments), null, 2)),
+                writeFile(`${path}-${subscriptionId}.ext.json`  , JSON.stringify(new AzureRoleAssignmentsConverter().mapExtendend   (result.roleAssignments), null, 2)),
+                writeFile(`${path}-${subscriptionId}.names.json`, JSON.stringify(new AzureRoleAssignmentsConverter().mapMinimalNoIds(result.roleAssignments), null, 2)),
+                writeFile(`${path}-${subscriptionId}.md`        , new AzureRoleAssignmentsToMarkdown().convert(result.roleAssignments)),
+                writeFile(`${path}-${subscriptionId}.html`      , new AzureRoleAssignmentsToHtml    ().convert(result.roleAssignments)),
+            ]);
 
             console.log({
-                parameters:{
+                parameters: {
                     subscriptionId,
                     path
                 },
-                durationInSeconds,
+                durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
                 files: [
                     `${path}-${subscriptionId}.full.json`,
                     `${path}-${subscriptionId}.min.json`,
@@ -64,9 +37,11 @@ export class rbac_export {
                     `${path}-${subscriptionId}.md`,
                     `${path}-${subscriptionId}.html`,
                 ],
-                failedRequests: p.failedRequests,
+                failedRequests: result.failedRequests,
             });
-        })
-        .catch(p => { console.error(p); throw p; });
+        } catch (e:any) {
+            console.error(e);
+            throw e;
+        }
     }
 }

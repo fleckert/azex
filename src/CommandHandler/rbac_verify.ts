@@ -11,52 +11,27 @@ export class rbac_verify {
     static async handle(credential: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string) : Promise<void> {
         const startDate = new Date();
 
-        return readFile(pathIn)
-        .then(p => JSON.parse(p.toString()) as RbacDefinition[])
-        .then(p => {
-            return new AzureRoleAssignmentsVerifier().verify(credential, subscriptionId, p);
-        }
-        )
-        .then(p => {
-            p.items.sort(AzureRoleAssignmentHelper.sort);
-            return p;
-        })
-        .then(async p => {
-            await writeFile(`${pathOut}-${subscriptionId}.full.json`, JSON.stringify(p.items, null, 2));
-            return p;
-        })
-        .then(async p => {
-            const collection = new AzureRoleAssignmentsConverter().mapMinimalEx(p.items);
-            await writeFile(`${pathOut}-${subscriptionId}.min.json`, JSON.stringify(collection, null, 2));
-            return p;
-        })
-        .then(async p => {
-            const collection = new AzureRoleAssignmentsConverter().mapExtendendEx(p.items);
-            await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(collection, null, 2));
-            return p;
-        })
-        .then(async p => {
-            const content = new AzureRoleAssignmentsToMarkdown().convertEx(p.items);
-            await writeFile(`${pathOut}-${subscriptionId}.md`, content);
-            return p;
-        })
-        .then(async p => {
-            const content = new AzureRoleAssignmentsToHtml().convertEx(p.items);
-            await writeFile(`${pathOut}-${subscriptionId}.html`, content);
-            return p;
-        })
-        .then(p => {
-            const endDate = new Date();
-
-            const durationInSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
+        try {
+            const content = await readFile(pathIn);
+            const rbacDefinitions = JSON.parse(content.toString()) as RbacDefinition[];
+            const rbacDefinitionsVerified = await new AzureRoleAssignmentsVerifier().verify(credential, subscriptionId, rbacDefinitions);
+            rbacDefinitionsVerified.items.sort(AzureRoleAssignmentHelper.sort);
+        
+            await Promise.all([
+                writeFile(`${pathOut}-${subscriptionId}.full.json`, JSON.stringify(rbacDefinitionsVerified.items, null, 2)),
+                writeFile(`${pathOut}-${subscriptionId}.min.json` , JSON.stringify(new AzureRoleAssignmentsConverter().mapMinimalEx  (rbacDefinitionsVerified.items), null, 2)),
+                writeFile(`${pathOut}-${subscriptionId}.ext.json` , JSON.stringify(new AzureRoleAssignmentsConverter().mapExtendendEx(rbacDefinitionsVerified.items), null, 2)),
+                writeFile(`${pathOut}-${subscriptionId}.md`       , new AzureRoleAssignmentsToMarkdown().convertEx(rbacDefinitionsVerified.items)),
+                writeFile(`${pathOut}-${subscriptionId}.html`     , new AzureRoleAssignmentsToHtml    ().convertEx(rbacDefinitionsVerified.items))
+            ]);
 
             console.log({
-                parameters:{
+                parameters: {
                     subscriptionId,
                     pathIn,
                     pathOut
                 },
-                durationInSeconds,
+                durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
                 files: [
                     `${pathOut}-${subscriptionId}.full.json`,
                     `${pathOut}-${subscriptionId}.min.json`,
@@ -64,9 +39,11 @@ export class rbac_verify {
                     `${pathOut}-${subscriptionId}.md`,
                     `${pathOut}-${subscriptionId}.html`,
                 ],
-                failedRequests: p.failedRequests,
+                failedRequests: rbacDefinitionsVerified.failedRequests,
             });
-        })
-        .catch(p => { console.error(p); throw p; });
+        } catch (e: any) {
+            console.error(e);
+            throw e;
+        }
     }
 }
