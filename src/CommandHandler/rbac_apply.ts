@@ -74,23 +74,17 @@ export class rbac_apply {
                 }
             }
 
-            console.log(
-                JSON.stringify(
-                    {
-                        parameters: {
-                            subscriptionId,
-                            path
-                        },
-                        durationInSeconds : (new Date().getTime() - startDate.getTime()) / 1000,
-                        newRoleAssignments,
-                        newRoleAssignmentsFailed,
-                        deletedRoleAssignments,
-                        deletedRoleAssignmentsFailed
-                    },
-                    null,
-                    2
-                )
-            );
+            console.log({
+                parameters: {
+                    subscriptionId,
+                    path
+                },
+                durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
+                newRoleAssignments,
+                newRoleAssignmentsFailed,
+                deletedRoleAssignments,
+                deletedRoleAssignmentsFailed
+            });
         } catch (e:any) {
             console.error(e); 
             throw e;
