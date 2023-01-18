@@ -20,7 +20,9 @@
         "zzz-test-group-2",
         "zzz-test-group-3",
         "zzz-test-group-4",
-        "zzz-test-group-5"
+        "zzz-test-group-5",
+        "zzz-test-group--#--chars",
+        "zzz-test-group--'--chars"
     ],
     "servicePrincipalNames": [
         "zzz-test-app-0",
@@ -28,7 +30,9 @@
         "zzz-test-app-2",
         "zzz-test-app-3",
         "zzz-test-app-4",
-        "zzz-test-app-5"
+        "zzz-test-app-5",
+        "zzz-test-app--#--chars",
+        "zzz-test-app--'--chars"
     ],
     "azureResources":{
         "resourceGroup":{

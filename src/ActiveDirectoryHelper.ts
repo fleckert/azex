@@ -1,21 +1,21 @@
 import axios from "axios";
-import { ActiveDirectoryApplication                                        } from "./models/ActiveDirectoryApplication";
-import { ActiveDirectoryGroup                                              } from "./models/ActiveDirectoryGroup";
-import { ActiveDirectoryEntity, ActiveDirectoryEntitySorterByDisplayName   } from "./models/ActiveDirectoryEntity";
-import { ActiveDirectoryServicePrincipal                                   } from "./models/ActiveDirectoryServicePrincipal";
-import { ActiveDirectoryUser, ActiveDirectoryUserSorterByUserPrincipalName } from "./models/ActiveDirectoryUser";
-import { TokenCredential                                                   } from "@azure/identity";
+import { ActiveDirectoryApplication                                                                 } from "./models/ActiveDirectoryApplication";
+import { ActiveDirectoryGroup                                                                       } from "./models/ActiveDirectoryGroup";
+import { ActiveDirectoryEntity, ActiveDirectoryEntitySorterByDisplayName, ActiveDirectoryEntityType } from "./models/ActiveDirectoryEntity";
+import { ActiveDirectoryServicePrincipal                                                            } from "./models/ActiveDirectoryServicePrincipal";
+import { ActiveDirectoryUser, ActiveDirectoryUserSorterByUserPrincipalName                          } from "./models/ActiveDirectoryUser";
+import { TokenCredential                                                                            } from "@azure/identity";
 
-interface BatchResponse<T> {
+interface BatchResponse<ActiveDirectoryEntity> {
     id    : number
     status: number
-    body  : { '@odata.context': string} & T
+    body  : { '@odata.context': string} & ActiveDirectoryEntity
 }
 
-interface BatchResponseValue<T> {
+interface BatchResponseValue<ActiveDirectoryEntity> {
     id    : number
     status: number
-    body  : { '@odata.context': string } & { value: Array<T> }
+    body  : { '@odata.context': string } & { value: Array<ActiveDirectoryEntity> }
 }
 
 interface BatchGetRequest {
@@ -102,9 +102,9 @@ export class ActiveDirectoryHelper {
             const response = await axios.post(`${this.microsoftGraphV1Endpoint}/users`, data, { headers });
 
             if (response.status === 201) {
-                const user = response.data as ActiveDirectoryUser;
-                user.type = 'User';
-                return { item: user, error: undefined };
+                const item = response.data as ActiveDirectoryUser;
+                item.type = this.mapODataContext(response.data["@odata.context"]);
+                return { item, error: undefined };
             }
             else {
                 return { item: undefined, error: new Error("Failed to create user.") };
@@ -135,9 +135,9 @@ export class ActiveDirectoryHelper {
             const response = await axios.post(`${this.microsoftGraphV1Endpoint}/groups`, data, { headers });
 
             if (response.status === 201) {
-                const group = response.data as ActiveDirectoryGroup;
-                group.type = 'Group';
-                return { item: group, error: undefined };
+                const item = response.data as ActiveDirectoryGroup;
+                item.type = this.mapODataContext(response.data["@odata.context"]);
+                return { item, error: undefined };
             }
             else {
                 return { item: undefined, error: new Error("Failed to create group.") };
@@ -161,9 +161,9 @@ export class ActiveDirectoryHelper {
             const response = await axios.post(`${this.microsoftGraphV1Endpoint}/applications`, data, { headers });
 
             if (response.status === 201) {
-                const application = response.data as ActiveDirectoryServicePrincipal;
-                application.type = 'Application';
-                return { item: application, error: undefined };
+                const item = response.data as ActiveDirectoryServicePrincipal;
+                item.type = this.mapODataContext(response.data["@odata.context"]);
+                return { item, error: undefined };
             }
             else {
                 return { item: undefined, error: new Error("Failed to create application.") };
@@ -187,9 +187,9 @@ export class ActiveDirectoryHelper {
             const response = await axios.post(`${this.microsoftGraphV1Endpoint}/servicePrincipals`, data, { headers });
 
             if (response.status === 201) {
-                const servicePrincipal = response.data as ActiveDirectoryServicePrincipal;
-                servicePrincipal.type = 'ServicePrincipal';
-                return { item: servicePrincipal, error: undefined };
+                const item = response.data as ActiveDirectoryServicePrincipal;
+                item.type = this.mapODataContext(response.data["@odata.context"]);
+                return { item, error: undefined };
             }
             else {
                 return { item: undefined, error: new Error("Failed to create group.") };
@@ -200,131 +200,58 @@ export class ActiveDirectoryHelper {
         }
     }
 
-    private getServicePrincipalsByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
-        return this.getBatched<ActiveDirectoryServicePrincipal>(
-            ids.map(p => `/serviceprincipals/${p}?${this.selectServicePrincipal}`),
-            p => { p.type = 'ServicePrincipal'; return p; },
-            ActiveDirectoryEntitySorterByDisplayName
-        );
-    }
-
-    private async getServicePrincipalsByDisplayNameBatched(displayNames: string[]): Promise<{items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string>}>{
-        const getUrl = (displayName : string) => `/serviceprincipals?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${displayName.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
-        
-        const result = await this.getBatchedValue<ActiveDirectoryServicePrincipal>(
-            displayNames.map(getUrl),
-            p => { p.type = 'ServicePrincipal'; return p; },
-            ActiveDirectoryEntitySorterByDisplayName
-        );
-
-        // servicePrincipalNames may not be unique, check for duplicates
-        const resultChecked = {items: new Array<ActiveDirectoryServicePrincipal>(), failedRequests: new Array<string>()};
-        resultChecked.failedRequests.push(...result.failedRequests);
-
-        const servicePrincipalDisplayNames = new Set(result.items.map(p => p.displayName));
-
-        for (const displayName of servicePrincipalDisplayNames) {
-            const itemsForDisplayName = result.items.filter(p => p.displayName === displayName);
-
-            if(itemsForDisplayName.length === 1){
-                resultChecked.items.push(itemsForDisplayName[0]);
-            }
-            else{
-                resultChecked.failedRequests.push(`${this.microsoftGraphV1Endpoint}${getUrl(displayName)} - displayName '${displayName}' is not unique`);
-            }
-        }
-
-        return resultChecked;
-    }
-
-    private getServicePrincipalsByAppIdBatched(appIds: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> {
-        const getUrl = (appId: string) => `/serviceprincipals?$filter=appId${this.urlBlank}eq${this.urlBlank}'${appId.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
-
-        return this.getBatchedValue<ActiveDirectoryServicePrincipal>(
-            appIds.map(getUrl),
-            p => { p.type = 'ServicePrincipal'; return p; },
-            ActiveDirectoryEntitySorterByDisplayName
-        );
-    }
-
-    private async getApplicationsByDisplayNameBatched(displayNames: string[]): Promise<{items: Array<ActiveDirectoryApplication>, failedRequests: Array<string>}>{
-        const getUrl = (displayName : string) => `/applications?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${displayName.replaceAll("#", this.urlHash)}'&${this.selectServicePrincipal}`
-        
-        const result = await this.getBatchedValue<ActiveDirectoryApplication>(
-            displayNames.map(getUrl),
-            p => { p.type = 'Application'; return p; },
-            ActiveDirectoryEntitySorterByDisplayName
-        );
-
-        // applicationNames may not be unique, check for duplicates
-        const resultChecked = {items: new Array<ActiveDirectoryApplication>(), failedRequests: new Array<string>()};
-        resultChecked.failedRequests.push(...result.failedRequests);
-
-        const applicationDisplayNames = new Set(result.items.map(p => p.displayName));
-
-        for (const displayName of applicationDisplayNames) {
-            const itemsForDisplayName = result.items.filter(p => p.displayName === displayName);
-
-            if(itemsForDisplayName.length === 1){
-                resultChecked.items.push(itemsForDisplayName[0]);
-            }
-            else{
-                resultChecked.failedRequests.push(`${this.microsoftGraphV1Endpoint}${getUrl(displayName)} - displayName '${displayName}' is not unique`);
-            }
-        }
-
-        return resultChecked;
-    }
-
-    private getUsersByIdBatched(ids: string[]): Promise<{items: Array<ActiveDirectoryUser>, failedRequests: Array<string>}> 
-    {
-        return this.getBatched<ActiveDirectoryUser>(
-            ids.map(p => `/users/${p}?${this.selectUser}`),
-            p => { p.type = 'User'; return p; },
-            ActiveDirectoryUserSorterByUserPrincipalName
-        );
-    }
-
-    private getUsersByUserPrincipalNameBatched(userPrincipalNames: string[]): Promise<{ items: Array<ActiveDirectoryUser>, failedRequests: Array<string> }> {
-        const getUrl = (userPrincipalNames: string) => {
-            const userPrincipaNameEscaped
-                = userPrincipalNames
-                  .replaceAll("#", this.urlHash)
-                  .replaceAll("'", "''");
-
-            return `/users?$filter=userPrincipalName${this.urlBlank}eq${this.urlBlank}'${userPrincipaNameEscaped}'&${this.selectUser}`;
-        };
-
-        return this.getBatchedValue<ActiveDirectoryUser>(
-            userPrincipalNames.map(getUrl),
-            p => { p.type = 'User'; return p; },
-            ActiveDirectoryUserSorterByUserPrincipalName
-        );
-    }
-
-    private getGroupsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
-        return this.getBatchedValue<ActiveDirectoryGroup>(
-            displayNames.map(p => `/groups?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectGroup}`),
-            p => { p.type = 'Group'; return p; },
-            ActiveDirectoryEntitySorterByDisplayName
-        );
+    private getServicePrincipalsByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> {
+        const getUrl = (id: string) => `/serviceprincipals/${id}?${this.selectServicePrincipal}`;
+        return this.getBatched<ActiveDirectoryServicePrincipal>(ids.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
     }
 
     private getGroupsByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
-        return this.getBatched<ActiveDirectoryGroup>(
-            ids.map(p => `/groups/${p}?${this.selectGroup}`),
-            p => { p.type = 'Group'; return p; },
-            ActiveDirectoryEntitySorterByDisplayName
-        );
+        const getUrl = (id: string) => `/groups/${id}?${this.selectGroup}`;
+        return this.getBatched<ActiveDirectoryGroup>(ids.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
     }
 
-    private async getBatched<T>(urls: string[], mapper: (b: T) => T, sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+    private getUsersByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryUser>, failedRequests: Array<string> }> {
+        const getUrl = (id: string) => `/users/${id}?${this.selectUser}`
+        return this.getBatched<ActiveDirectoryUser>(ids.map(getUrl), ActiveDirectoryUserSorterByUserPrincipalName);
+    }
+
+    private getUsersByUserPrincipalNameBatched(userPrincipalNames: string[]): Promise<{ items: Array<ActiveDirectoryUser>, failedRequests: Array<string> }> {
+        const getUrl = (userPrincipalName: string) => `/users?$filter=userPrincipalName${this.urlBlank}eq${this.urlBlank}'${this.escapeForODataFilter(userPrincipalName)}'&${this.selectUser}`;
+        return this.getBatchedValue<ActiveDirectoryUser>(userPrincipalNames.map(getUrl), ActiveDirectoryUserSorterByUserPrincipalName);
+    }
+
+    private async getServicePrincipalsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> {
+        const getUrl = (displayName: string) => `/serviceprincipals?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${this.escapeForODataFilter(displayName)}'&${this.selectServicePrincipal}`
+        const result = await this.getBatchedValue<ActiveDirectoryServicePrincipal>(displayNames.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
+        return this.checkForUniqueDisplayNames(result, displayName=> `ServicePrincipals - displayName '${displayName}' is not unique.` );
+    }
+
+    private getServicePrincipalsByAppIdBatched(appIds: string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> {
+        const getUrl = (appId: string) => `/serviceprincipals?$filter=appId${this.urlBlank}eq${this.urlBlank}'${appId}'&${this.selectServicePrincipal}`
+        return this.getBatchedValue<ActiveDirectoryServicePrincipal>(appIds.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
+    }
+
+    private async getApplicationsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryApplication>, failedRequests: Array<string> }> {
+        const getUrl = (displayName: string) => `/applications?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${this.escapeForODataFilter(displayName)}'&${this.selectServicePrincipal}`
+        const result = await this.getBatchedValue<ActiveDirectoryApplication>(displayNames.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
+        return this.checkForUniqueDisplayNames(result, displayName=> `Applications - displayName '${displayName}' is not unique.` );
+    }
+
+    private async getGroupsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
+        const getUrl = (displayName: string) => `/groups?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${this.escapeForODataFilter(displayName)}'&${this.selectGroup}`
+        const result = await this.getBatchedValue<ActiveDirectoryGroup>(displayNames.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
+        return this.checkForUniqueDisplayNames(result, displayName=> `Groups - displayName '${displayName}' is not unique.` );
+    }
+
+
+
+    private async getBatched<T extends ActiveDirectoryEntity>(urls: string[], sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
 
         const requestsAll = this.getBatchGetRequests(urls);
 
         const headers = await this.getHeaders();
 
-        const collectionOk     = new Array<T     >();
+        const collectionOk     = new Array<T>();
         const collectionFailed = new Array<string>();
 
         for (const requests of requestsAll) {
@@ -336,7 +263,7 @@ export class ActiveDirectoryHelper {
                 if (response.status === 200) {
                     const itemsInResponse = response.data.responses as BatchResponse<T>[];
 
-                    const itemsOk = itemsInResponse.filter(p => p.status === 200).map(p => mapper(p.body));
+                    const itemsOk = itemsInResponse.filter(p => p.status === 200).map(p => { p.body.type = this.mapODataContext(p.body["@odata.context"]); return p.body; });
 
                     collectionOk.push(...itemsOk);
 
@@ -362,13 +289,13 @@ export class ActiveDirectoryHelper {
         return { items: collectionOk, failedRequests: collectionFailed };
     }
 
-    private async getBatchedValue<T>(urls: string[], mapper: (b: T) => T, sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+    private async getBatchedValue<T extends ActiveDirectoryEntity>(urls: string[], sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
 
         const requestsAll = this.getBatchGetRequests(urls);
 
         const headers = await this.getHeaders();
 
-        const collectionOk     = new Array<T     >();
+        const collectionOk     = new Array<T>();
         const collectionFailed = new Array<string>();
 
         for (const requests of requestsAll) {
@@ -383,7 +310,8 @@ export class ActiveDirectoryHelper {
                     for(var items of itemsInResponse.filter(p => p.status === 200)){
                         // items.body.value is an Array<T>
                         for (const item of items.body.value) {
-                            collectionOk.push(mapper(item));
+                            item.type = this.mapODataContext(items.body["@odata.context"]);
+                            collectionOk.push(item);
                         }
                     }
 
@@ -445,5 +373,49 @@ export class ActiveDirectoryHelper {
         }
 
         return requestsAll;
+    }
+
+    private mapODataContext(odataContext: string): ActiveDirectoryEntityType {
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#applications(`     ) && odataContext.endsWith(')'        )) { return 'Application'     ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#applications(`     ) && odataContext.endsWith(')/$entity')) { return 'Application'     ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#applications`      ) && odataContext.endsWith('/$entity' )) { return 'Application'     ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#groups(`           ) && odataContext.endsWith(')'        )) { return 'Group'           ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#groups(`           ) && odataContext.endsWith(')/$entity')) { return 'Group'           ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#groups`            ) && odataContext.endsWith('/$entity' )) { return 'Group'           ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#servicePrincipals(`) && odataContext.endsWith(')'        )) { return 'ServicePrincipal'; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#servicePrincipals(`) && odataContext.endsWith(')/$entity')) { return 'ServicePrincipal'; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#servicePrincipals` ) && odataContext.endsWith('/$entity' )) { return 'ServicePrincipal'; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#users(`            ) && odataContext.endsWith(')'        )) { return 'User'            ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#users(`            ) && odataContext.endsWith(')/$entity')) { return 'User'            ; }
+        if (odataContext.startsWith(`${this.microsoftGraphV1Endpoint}/$metadata#users`             ) && odataContext.endsWith('/$entity' )) { return 'User'            ; }
+
+        throw new Error(`Failed to map '${odataContext}'.`);
+    }
+
+    private escapeForODataFilter(value: string): string {
+        return value.replaceAll("#", this.urlHash).replaceAll("'", "''");
+    }
+
+    private checkForUniqueDisplayNames<T extends ActiveDirectoryEntity>(
+        result: { items: Array<T>, failedRequests: Array<string> },
+        failedRequestMapper: (value: string) => string
+    ): { items: Array<T>, failedRequests: Array<string> } {
+        const resultChecked = { items: new Array<T>(), failedRequests: new Array<string>() };
+        resultChecked.failedRequests.push(...result.failedRequests);
+
+        const existingDisplayNames = new Set(result.items.map(p => p.displayName));
+
+        for (const displayName of existingDisplayNames) {
+            const itemsForDisplayName = result.items.filter(p => p.displayName.toLowerCase() === displayName.toLowerCase());
+
+            if (itemsForDisplayName.length === 1) {
+                resultChecked.items.push(itemsForDisplayName[0]);
+            }
+            else {
+                resultChecked.failedRequests.push(failedRequestMapper(displayName));
+            }
+        }
+
+        return resultChecked;
     }
 }

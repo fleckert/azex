@@ -63,6 +63,10 @@ export class TestSetup {
 
         const existingItems = await activeDirectoryHelper.getGroupsByDisplayName(displayNames);
 
+        if (existingItems.failedRequests.length > 0) {
+            return { existingItems: [], newItems:[], errors: existingItems.failedRequests.map(p => new Error(p)) };
+        }
+
         const errors = new Array<Error>();
         const newItems = new Array<ActiveDirectoryGroup>();
 
@@ -92,6 +96,10 @@ export class TestSetup {
 
         const existingItems = await activeDirectoryHelper.getApplicationsByDisplayName(displayNames);
 
+        if (existingItems.failedRequests.length > 0) {
+            return { existingItems: [], newItems:[], errors: existingItems.failedRequests.map(p => new Error(p)) };
+        }
+
         const errors = new Array<Error>();
         const newItems = new Array<ActiveDirectoryApplication>();
 
@@ -120,6 +128,11 @@ export class TestSetup {
         }> {
 
         const existingApps = await activeDirectoryHelper.getApplicationsByDisplayName(displayNames);
+
+        if (existingApps.failedRequests.length > 0) {
+            return { existingItems: [], newItems: [], errors: existingApps.failedRequests.map(p => new Error(p)) };
+        }
+
         const appIds = existingApps.items.map(p => p.appId);
 
         const existingItems = await activeDirectoryHelper.getServicePrincipalsByAppIds(appIds);
@@ -127,7 +140,7 @@ export class TestSetup {
         const errors = new Array<Error>();
         const newItems = new Array<ActiveDirectoryServicePrincipal>();
 
-        errors.push(...existingApps.failedRequests.map(p => { return new Error(p) }));
+        errors.push(...existingItems.failedRequests.map(p => { return new Error(p) }));
 
         for (const displayName of displayNames) {
             const application = existingApps.items.find(p => p.displayName.toLowerCase() === displayName.toLowerCase());
