@@ -43,7 +43,4 @@ test('ActiveDirectoryHelper-users', async () => {
     if (!TestHelper.checkForCorrespondingElements(usersByUserPrincipalName.items, usersByUserPrincipalNameToLowerCase.items, compareUsers)) {
         throw new Error(`usersByUserPrincipalName.items and usersByUserPrincipalNameToLowerCase.items do not match. ${JSON.stringify({ usersByUserPrincipalName: usersByUserPrincipalName.items, usersByUserPrincipalNameToLowerCase: usersByUserPrincipalNameToLowerCase.items }, null, 2)}`);
     }
-
 }, 100000);
-
-
