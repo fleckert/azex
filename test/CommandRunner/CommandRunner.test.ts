@@ -38,15 +38,23 @@ const testRunAndParseJson = async <TItem, TError>(
 test('CommandRunner-testRun az account show', async () => {
     await testRun(
         "az account show",
-        stdout => stdout !== undefined && stdout.length > 0,
+        stdout => stdout !== undefined && stdout.length !== 0,
         stderr => stderr === undefined || stderr.length === 0
+    );
+}, 100000);
+
+test('CommandRunner-testRun az account showInvalid', async () => {
+    await testRun(
+        "az account showInvalid",
+        stdout => stdout === undefined || stdout.length === 0,
+        stderr => stderr !== undefined && stderr.length !== 0
     );
 }, 100000);
 
 test('CommandRunner-testRun az account show --query tenantId --output tsv', async () => {
     await testRun(
         "az account show --query tenantId --output tsv",
-        stdout => stdout !== undefined && stdout.length > 0,
+        stdout => stdout !== undefined && stdout.length !== 0,
         stderr => stderr === undefined || stderr.length === 0
     );
 }, 100000);
@@ -55,7 +63,7 @@ test('CommandRunner-testRun az account show --query tenantId --output tsv', asyn
 test('CommandRunner-testRunAndParseJson az account show', async () => {
     await testRunAndParseJson<{ tenantId: string }, string>(
         "az account show",
-        item  => item  !== undefined && item.tenantId !== undefined && item.tenantId.length > 0,
+        item  => item  !== undefined && item.tenantId !== undefined && item.tenantId.length !== 0,
         error => error === undefined || error.length === 0
     );
 }, 100000);
@@ -64,7 +72,7 @@ test('CommandRunner-testRunAndParseJson az account showInvalid', async () => {
     await testRunAndParseJson<{ tenantId: string }, string>(
         "az account showInvalid",
         item  => item  === undefined,
-        error => error !== undefined && error.length > 0
+        error => error !== undefined && error.length !== 0
     );
 }, 100000);
 
