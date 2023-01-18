@@ -86,7 +86,8 @@ export class ActiveDirectoryHelper {
         }
     ): Promise<{ item: ActiveDirectoryUser | undefined; error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/graph/api/user-post-users
-        
+        // https://learn.microsoft.com/en-us/azure/active-directory/authentication/concept-sspr-policy#userprincipalname-policies-that-apply-to-all-user-accounts
+
         const headers = await this.getHeaders();
 
         const data = JSON.stringify({
@@ -285,8 +286,17 @@ export class ActiveDirectoryHelper {
     }
 
     private getUsersByUserPrincipalNameBatched(userPrincipalNames: string[]): Promise<{ items: Array<ActiveDirectoryUser>, failedRequests: Array<string> }> {
+        const getUrl = (userPrincipalNames: string) => {
+            const userPrincipaNameEscaped
+                = userPrincipalNames
+                  .replaceAll("#", this.urlHash)
+                  .replaceAll("'", "''");
+
+            return `/users?$filter=userPrincipalName${this.urlBlank}eq${this.urlBlank}'${userPrincipaNameEscaped}'&${this.selectUser}`;
+        };
+
         return this.getBatchedValue<ActiveDirectoryUser>(
-            userPrincipalNames.map(p => `/users?$filter=userPrincipalName${this.urlBlank}eq${this.urlBlank}'${p.replaceAll("#", this.urlHash)}'&${this.selectUser}`),
+            userPrincipalNames.map(getUrl),
             p => { p.type = 'User'; return p; },
             ActiveDirectoryUserSorterByUserPrincipalName
         );

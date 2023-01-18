@@ -6,7 +6,13 @@
         "zzz-test-user-2",
         "zzz-test-user-3",
         "zzz-test-user-4",
-        "zzz-test-user-5"
+        "zzz-test-user-5",
+        "zzz-test-user--.--chars",
+        "zzz-test-user--!--chars",
+        "zzz-test-user--#--chars",
+        "zzz-test-user--~--chars",
+        "zzz-test-user--^--chars",
+        "zzz-test-user--'--chars"
     ],
     "groupNames": [
         "zzz-test-group-0",
