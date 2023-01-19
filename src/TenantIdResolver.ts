@@ -1,7 +1,6 @@
-import { exec            } from "child_process";
-import { promisify       } from "util";
+import { CommandRunner   } from "./CommandRunner";
+import { Guid            } from "./Guid";
 import { TokenCredential } from "@azure/identity";
-import { validate        } from "uuid";
 import jwt_decode          from "jwt-decode";
 
 export class TenantIdResolver {
@@ -10,31 +9,31 @@ export class TenantIdResolver {
     async getTenantId(): Promise<string | undefined> {
         {
             const tenantId = process.env.AZURE_TENANT_ID;
-            if (this.isValidTenantId(tenantId)) {
+            if (Guid.isGuid(tenantId)) {
                 return tenantId;
             }
         }
         {
             const tenantId = await this.run('az account show --query tenantId --output tsv');
-            if (this.isValidTenantId(tenantId)) {
+            if (Guid.isGuid(tenantId)) {
                 return tenantId;
             }
         }
         {
             const tenantId = await this.run('pwsh -Command "Get-AzContext | Select-Object -Expand Subscription | Select-Object -Expand TenantId"');
-            if (this.isValidTenantId(tenantId)) {
+            if (Guid.isGuid(tenantId)) {
                 return tenantId;
             }
         }
         {
             const tenantId = await this.run('powershell -Command "Get-AzContext | Select-Object -Expand Subscription | Select-Object -Expand TenantId"');
-            if (this.isValidTenantId(tenantId)) {
+            if (Guid.isGuid(tenantId)) {
                 return tenantId;
             }
         }
         {
             const tenantId = await this.getTenantIdFromCredentials(this.credential);
-            if (this.isValidTenantId(tenantId)) {
+            if (Guid.isGuid(tenantId)) {
                 return tenantId;
             }
         }
@@ -54,21 +53,9 @@ export class TenantIdResolver {
         return decoded.tid;
     }
 
-    private isValidTenantId(tenantId: string | undefined) {
-        if (tenantId === undefined) { return false; }
-        if (tenantId === null     ) { return false; }
-        if (tenantId === ''       ) { return false; }
-
-        return validate(tenantId);
-    }
-
     private async run(command: string): Promise<string | undefined> {
-        try {
-            const { stdout, stderr } = await promisify(exec)(`${command}`);
+        const { stdout, stderr } = await CommandRunner.runAndMap(command, stdOut => stdOut?.trim(), stdErr => stdErr);
 
-            return stderr === '' ? stdout.replaceAll('\r', '').replaceAll('\n', '') : undefined;
-        } catch (e) {
-            return undefined;
-        }
+        return stderr === '' || stderr === undefined ? stdout : undefined;
     }
 }

@@ -78,16 +78,16 @@ export class AzureRoleAssignmentsResolver {
         }
 
         const resolvedRoleAssignments = this.resolveRoleAssignments(
-            roleAssignments, 
-            await roleDefinitions, 
-            usersResponses.items, 
-            groupsResponses.items, 
+            roleAssignments,
+            await roleDefinitions,
+            usersResponses.items,
+            groupsResponses.items,
             servicePrincipalsResponses.items,
             await managementGroups,
             subscriptionId,
             (await subscriptionClient.subscriptions.get(subscriptionId))?.displayName,
             tenantId
-        ); 
+        );
 
         return { roleAssignments: resolvedRoleAssignments, failedRequests };
     }
