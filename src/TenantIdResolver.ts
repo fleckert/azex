@@ -54,7 +54,7 @@ export class TenantIdResolver {
     }
 
     private async run(command: string): Promise<string | undefined> {
-        const { stdout, stderr } = await CommandRunner.runAndMap(command, stdOut => stdOut?.replaceAll('\r', '').replaceAll('\n', ''), stdErr => stdErr);
+        const { stdout, stderr } = await CommandRunner.runAndMap(command, stdOut => stdOut?.trim(), stdErr => stdErr);
 
         return stderr === '' || stderr === undefined ? stdout : undefined;
     }

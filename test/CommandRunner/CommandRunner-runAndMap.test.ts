@@ -24,7 +24,7 @@ const testRunAndMap = async (
 test('CommandRunner-runAndMap az account show --query tenantId --output tsv', async () => {
     await testRunAndMap(
         "az account show --query tenantId --output tsv",
-        stdout => stdout?.replaceAll('\r', '')?.replaceAll('\n', ''),
+        stdout => stdout?.trim(),
         stderr => stderr,
         Guid.isGuid,
         TestHelper.stringIsNullUndefinedOrEmpty,
