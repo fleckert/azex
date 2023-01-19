@@ -1,4 +1,5 @@
 import { CommandRunner } from "../../src/CommandRunner";
+import { validate      } from "uuid";
 
 const testRun = async (
     command: string,
@@ -15,6 +16,28 @@ const testRun = async (
     }
 
     console.log(JSON.stringify({ command, isValidStdout, isValidStderr, stdout, stderr }, null, 2));
+}
+
+const testRunAndMap = async (
+    command: string,
+    mapStdout       : (value: string | undefined) => string | undefined,
+    mapStderr       : (value: string | undefined) => string | undefined,
+    validationStdout: (value: string | undefined) => boolean,
+    validationStderr: (value: string | undefined) => boolean
+) => {
+    const { stdout, stderr } = await CommandRunner.run(command);
+
+    const stdoutMapped = mapStdout(stdout);
+    const stderrMapped = mapStderr(stderr);
+
+    const isValidStdout = validationStdout(stdoutMapped);
+    const isValidStderr = validationStderr(stderrMapped);
+
+    if (isValidStdout === false || isValidStderr === false) {
+        throw new Error(JSON.stringify({ command, stdout, stdoutMapped, isValidStdout, stderr, stderrMapped, isValidStderr }, null, 2));
+    }
+
+    console.log(JSON.stringify({ command, stdout, stdoutMapped, isValidStdout, stderr, stderrMapped, isValidStderr }, null, 2));
 }
 
 const testRunAndParseJson = async <TItem, TError>(
@@ -34,37 +57,37 @@ const testRunAndParseJson = async <TItem, TError>(
     console.log(JSON.stringify({ command, isValidItem, isValidError, item, error }, null, 2));
 }
 
+const stringIsNullUndefinedOrEmpty              = (value: string | undefined | null) => { return value === undefined || value === null || value.length === 0; }
+const stringIsNotNullAndNotUndefinedAndNotEmpty = (value: string | undefined | null) => { return value !== undefined && value !== null && value.length !== 0; }
 
 test('CommandRunner-testRun az account show', async () => {
-    await testRun(
-        "az account show",
-        stdout => stdout !== undefined && stdout.length !== 0,
-        stderr => stderr === undefined || stderr.length === 0
-    );
+    await testRun("az account show", stringIsNotNullAndNotUndefinedAndNotEmpty, stringIsNullUndefinedOrEmpty);
 }, 100000);
 
 test('CommandRunner-testRun az account showInvalid', async () => {
-    await testRun(
-        "az account showInvalid",
-        stdout => stdout === undefined || stdout.length === 0,
-        stderr => stderr !== undefined && stderr.length !== 0
-    );
+    await testRun("az account showInvalid", stringIsNullUndefinedOrEmpty, stringIsNotNullAndNotUndefinedAndNotEmpty);
 }, 100000);
 
 test('CommandRunner-testRun az account show --query tenantId --output tsv', async () => {
-    await testRun(
+    await testRun("az account show --query tenantId --output tsv", stringIsNotNullAndNotUndefinedAndNotEmpty, stringIsNullUndefinedOrEmpty);
+}, 100000);
+
+test('CommandRunner-testRunAndMap az account show --query tenantId --output tsv', async () => {
+    await testRunAndMap(
         "az account show --query tenantId --output tsv",
-        stdout => stdout !== undefined && stdout.length !== 0,
-        stderr => stderr === undefined || stderr.length === 0
+        stdout => stdout?.replaceAll('\r', '')?.replaceAll('\n', ''),
+        stderr => stderr,
+        stdout => stdout !== undefined && validate(stdout),
+        stringIsNullUndefinedOrEmpty,
     );
 }, 100000);
 
 
 test('CommandRunner-testRunAndParseJson az account show', async () => {
     await testRunAndParseJson<{ tenantId: string }, string>(
-        "az account show",
+        "az account show --output json",
         item  => item  !== undefined && item.tenantId !== undefined && item.tenantId.length !== 0,
-        error => error === undefined || error.length === 0
+        stringIsNullUndefinedOrEmpty
     );
 }, 100000);
 
@@ -72,7 +95,7 @@ test('CommandRunner-testRunAndParseJson az account showInvalid', async () => {
     await testRunAndParseJson<{ tenantId: string }, string>(
         "az account showInvalid",
         item  => item  === undefined,
-        error => error !== undefined && error.length !== 0
+        stringIsNotNullAndNotUndefinedAndNotEmpty
     );
 }, 100000);
 
