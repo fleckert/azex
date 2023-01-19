@@ -1,5 +1,5 @@
 import { CommandRunner } from "../../src/CommandRunner";
-import { validate      } from "uuid";
+import { Guid          } from "../../src/Guid";
 import { TestHelper    } from "../TestHelper";
 
 const testRunAndMap = async (
@@ -26,7 +26,7 @@ test('CommandRunner-runAndMap az account show --query tenantId --output tsv', as
         "az account show --query tenantId --output tsv",
         stdout => stdout?.replaceAll('\r', '')?.replaceAll('\n', ''),
         stderr => stderr,
-        stdout => stdout !== undefined && validate(stdout),
+        Guid.isGuid,
         TestHelper.stringIsNullUndefinedOrEmpty,
     );
 }, 100000);

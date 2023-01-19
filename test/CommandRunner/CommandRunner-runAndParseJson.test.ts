@@ -18,7 +18,7 @@ const testRunAndParseJson = async <TItem, TError>(
     console.log(JSON.stringify({ command, isValidItem, isValidError, item, error }, null, 2));
 }
 
-test('CommandRunner-runAndParseJson az account show', async () => {
+test('CommandRunner-runAndParseJson az account show --output json', async () => {
     await testRunAndParseJson<{ tenantId: string }, string>(
         "az account show --output json",
         item  => item  !== undefined && item.tenantId !== undefined && item.tenantId.length !== 0,
