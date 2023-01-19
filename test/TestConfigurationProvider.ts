@@ -1,8 +1,9 @@
-import { readFile } from "fs/promises";
+import { CommandRunner          } from "../src/CommandRunner";
+import { readFile               } from "fs/promises";
+import { SubscriptionIdResolver } from "../src/SubscriptionIdResolver";
+import { TestConfiguration      } from "./TestConfiguration";
+import { TestHelper             } from "./TestHelper";
 import path from "path";
-import { CommandRunner } from "../src/CommandRunner";
-import { TestConfiguration } from "./TestConfiguration";
-import { TestHelper } from "./TestHelper";
 
 export class TestConfigurationProvider {
     static async get(): Promise<TestConfiguration> {
@@ -11,15 +12,18 @@ export class TestConfigurationProvider {
         const configRaw = await readFile(pathToConfigFile);
         const config = JSON.parse(configRaw.toString()) as TestConfiguration;
 
-        if(TestHelper.stringIsNullUndefinedOrEmpty(config.domain)){
-            config.domain = await TestConfigurationProvider.getDomain();
-        }
+        config.domain       = await TestConfigurationProvider.getDomain        (config.domain      );
+        config.subscription = await TestConfigurationProvider.getSubscriptionId(config.subscription);
 
         return config;
     }
 
-    private static async getDomain(): Promise<string> {
+    private static async getDomain(domain: string|undefined): Promise<string> {
         const errorMessage = 'Failed to resolve the value for \'domain\'. Set the \'domain\' property in the test-configuration file or login the Azure CLI as a user.';
+
+        if (domain !== undefined && domain.trim().length > 0) {
+            return domain;
+        }
 
         const { item, error } = await CommandRunner.runAndParseJson<{ name: string, type: string }, string>('az account show --query user --output json');
 
@@ -32,9 +36,15 @@ export class TestConfigurationProvider {
         const indexofAt = item.name.lastIndexOf('@');
         if (indexofAt < 0) { throw new Error(errorMessage); }
 
-        const domain = item.name.substring(indexofAt + 1);
+        return item.name.substring(indexofAt + 1);
+    }
 
-        return domain;
+    private static async getSubscriptionId(subscription:string|undefined) : Promise<string> {
+        const subscriptionId = await new SubscriptionIdResolver().getSubscriptionId(subscription);
+        
+        if (subscriptionId === undefined) { throw new Error("subscriptionId === undefined"); }
+
+        return subscriptionId;
     }
 }
 

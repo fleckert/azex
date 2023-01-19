@@ -1,5 +1,6 @@
 export interface TestConfiguration {
     domain               : string;
+    subscription         : string;
     userNames            : Array<string>;
     groupNames           : Array<string>;
     servicePrincipalNames: Array<string>;
@@ -7,6 +8,5 @@ export interface TestConfiguration {
         resourceGroup: {
             name: string
         }
-    },
-    subscription: string | undefined
+    };
 }

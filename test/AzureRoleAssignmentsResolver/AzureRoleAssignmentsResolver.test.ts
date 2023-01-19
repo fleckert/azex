@@ -2,17 +2,16 @@ import { AzureRoleAssignmentsConverter        } from "../../src/AzureRoleAssignm
 import { AzureRoleAssignmentsResolver         } from "../../src/AzureRoleAssignmentsResolver";
 import { CommandRunner                        } from "../../src/CommandRunner";
 import { RbacDefinition, RbacDefinitionHelper } from "../../src/models/RbacDefinition";
+import { TestConfigurationProvider            } from "../TestConfigurationProvider";
 import { TestHelper                           } from "../TestHelper";
-import { TestSubscriptionIdProvider           } from "../TestSubscriptionIdProvider";
 import { TestTokenCredentialProvider          } from "../TestTokenCredentialProvider";
 
 test('AzureRoleAssignmentsResolver - match AzureCli', async () => {
     const credential = TestTokenCredentialProvider.get();
-
-    const subscriptionId = await TestSubscriptionIdProvider.getSubscriptionId();
+    const config = await TestConfigurationProvider.get();
 
     const promiseAzureCli  = CommandRunner.runAndParseJson<Array<RbacDefinition>, string>('az role assignment list --all');
-    const promiseAzureRoleAssignmentsResolver =   new AzureRoleAssignmentsResolver().resolve(credential, subscriptionId);
+    const promiseAzureRoleAssignmentsResolver =   new AzureRoleAssignmentsResolver().resolve(credential, config.subscription);
    
     const { item: rbacDefinitionsFromAzureCli, error: errorAzureCli } = await promiseAzureCli;
     const { roleAssignments, failedRequests                         } = await promiseAzureRoleAssignmentsResolver;
