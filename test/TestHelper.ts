@@ -14,4 +14,8 @@ export class TestHelper {
 
         return true;
     }
+
+    static stringIsNullUndefinedOrEmpty             (value: string | undefined | null) { return value === undefined || value === null || value.length === 0; }
+    static stringIsNotNullAndNotUndefinedAndNotEmpty(value: string | undefined | null) { return value !== undefined && value !== null && value.length !== 0; }
+
 }
