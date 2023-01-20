@@ -1,11 +1,9 @@
-import { TenantIdResolver            } from "../../src/TenantIdResolver";
-import { TestHelper                  } from "../TestHelper";
-import { TestTokenCredentialProvider } from "../TestTokenCredentialProvider";
-
- 
+import { TenantIdResolver          } from "../../src/TenantIdResolver";
+import { TestConfigurationProvider } from "../TestConfigurationProvider";
+import { TestHelper                } from "../TestHelper";
 
 test('TenantIdResolver', async () => {
-    const credential = TestTokenCredentialProvider.get();
+    const credential = TestConfigurationProvider.getCredential();
 
     const tenantId = await new TenantIdResolver(credential).getTenantId();
 
@@ -13,4 +11,3 @@ test('TenantIdResolver', async () => {
         throw new Error(`tenantId is null, undefined or empty.`)
     }
 }, 100000);
-

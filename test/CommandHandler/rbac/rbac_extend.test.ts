@@ -1,10 +1,9 @@
 import path from "path";
 import { rbac_extend                 } from "../../../src/CommandHandler/rbac_extend";
 import { TestConfigurationProvider   } from "../../TestConfigurationProvider";
-import { TestTokenCredentialProvider } from "../../TestTokenCredentialProvider";
 
 test('rbac_extend-min', async () => {
-    const credential = TestTokenCredentialProvider.get();
+    const credential = TestConfigurationProvider.getCredential();
     const config     = await TestConfigurationProvider.get();
     const pathIn     = path.join(__dirname, 'out', `azex-test-rbac-export-${config.subscription}.min.json`);
     const pathOut    = path.join(__dirname, 'out', `azex-test-rbac-extend-min`                            );
@@ -13,7 +12,7 @@ test('rbac_extend-min', async () => {
 }, 100000);
 
 test('rbac_extend-names', async () => {
-    const credential = TestTokenCredentialProvider.get();
+    const credential = TestConfigurationProvider.getCredential();
     const config     = await TestConfigurationProvider.get();
     const pathIn     = path.join(__dirname, 'out', `azex-test-rbac-export-${config.subscription}.names.json`);
     const pathOut    = path.join(__dirname, 'out', `azex-test-rbac-extend-names`                            );

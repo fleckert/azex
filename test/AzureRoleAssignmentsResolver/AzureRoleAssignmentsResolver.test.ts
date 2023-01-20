@@ -4,10 +4,9 @@ import { CommandRunner                        } from "../../src/CommandRunner";
 import { RbacDefinition, RbacDefinitionHelper } from "../../src/models/RbacDefinition";
 import { TestConfigurationProvider            } from "../TestConfigurationProvider";
 import { TestHelper                           } from "../TestHelper";
-import { TestTokenCredentialProvider          } from "../TestTokenCredentialProvider";
 
 test('AzureRoleAssignmentsResolver - match AzureCli', async () => {
-    const credential = TestTokenCredentialProvider.get();
+    const credential = TestConfigurationProvider.getCredential();
     const config = await TestConfigurationProvider.get();
 
     const promiseAzureCli  = CommandRunner.runAndParseJson<Array<RbacDefinition>, string>('az role assignment list --all');

@@ -1,8 +1,10 @@
-import { CommandRunner          } from "../src/CommandRunner";
-import { readFile               } from "fs/promises";
-import { SubscriptionIdResolver } from "../src/SubscriptionIdResolver";
-import { TestConfiguration      } from "./TestConfiguration";
-import { TestHelper             } from "./TestHelper";
+import { ActiveDirectoryHelper                   } from "../src/ActiveDirectoryHelper";
+import { CommandRunner                           } from "../src/CommandRunner";
+import { DefaultAzureCredential, TokenCredential } from "@azure/identity";
+import { readFile                                } from "fs/promises";
+import { SubscriptionIdResolver                  } from "../src/SubscriptionIdResolver";
+import { TestConfiguration                       } from "./TestConfiguration";
+import { TestHelper                              } from "./TestHelper";
 import path from "path";
 
 export class TestConfigurationProvider {
@@ -45,6 +47,16 @@ export class TestConfigurationProvider {
         if (subscriptionId === undefined) { throw new Error("subscriptionId === undefined"); }
 
         return subscriptionId;
+    }
+
+    static getCredential(): TokenCredential {
+        return new DefaultAzureCredential();;
+    }
+
+    static getActiveDirectoryHelper(): ActiveDirectoryHelper {
+        const credential = TestConfigurationProvider.getCredential();
+
+        return new ActiveDirectoryHelper(credential);
     }
 }
 
