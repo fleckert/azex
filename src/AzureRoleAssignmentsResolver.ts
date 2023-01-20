@@ -20,8 +20,7 @@ export class AzureRoleAssignmentsResolver {
         credentials   : TokenCredential, 
         subscriptionId: string
     ) : Promise<{roleAssignments : Array<AzureRoleAssignment>, failedRequests: Array<string>}> {
-        const subscriptionClient            = new SubscriptionClient(credentials);
-
+        const subscriptionClient     = new SubscriptionClient    (credentials                );
         const activeDirectoryHelper  = new ActiveDirectoryHelper (credentials                );
         const roleDefinitionHelper   = new RoleDefinitionHelper  (credentials, subscriptionId);
         const managementGroupsHelper = new ManagementGroupsHelper(credentials                );
