@@ -68,13 +68,13 @@ export class TestConfigurationProvider {
         return subscriptionId;
     }
 
-    static getCredential(): TokenCredential {
+    static getCredentials(): TokenCredential {
         return new DefaultAzureCredential();;
     }
 
     static getActiveDirectoryHelper(): ActiveDirectoryHelper {
-        const credential = TestConfigurationProvider.getCredential();
+        const credentials = TestConfigurationProvider.getCredentials();
 
-        return new ActiveDirectoryHelper(credential);
+        return new ActiveDirectoryHelper(credentials);
     }
 }

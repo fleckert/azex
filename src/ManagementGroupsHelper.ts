@@ -5,9 +5,9 @@ export class ManagementGroupsHelper {
     readonly managementGroupsAPI: ManagementGroupsAPI;
 
     constructor(
-        readonly credential: TokenCredential
+        readonly credentials: TokenCredential
     ) {
-        this.managementGroupsAPI = new ManagementGroupsAPI(credential);
+        this.managementGroupsAPI = new ManagementGroupsAPI(credentials);
     }
 
     async getByIds(groupIds: string[]): Promise<Array<ManagementGroupInfo>> {

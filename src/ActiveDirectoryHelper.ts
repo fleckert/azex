@@ -37,7 +37,7 @@ export class ActiveDirectoryHelper {
 
 
     constructor(
-        readonly credential: TokenCredential
+        readonly credentials: TokenCredential
     ) { }
 
     getUsersById                     (ids                : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched                     (ids                ); }
@@ -348,7 +348,7 @@ export class ActiveDirectoryHelper {
     }
 
     private async getToken(): Promise<string> {
-        const accessToken = await this.credential.getToken("https://graph.microsoft.com/.default");
+        const accessToken = await this.credentials.getToken("https://graph.microsoft.com/.default");
 
         if (accessToken === null) { throw "Failed to retrieve accessToken for https://graph.microsoft.com/.default."; }
 

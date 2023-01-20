@@ -38,7 +38,7 @@ test('setup-test-groups', async () => {
 test('setup-test-resourceGroups', async () => {
     const config = await TestConfigurationProvider.get();
 
-    const { existingItems, newItems, errors } = await TestSetup.ensureResourceGroupsExist(TestConfigurationProvider.getCredential(), config.subscription, config.azureResources.resourceGroupNames, config.azureResources.location)
+    const { existingItems, newItems, errors } = await TestSetup.ensureResourceGroupsExist(TestConfigurationProvider.getCredentials(), config.subscription, config.azureResources.resourceGroupNames, config.azureResources.location)
     if (errors.length > 0) { throw new Error(errors.map(p => p.message).join('/n')); }
     console.log({ newResourceGroups: newItems });
 }, 100000);
@@ -46,7 +46,7 @@ test('setup-test-resourceGroups', async () => {
 test('setup-test-resourceGroupsRbacs', async () => {
     const config = await TestConfigurationProvider.get();
 
-    const { items, errors } = await TestSetup.ensureResourceGroupsRbacsExist(TestConfigurationProvider.getCredential(), config.subscription, config.domain, config.azureResources.rbacAssignments);
+    const { items, errors } = await TestSetup.ensureResourceGroupsRbacsExist(TestConfigurationProvider.getCredentials(), config.subscription, config.domain, config.azureResources.rbacAssignments);
     if (errors.length > 0) { throw new Error(errors.map(p => p.message).join('/n')); }
     // console.log({ newResourceGroups: newItems });
 }, 100000);

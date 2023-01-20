@@ -3,9 +3,9 @@ import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('TenantIdResolver', async () => {
-    const credential = TestConfigurationProvider.getCredential();
+    const credentials = TestConfigurationProvider.getCredentials();
 
-    const tenantId = await new TenantIdResolver(credential).getTenantId();
+    const tenantId = await new TenantIdResolver(credentials).getTenantId();
 
     if (TestHelper.stringIsNullUndefinedOrEmpty(tenantId)) {
         throw new Error(`tenantId is null, undefined or empty.`)

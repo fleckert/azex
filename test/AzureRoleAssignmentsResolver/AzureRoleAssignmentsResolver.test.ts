@@ -6,11 +6,11 @@ import { TestConfigurationProvider            } from "../_Configuration/TestConf
 import { TestHelper                           } from "../_TestHelper/TestHelper";
 
 test('AzureRoleAssignmentsResolver - match AzureCli', async () => {
-    const credential = TestConfigurationProvider.getCredential();
+    const credentials = TestConfigurationProvider.getCredentials();
     const config = await TestConfigurationProvider.get();
 
     const promiseAzureCli  = CommandRunner.runAndParseJson<Array<RbacDefinition>, string>('az role assignment list --all');
-    const promiseAzureRoleAssignmentsResolver =   new AzureRoleAssignmentsResolver().resolve(credential, config.subscription);
+    const promiseAzureRoleAssignmentsResolver =   new AzureRoleAssignmentsResolver().resolve(credentials, config.subscription);
    
     const { item: rbacDefinitionsFromAzureCli, error: errorAzureCli } = await promiseAzureCli;
     const { roleAssignments, failedRequests                         } = await promiseAzureRoleAssignmentsResolver;

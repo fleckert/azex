@@ -8,10 +8,10 @@ export class RoleAssignmentHelper {
   readonly authorizationManagementClient: AuthorizationManagementClient;
 
   constructor(
-    readonly credential    : TokenCredential,
+    readonly credentials   : TokenCredential,
     readonly subscriptionId: string
   ) {
-    this.authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
+    this.authorizationManagementClient = new AuthorizationManagementClient(credentials, subscriptionId);
   }
 
   async setRoleAssignment(

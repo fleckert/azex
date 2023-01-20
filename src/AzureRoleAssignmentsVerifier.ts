@@ -11,23 +11,23 @@ import { TokenCredential              } from "@azure/identity";
 
 export class AzureRoleAssignmentsVerifier {
     async verify(
-        credential     : TokenCredential,
+        credentials    : TokenCredential,
         subscriptionId : string,
         rbacDefinitions: Array<RbacDefinition>
     ): Promise<{ items: Array<AzureRoleAssignmentEx>, failedRequests: Array<string> }> {
-        const resourceManagementClient      = new ResourceManagementClient     (credential, subscriptionId);
+        const resourceManagementClient = new ResourceManagementClient(credentials, subscriptionId);
 
         const scopes             = new Set(rbacDefinitions.map(p => p.scope           ));
         const principalIds       = new Set(rbacDefinitions.filter(p => p.principalId      !== undefined).map(p => p.principalId!     ));
         const roleDefinitionsIds = new Set(rbacDefinitions.filter(p => p.roleDefinitionId !== undefined).map(p => p.roleDefinitionId!));
 
         const resourcesPromise            = new ResourcesHelper       (resourceManagementClient).getByIds([...scopes]);
-        const roleDefinitionsByIdsPromise = new RoleDefinitionHelper  (credential, subscriptionId).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], []);
-        const principalsByIdsPromise      = new ActiveDirectoryHelper (credential).getPrincipalsbyId([...principalIds]);
-        const subscriptionPromise         = new SubscriptionClient    (credential).subscriptions.get(subscriptionId);
-        const tenantIdPromise             = new TenantIdResolver      (credential).getTenantId();
+        const roleDefinitionsByIdsPromise = new RoleDefinitionHelper  (credentials, subscriptionId).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], []);
+        const principalsByIdsPromise      = new ActiveDirectoryHelper (credentials).getPrincipalsbyId([...principalIds]);
+        const subscriptionPromise         = new SubscriptionClient    (credentials).subscriptions.get(subscriptionId);
+        const tenantIdPromise             = new TenantIdResolver      (credentials).getTenantId();
 
-        const roleAssignmentsEx = await new AzureRoleAssignmentsResolver().resolve(credential, subscriptionId);
+        const roleAssignmentsEx = await new AzureRoleAssignmentsResolver().resolve(credentials, subscriptionId);
 
         const resources            = await resourcesPromise;
         const principalsByIds      = await principalsByIdsPromise;
