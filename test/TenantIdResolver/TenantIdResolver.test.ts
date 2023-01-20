@@ -1,6 +1,6 @@
 import { TenantIdResolver          } from "../../src/TenantIdResolver";
-import { TestConfigurationProvider } from "../TestConfigurationProvider";
-import { TestHelper                } from "../TestHelper";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('TenantIdResolver', async () => {
     const credential = TestConfigurationProvider.getCredential();

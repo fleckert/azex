@@ -1,6 +1,6 @@
 import path from "path";
 import { rbac_extend                 } from "../../../src/CommandHandler/rbac_extend";
-import { TestConfigurationProvider   } from "../../TestConfigurationProvider";
+import { TestConfigurationProvider   } from "../../_Configuration/TestConfiguration";
 
 test('rbac_extend-min', async () => {
     const credential = TestConfigurationProvider.getCredential();

@@ -1,5 +1,5 @@
 import { SubscriptionIdResolver } from "../../src/SubscriptionIdResolver";
-import { TestHelper             } from "../TestHelper";
+import { TestHelper             } from "../_TestHelper/TestHelper";
 
 test('SubscriptionIdResolver \'undefined\'', async () => {
     const subscriptionId = await new SubscriptionIdResolver().getSubscriptionId(undefined);

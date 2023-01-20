@@ -1,6 +1,6 @@
 import path from "path";
 import { rbac_export                 } from "../../../src/CommandHandler/rbac_export";
-import { TestConfigurationProvider   } from "../../TestConfigurationProvider";
+import { TestConfigurationProvider   } from "../../_Configuration/TestConfiguration";
 
 test('rbac_export', async () => {
     const credential = TestConfigurationProvider.getCredential();

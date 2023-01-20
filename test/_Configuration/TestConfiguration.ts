@@ -1,11 +1,23 @@
-import { ActiveDirectoryHelper                   } from "../src/ActiveDirectoryHelper";
-import { CommandRunner                           } from "../src/CommandRunner";
+import { ActiveDirectoryHelper                   } from "../../src/ActiveDirectoryHelper";
+import { CommandRunner                           } from "../../src/CommandRunner";
 import { DefaultAzureCredential, TokenCredential } from "@azure/identity";
 import { readFile                                } from "fs/promises";
-import { SubscriptionIdResolver                  } from "../src/SubscriptionIdResolver";
-import { TestConfiguration                       } from "./TestConfiguration";
-import { TestHelper                              } from "./TestHelper";
+import { SubscriptionIdResolver                  } from "../../src/SubscriptionIdResolver";
+import { TestHelper                              } from "../_TestHelper/TestHelper";
 import path from "path";
+
+export interface TestConfiguration {
+    domain               : string;
+    subscription         : string;
+    userNames            : Array<string>;
+    groupNames           : Array<string>;
+    servicePrincipalNames: Array<string>;
+    azureResources: {
+        resourceGroup: {
+            name: string
+        }
+    };
+}
 
 export class TestConfigurationProvider {
     static async get(): Promise<TestConfiguration> {
@@ -59,4 +71,3 @@ export class TestConfigurationProvider {
         return new ActiveDirectoryHelper(credential);
     }
 }
-

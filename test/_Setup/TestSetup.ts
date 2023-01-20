@@ -1,8 +1,8 @@
-import { ActiveDirectoryApplication      } from "../src/models/ActiveDirectoryApplication";
-import { ActiveDirectoryGroup            } from "../src/models/ActiveDirectoryGroup";
-import { ActiveDirectoryHelper           } from "../src/ActiveDirectoryHelper";
-import { ActiveDirectoryServicePrincipal } from "../src/models/ActiveDirectoryServicePrincipal";
-import { ActiveDirectoryUser             } from "../src/models/ActiveDirectoryUser";
+import { ActiveDirectoryApplication      } from "../../src/models/ActiveDirectoryApplication";
+import { ActiveDirectoryGroup            } from "../../src/models/ActiveDirectoryGroup";
+import { ActiveDirectoryHelper           } from "../../src/ActiveDirectoryHelper";
+import { ActiveDirectoryServicePrincipal } from "../../src/models/ActiveDirectoryServicePrincipal";
+import { ActiveDirectoryUser             } from "../../src/models/ActiveDirectoryUser";
 import { v4 as uuidv4                    } from "uuid";
 
 export class TestSetup {

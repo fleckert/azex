@@ -2,8 +2,8 @@ import { AzureRoleAssignmentsConverter        } from "../../src/AzureRoleAssignm
 import { AzureRoleAssignmentsResolver         } from "../../src/AzureRoleAssignmentsResolver";
 import { CommandRunner                        } from "../../src/CommandRunner";
 import { RbacDefinition, RbacDefinitionHelper } from "../../src/models/RbacDefinition";
-import { TestConfigurationProvider            } from "../TestConfigurationProvider";
-import { TestHelper                           } from "../TestHelper";
+import { TestConfigurationProvider            } from "../_Configuration/TestConfiguration";
+import { TestHelper                           } from "../_TestHelper/TestHelper";
 
 test('AzureRoleAssignmentsResolver - match AzureCli', async () => {
     const credential = TestConfigurationProvider.getCredential();

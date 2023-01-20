@@ -1,6 +1,6 @@
 import { ActiveDirectoryUser       } from "../models/ActiveDirectoryUser";
-import { TestConfigurationProvider } from "../TestConfigurationProvider";
-import { TestHelper                } from "../TestHelper";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('ActiveDirectoryHelper-users', async () => {
     const checkFailedRequests = (collection: Array<string>, collectionName: string) : void=> {

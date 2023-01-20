@@ -1,4 +1,4 @@
-import { TestConfigurationProvider } from "./TestConfigurationProvider";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { TestSetup                 } from "./TestSetup";
 
 

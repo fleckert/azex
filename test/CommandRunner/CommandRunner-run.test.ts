@@ -1,5 +1,5 @@
 import { CommandRunner } from "../../src/CommandRunner";
-import { TestHelper    } from "../TestHelper";
+import { TestHelper    } from "../_TestHelper/TestHelper";
 
 const testRun = async (
     command: string,

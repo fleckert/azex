@@ -1,6 +1,6 @@
 import path from "path";
 import { rbac_verify                 } from "../../../src/CommandHandler/rbac_verify";
-import { TestConfigurationProvider   } from "../../TestConfigurationProvider";
+import { TestConfigurationProvider   } from "../../_Configuration/TestConfiguration";
 
 test('rbac_verify-min', async () => {
     const credential = TestConfigurationProvider.getCredential();
