@@ -13,9 +13,16 @@ export interface TestConfiguration {
     groupNames           : Array<string>;
     servicePrincipalNames: Array<string>;
     azureResources: {
-        resourceGroup: {
-            name: string
-        }
+        location: string,
+        resourceGroupNames: Array<string>,
+        rbacAssignments: [
+            {
+                resourceGroupName : string,
+                principalType     : string,
+                roleDefinitionName: string,
+                name              : string
+            }
+        ]
     };
 }
 

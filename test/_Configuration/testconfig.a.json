@@ -1,5 +1,6 @@
 {
     "domain": "",
+    "subscription": "",
     "userNames": [
         "zzz-test-user-0",
         "zzz-test-user-1",
@@ -34,10 +35,32 @@
         "zzz-test-app--#--chars",
         "zzz-test-app--'--chars"
     ],
-    "azureResources":{
-        "resourceGroup":{
-            "name": "zzz-test-rbac-000"
-        }
-    },
-    "subscription": ""
+    "azureResources": {
+        "location": "westeurope",
+        "resourceGroupNames": [
+            "zzz-test-rbac-000",
+            "zzz-test-rbac-001",
+            "zzz-test-rbac-002"
+        ],
+        "rbacAssignments": [
+            {
+                "resourceGroupName" : "zzz-test-rbac-000",
+                "roleDefinitionName": "Reader",
+                "principalType"     : "User",
+                "name"              : "zzz-test-user-0"
+            },
+            {
+                "resourceGroupName" : "zzz-test-rbac-000",
+                "roleDefinitionName": "Reader",
+                "principalType"     : "Group",
+                "name"              : "zzz-test-group-0"
+            },
+            {
+                "resourceGroupName" : "zzz-test-rbac-000",
+                "roleDefinitionName": "Reader",
+                "principalType"     : "ServicePrincipal",
+                "name"              : "zzz-test-app-0"
+            }
+        ]
+    }
 }

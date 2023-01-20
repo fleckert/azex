@@ -25,8 +25,13 @@ export class ManagementGroupsHelper {
             }
         }
         catch (e: any) {
-            if (e?.statusCode === 404) {
-                // [{"error":{"code":"NotFound","message":"Management Groups are not enabled in this tenant.","details":null}}]
+            if (e?.statusCode === 403) {
+                // 'The client '...' with object id '...' does not have authorization to perform action
+                // 'Microsoft.Management/managementGroups/read' over scope '/providers/Microsoft.Management' or the scope is invalid.
+                // If access was recently granted, please refresh your credentials.'
+            }
+            else if (e?.statusCode === 404) {
+                // 'Management Groups are not enabled in this tenant.'
             }
             else {
                 throw e;
