@@ -1,7 +1,6 @@
 import { ActiveDirectoryUser       } from "../models/ActiveDirectoryUser";
-import { TestActiveDirectoryHelper } from "../TestActiveDirectoryHelper";
-import { TestConfigurationProvider } from "../TestConfigurationProvider";
-import { TestHelper                } from "../TestHelper";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('ActiveDirectoryHelper-users', async () => {
     const checkFailedRequests = (collection: Array<string>, collectionName: string) : void=> {
@@ -20,10 +19,10 @@ test('ActiveDirectoryHelper-users', async () => {
 
     const userPrincipalNames = config.userNames.map(p => `${p}@${config.domain}`);
 
-    const usersByUserPrincipalName            = await TestActiveDirectoryHelper.get().getUsersByUserPrincipalName(userPrincipalNames                          );
-    const usersByUserPrincipalNameToUpperCase = await TestActiveDirectoryHelper.get().getUsersByUserPrincipalName(userPrincipalNames.map(p => p.toUpperCase()));
-    const usersByUserPrincipalNameToLowerCase = await TestActiveDirectoryHelper.get().getUsersByUserPrincipalName(userPrincipalNames.map(p => p.toLowerCase()));
-    const usersById                           = await TestActiveDirectoryHelper.get().getUsersById(usersByUserPrincipalName.items.map(p => p.id));
+    const usersByUserPrincipalName            = await TestConfigurationProvider.getActiveDirectoryHelper().getUsersByUserPrincipalName(userPrincipalNames                          );
+    const usersByUserPrincipalNameToUpperCase = await TestConfigurationProvider.getActiveDirectoryHelper().getUsersByUserPrincipalName(userPrincipalNames.map(p => p.toUpperCase()));
+    const usersByUserPrincipalNameToLowerCase = await TestConfigurationProvider.getActiveDirectoryHelper().getUsersByUserPrincipalName(userPrincipalNames.map(p => p.toLowerCase()));
+    const usersById                           = await TestConfigurationProvider.getActiveDirectoryHelper().getUsersById(usersByUserPrincipalName.items.map(p => p.id));
 
     checkFailedRequests(usersByUserPrincipalName           .failedRequests, "usersByUserPrincipalName.failedRequests"           );
     checkFailedRequests(usersByUserPrincipalNameToUpperCase.failedRequests, "usersByUserPrincipalNameToUpperCase.failedRequests");

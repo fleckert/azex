@@ -1,6 +1,6 @@
 import { CommandRunner } from "../../src/CommandRunner";
 import { Guid          } from "../../src/Guid";
-import { TestHelper    } from "../TestHelper";
+import { TestHelper    } from "../_TestHelper/TestHelper";
 
 const testRunAndMap = async (
     command: string,

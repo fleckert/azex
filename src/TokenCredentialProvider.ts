@@ -4,11 +4,11 @@ export class TokenCredentialProvider {
     static get(): TokenCredential {
         const clientId = 'a54fd18c-99ca-4cb3-9356-aa29f42897b4';
 
-        const credential = new TryCatchedChainedTokenCredential([
+        const credentials = new TryCatchedChainedTokenCredential([
             new DefaultAzureCredential(),
             new DeviceCodeCredential({ clientId })
         ]);
-        return credential;
+        return credentials;
     }
 }
 

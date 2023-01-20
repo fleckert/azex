@@ -1,8 +1,14 @@
-import { ActiveDirectoryApplication      } from "../src/models/ActiveDirectoryApplication";
-import { ActiveDirectoryGroup            } from "../src/models/ActiveDirectoryGroup";
-import { ActiveDirectoryHelper           } from "../src/ActiveDirectoryHelper";
-import { ActiveDirectoryServicePrincipal } from "../src/models/ActiveDirectoryServicePrincipal";
-import { ActiveDirectoryUser             } from "../src/models/ActiveDirectoryUser";
+import { ActiveDirectoryApplication      } from "../../src/models/ActiveDirectoryApplication";
+import { ActiveDirectoryGroup            } from "../../src/models/ActiveDirectoryGroup";
+import { ActiveDirectoryHelper           } from "../../src/ActiveDirectoryHelper";
+import { ActiveDirectoryServicePrincipal } from "../../src/models/ActiveDirectoryServicePrincipal";
+import { ActiveDirectoryUser             } from "../../src/models/ActiveDirectoryUser";
+import { AzureRoleAssignmentsExtender    } from "../../src/AzureRoleAssignmentsExtender";
+import { PrincipalType, RoleAssignment   } from "@azure/arm-authorization/esm/models";
+import { RbacDefinition                  } from "../../src/models/RbacDefinition";
+import { ResourceManagementClient        } from "@azure/arm-resources";
+import { RoleAssignmentHelper            } from "../../src/RoleAssignmentHelper";
+import { TokenCredential                 } from "@azure/identity";
 import { v4 as uuidv4                    } from "uuid";
 
 export class TestSetup {
@@ -157,5 +163,91 @@ export class TestSetup {
 
         // existingServicePrincipals.failedRequests is ignored as it is expected that non-existent servicePrincipals are listed here
         return { existingItems: existingItems.items, newItems: newItems, errors };
+    }
+
+    static async ensureResourceGroupsExist(credentials: TokenCredential, subscriptionId: string, resourceGroupNames: Array<string>, location: string):
+        Promise<{
+            existingItems: Array<string>,
+            newItems     : Array<string>,
+            errors       : Array<Error >
+        }> {
+
+        const newItems      = new Array<string>();
+        const existingItems = new Array<string>();
+        const errors        = new Array<Error >();
+
+        const resourceManagementClient = new ResourceManagementClient(credentials, subscriptionId);
+
+        for (const resourceGroupName of resourceGroupNames) {
+
+            const response = await resourceManagementClient.resourceGroups.checkExistence(resourceGroupName)
+
+            if (response.body === true) {
+                existingItems.push(resourceGroupName);
+            }
+            else {
+                try {
+                    await resourceManagementClient.resourceGroups.createOrUpdate(resourceGroupName, { location });
+                    newItems.push(resourceGroupName);
+                }
+                catch (e: any) {
+                    errors.push(e);
+                }
+            }
+        }
+
+        return { existingItems, newItems, errors };
+    }
+
+    static async ensureResourceGroupsRbacsExist(credentials: TokenCredential, subscriptionId: string, domain: string, rbacAssignments: Array<{ resourceGroupName: string, principalType: string, roleDefinitionName: string, name: string }>):
+        Promise<{
+            items: Array<RoleAssignment>,
+            errors: Array<Error>
+        }> {
+
+        const items  = new Array<RoleAssignment>();
+        const errors = new Array<Error         >();
+
+
+        const rbacDefinitions: RbacDefinition[] = rbacAssignments.map(p => {
+            return {
+                scope             : `/subscriptions/${subscriptionId}/resourceGroups/${p.resourceGroupName}`,
+                principalName     : p.principalType.toLowerCase() === 'user'? `${p.name}@${domain}`: p.name,
+                principalType     : p.principalType,
+                roleDefinitionName: p.roleDefinitionName,
+                roleDefinitionId  : undefined,
+                principalId       : undefined
+            };
+        });
+
+        const { items: rbacDefinitionsExt, failedRequests } = await new AzureRoleAssignmentsExtender().extend(credentials, subscriptionId, rbacDefinitions);
+
+        if (failedRequests.length > 0) { errors.push(...failedRequests.map(p => new Error(p))); }
+
+        const roleAssignmentHelper = new RoleAssignmentHelper(credentials, subscriptionId);
+
+        for (const item of rbacDefinitionsExt) {
+            if (item.principalId === undefined) {
+                errors.push(new Error(`principalId === undefined in ${JSON.stringify(item)}`));
+            }
+            else if (item.roleDefinitionId === undefined) {
+                errors.push(new Error(`roleDefinitionId === undefined in ${JSON.stringify(item)}`));
+            }
+            else if (item.principalType as PrincipalType === undefined) {
+                errors.push(new Error(`item.principalType as PrincipalType === undefined in ${JSON.stringify(item)}`));
+            }
+            else {
+                try {
+                    const response = await roleAssignmentHelper.setRoleAssignment(item.scope, item.principalId, item.roleDefinitionId, item.principalType as PrincipalType);
+
+                    items.push(response);
+                }
+                catch (e: any) {
+                    errors.push(e);
+                }
+            }
+        }
+
+        return { items, errors };
     }
 }

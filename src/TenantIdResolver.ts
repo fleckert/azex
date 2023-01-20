@@ -4,7 +4,7 @@ import { TokenCredential } from "@azure/identity";
 import jwt_decode          from "jwt-decode";
 
 export class TenantIdResolver {
-    constructor(readonly credential: TokenCredential) { }
+    constructor(readonly credentials: TokenCredential) { }
 
     async getTenantId(): Promise<string | undefined> {
         {
@@ -32,7 +32,7 @@ export class TenantIdResolver {
             }
         }
         {
-            const tenantId = await this.getTenantIdFromCredentials(this.credential);
+            const tenantId = await this.getTenantIdFromCredentials(this.credentials);
             if (Guid.isGuid(tenantId)) {
                 return tenantId;
             }
@@ -41,8 +41,8 @@ export class TenantIdResolver {
         return undefined;
     }
 
-    async getTenantIdFromCredentials(credential: TokenCredential): Promise<string | undefined> {
-        const token = await credential.getToken("https://management.azure.com/.default");
+    async getTenantIdFromCredentials(credentials: TokenCredential): Promise<string | undefined> {
+        const token = await credentials.getToken("https://management.azure.com/.default");
 
         if (token === null) {
             return undefined;

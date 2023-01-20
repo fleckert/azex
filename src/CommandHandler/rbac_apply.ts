@@ -7,14 +7,14 @@ import { RoleAssignmentHelper          } from "../RoleAssignmentHelper";
 import { TokenCredential               } from "@azure/identity";
 
 export class rbac_apply {
-    static async handle(credential: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
+    static async handle(credentials: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
         const startDate = new Date();
 
         try {
             const content = await readFile(path);
             const rbacDefinitions = JSON.parse(content.toString()) as RbacDefinition[];
-            const roleAssignments = await new AzureRoleAssignmentsVerifier().verify(credential, subscriptionId, rbacDefinitions);
-            const roleAssignmentHelper = new RoleAssignmentHelper(credential, subscriptionId);
+            const roleAssignments = await new AzureRoleAssignmentsVerifier().verify(credentials, subscriptionId, rbacDefinitions);
+            const roleAssignmentHelper = new RoleAssignmentHelper(credentials, subscriptionId);
 
             const newRoleAssignments       = new Array<RoleAssignment>();
             const newRoleAssignmentsFailed = new Array<RbacDefinition>();

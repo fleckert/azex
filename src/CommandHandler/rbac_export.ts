@@ -7,11 +7,11 @@ import { AzureRoleAssignmentsToHtml     } from "../Converters/AzureRoleAssignmen
 import { AzureRoleAssignmentHelper      } from "../models/AzureRoleAssignment";
 
 export class rbac_export {
-    static async handle(credential: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
+    static async handle(credentials: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
         const startDate = new Date();
 
         try {
-            const result = await new AzureRoleAssignmentsResolver().resolve(credential, subscriptionId);
+            const result = await new AzureRoleAssignmentsResolver().resolve(credentials, subscriptionId);
             result.roleAssignments.sort(AzureRoleAssignmentHelper.sort);
 
             await Promise.all([

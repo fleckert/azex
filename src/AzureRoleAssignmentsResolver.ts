@@ -17,16 +17,15 @@ import { TokenCredential                 } from "@azure/identity";
 
 export class AzureRoleAssignmentsResolver {
     async resolve(
-        credential    : TokenCredential, 
+        credentials   : TokenCredential, 
         subscriptionId: string
     ) : Promise<{roleAssignments : Array<AzureRoleAssignment>, failedRequests: Array<string>}> {
-        const subscriptionClient            = new SubscriptionClient(credential);
-
-        const activeDirectoryHelper  = new ActiveDirectoryHelper (credential                );
-        const roleDefinitionHelper   = new RoleDefinitionHelper  (credential, subscriptionId);
-        const managementGroupsHelper = new ManagementGroupsHelper(credential                );
-        const roleAssignmentHelper   = new RoleAssignmentHelper  (credential, subscriptionId);
-        const tenantIdResolver       = new TenantIdResolver      (credential                );
+        const subscriptionClient     = new SubscriptionClient    (credentials                );
+        const activeDirectoryHelper  = new ActiveDirectoryHelper (credentials                );
+        const roleDefinitionHelper   = new RoleDefinitionHelper  (credentials, subscriptionId);
+        const managementGroupsHelper = new ManagementGroupsHelper(credentials                );
+        const roleAssignmentHelper   = new RoleAssignmentHelper  (credentials, subscriptionId);
+        const tenantIdResolver       = new TenantIdResolver      (credentials                );
 
         const roleAssignments = await roleAssignmentHelper.listAllForScope(`/subscriptions/${subscriptionId}`);
     

@@ -7,10 +7,10 @@ export class RoleDefinitionHelper {
     readonly authorizationManagementClient : AuthorizationManagementClient;
 
     constructor(
-        readonly credential: TokenCredential,
+        readonly credentials: TokenCredential,
         readonly subscriptionId: string
     ) {
-        this.authorizationManagementClient = new AuthorizationManagementClient(credential, subscriptionId);
+        this.authorizationManagementClient = new AuthorizationManagementClient(credentials, subscriptionId);
     }
 
 

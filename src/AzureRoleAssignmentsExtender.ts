@@ -8,7 +8,7 @@ import { TokenCredential               } from "@azure/identity";
 
 export class AzureRoleAssignmentsExtender {
     async extend(
-        credential     : TokenCredential, 
+        credentials    : TokenCredential, 
         subscriptionId : string, 
         rbacDefinitions: Array<RbacDefinition>
     ): Promise<{ items: Array<RbacDefinition>, failedRequests: Array<string> }> {
@@ -21,11 +21,11 @@ export class AzureRoleAssignmentsExtender {
         const principalGroupNames            = new Set(rbacDefinitions.filter(p => p.principalName !== undefined && p.principalType?.toLowerCase() === 'group'           ).map(p => p.principalName!));
         const principalServicePrincipalNames = new Set(rbacDefinitions.filter(p => p.principalName !== undefined && p.principalType?.toLowerCase() === 'serviceprincipal').map(p => p.principalName!));
 
-        const roleDefinitionsPromise                   = new RoleDefinitionHelper (credential, subscriptionId).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], [...roleDefinitionsNames]);
-        const principalsByIdPromise                    = new ActiveDirectoryHelper(credential).getPrincipalsbyId([...principalIds]);        
-        const principalsByUserNamesPromise             = new ActiveDirectoryHelper(credential).getUsersByUserPrincipalName      ([...principalUserNames            ]);
-        const principalsByGroupNamesPromise            = new ActiveDirectoryHelper(credential).getGroupsByDisplayName           ([...principalGroupNames           ]);
-        const principalsByServicePrincipalNamesPromise = new ActiveDirectoryHelper(credential).getServicePrincipalsByDisplayName([...principalServicePrincipalNames]);
+        const roleDefinitionsPromise                   = new RoleDefinitionHelper (credentials, subscriptionId).listAllForScopeById(`/subscriptions/${subscriptionId}`, [...roleDefinitionsIds], [...roleDefinitionsNames]);
+        const principalsByIdPromise                    = new ActiveDirectoryHelper(credentials).getPrincipalsbyId([...principalIds]);        
+        const principalsByUserNamesPromise             = new ActiveDirectoryHelper(credentials).getUsersByUserPrincipalName      ([...principalUserNames            ]);
+        const principalsByGroupNamesPromise            = new ActiveDirectoryHelper(credentials).getGroupsByDisplayName           ([...principalGroupNames           ]);
+        const principalsByServicePrincipalNamesPromise = new ActiveDirectoryHelper(credentials).getServicePrincipalsByDisplayName([...principalServicePrincipalNames]);
 
         const roleDefinitions                   = await roleDefinitionsPromise;
         const principalsById                    = await principalsByIdPromise;
