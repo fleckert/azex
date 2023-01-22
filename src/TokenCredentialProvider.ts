@@ -5,9 +5,9 @@ export class TokenCredentialProvider {
         const clientId = 'a54fd18c-99ca-4cb3-9356-aa29f42897b4';
 
         const credentials = new TryCatchedChainedTokenCredential([
-            new EnvironmentCredential(),
-            new AzureCliCredential(),
-            new AzurePowerShellCredential(),
+            // new EnvironmentCredential(),
+            // new AzureCliCredential(),
+            // new AzurePowerShellCredential(),
             //new DefaultAzureCredential(),
             new DeviceCodeCredential({ clientId })
         ]);
