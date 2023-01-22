@@ -1,9 +1,10 @@
 import { ActiveDirectoryHelper                   } from "../../src/ActiveDirectoryHelper";
 import { CommandRunner                           } from "../../src/CommandRunner";
-import { DefaultAzureCredential, TokenCredential } from "@azure/identity";
+import { TokenCredential                         } from "@azure/identity";
 import { readFile                                } from "fs/promises";
 import { SubscriptionIdResolver                  } from "../../src/SubscriptionIdResolver";
 import { TestHelper                              } from "../_TestHelper/TestHelper";
+import { TokenCredentialProvider                 } from "../../src/TokenCredentialProvider";
 import path from "path";
 
 export interface TestConfiguration {
@@ -69,7 +70,8 @@ export class TestConfigurationProvider {
     }
 
     static getCredentials(): TokenCredential {
-        return new DefaultAzureCredential();;
+
+        return TokenCredentialProvider.get();
     }
 
     static getActiveDirectoryHelper(): ActiveDirectoryHelper {

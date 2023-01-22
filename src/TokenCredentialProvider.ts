@@ -1,11 +1,14 @@
-import { AccessToken, DefaultAzureCredential, DeviceCodeCredential, GetTokenOptions, TokenCredential } from "@azure/identity";
+import { AccessToken, AzureCliCredential, AzurePowerShellCredential, DefaultAzureCredential, DeviceCodeCredential, EnvironmentCredential, GetTokenOptions, TokenCredential } from "@azure/identity";
 
 export class TokenCredentialProvider {
     static get(): TokenCredential {
         const clientId = 'a54fd18c-99ca-4cb3-9356-aa29f42897b4';
 
         const credentials = new TryCatchedChainedTokenCredential([
-            new DefaultAzureCredential(),
+            new EnvironmentCredential(),
+            new AzureCliCredential(),
+            new AzurePowerShellCredential(),
+            //new DefaultAzureCredential(),
             new DeviceCodeCredential({ clientId })
         ]);
         return credentials;
