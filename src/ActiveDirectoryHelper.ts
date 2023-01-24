@@ -285,11 +285,11 @@ export class ActiveDirectoryHelper {
 
                     collectionOk.push(...itemsOk);
 
-                    const failedRequestIds = itemsInResponse.filter(p => p.status !== 200).map(p => p.id);
+                    const itemsInResponeFailed = itemsInResponse.filter(p => p.status !== 200);
 
-                    for (const failedRequestId of failedRequestIds) {
-                        const failedRequest = requests.find(p => `${p.id}` === `${failedRequestId}`);
-                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${failedRequest?.url}`);
+                    for (const item of itemsInResponeFailed) {
+                        const request = requests.find(p => `${p.id}` === `${item.id}`);
+                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${request?.url}`);
                     }
                 }
                 else {
@@ -337,11 +337,11 @@ export class ActiveDirectoryHelper {
                         }
                     }
 
-                    const failedRequestIds = itemsInResponse.filter(p => p.status !== 200).map(p => p.id);
+                    const itemsInResponseFailed = itemsInResponse.filter(p => p.status !== 200);
 
-                    for (const failedRequestId of failedRequestIds) {
-                        const failedRequest = requests.find(p => `${p.id}` === `${failedRequestId}`);
-                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${failedRequest?.url}`);
+                    for (const item of itemsInResponseFailed) {
+                        const request = requests.find(p => `${p.id}` === `${item.id}`);
+                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${request?.url}`);
                     }
                 }
                 else {
