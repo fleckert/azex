@@ -4,6 +4,7 @@ import { ActiveDirectoryGroup                                                   
 import { ActiveDirectoryEntity, ActiveDirectoryEntitySorterByDisplayName, ActiveDirectoryEntityType } from "./models/ActiveDirectoryEntity";
 import { ActiveDirectoryServicePrincipal                                                            } from "./models/ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser, ActiveDirectoryUserSorterByUserPrincipalName                          } from "./models/ActiveDirectoryUser";
+import { Guid                                                                                       } from "./Guid";
 import { TokenCredential                                                                            } from "@azure/identity";
 
 interface BatchResponse<ActiveDirectoryEntity> {
@@ -33,6 +34,7 @@ export class ActiveDirectoryHelper {
 
     private readonly selectUser             = '$select=id,displayName,userPrincipalName';
     private readonly selectServicePrincipal = '$select=id,displayName,appId,servicePrincipalType';
+    private readonly selectApplication      = '$select=id,displayName,appId';
     private readonly selectGroup            = '$select=id,displayName';
 
 
@@ -43,6 +45,7 @@ export class ActiveDirectoryHelper {
     getUsersById                     (ids                : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched                     (ids                ); }
     getGroupsById                    (ids                : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByIdBatched                    (ids                ); }
     getServicePrincipalsById         (ids                : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByIdBatched         (ids                ); }
+    getApplicationsById              (ids                : string[]): Promise<{ items: Array<ActiveDirectoryApplication     >, failedRequests: Array<string> }> { return this.getApplicationsByIdBatched              (ids                ); }
 
     getUsersByUserPrincipalName      (userPrincipalNames : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByUserPrincipalNameBatched      (userPrincipalNames ); }
     getGroupsByDisplayName           (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByDisplayNameBatched           (displayNames       ); }
@@ -51,18 +54,23 @@ export class ActiveDirectoryHelper {
     getApplicationsByDisplayName     (displayNames       : string[]): Promise<{ items: Array<ActiveDirectoryApplication     >, failedRequests: Array<string> }> { return this.getApplicationsByDisplayNameBatched     (displayNames       ); }
 
     async getPrincipalsbyId(ids: string[]): Promise<{ items: Array<ActiveDirectoryEntity>, failedRequests: Array<string>}> {
-        const usersPromise             = this.getUsersById            (ids);
-        const groupsPromise            = this.getGroupsById           (ids);
-        const serviceprincipalsPromise = this.getServicePrincipalsById(ids);
+        const idsValid = ids.filter(id => Guid.isGuid(id));
+
+        const usersPromise             = this.getUsersByIdBatched            (idsValid);
+        const groupsPromise            = this.getGroupsByIdBatched           (idsValid);
+        const serviceprincipalsPromise = this.getServicePrincipalsByIdBatched(idsValid);
+        const applicationsPromise      = this.getApplicationsByIdBatched     (idsValid);
 
         const users             = await usersPromise;
         const groups            = await groupsPromise;
         const serviceprincipals = await serviceprincipalsPromise;
+        const applications      = await applicationsPromise;
 
         const principals = new Array<ActiveDirectoryEntity>();
-        principals.push(...users.items            );
-        principals.push(...groups.items           );
+        principals.push(...users            .items);
+        principals.push(...groups           .items);
         principals.push(...serviceprincipals.items);
+        principals.push(...applications     .items);
 
         const failedRequests = new Array<string>();
 
@@ -205,6 +213,12 @@ export class ActiveDirectoryHelper {
         return this.getBatched<ActiveDirectoryServicePrincipal>(ids.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
     }
 
+    
+    private getApplicationsByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryApplication>, failedRequests: Array<string> }> {
+        const getUrl = (id: string) => `/applications/${id}?${this.selectApplication}`;
+        return this.getBatched<ActiveDirectoryApplication>(ids.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
+    }
+
     private getGroupsByIdBatched(ids: string[]): Promise<{ items: Array<ActiveDirectoryGroup>, failedRequests: Array<string> }> {
         const getUrl = (id: string) => `/groups/${id}?${this.selectGroup}`;
         return this.getBatched<ActiveDirectoryGroup>(ids.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
@@ -232,7 +246,7 @@ export class ActiveDirectoryHelper {
     }
 
     private async getApplicationsByDisplayNameBatched(displayNames: string[]): Promise<{ items: Array<ActiveDirectoryApplication>, failedRequests: Array<string> }> {
-        const getUrl = (displayName: string) => `/applications?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${this.escapeForODataFilter(displayName)}'&${this.selectServicePrincipal}`
+        const getUrl = (displayName: string) => `/applications?$filter=displayName${this.urlBlank}eq${this.urlBlank}'${this.escapeForODataFilter(displayName)}'&${this.selectApplication}`
         const result = await this.getBatchedValue<ActiveDirectoryApplication>(displayNames.map(getUrl), ActiveDirectoryEntitySorterByDisplayName);
         return this.checkForUniqueDisplayNames(result, displayName=> `Applications - displayName '${displayName}' is not unique.` );
     }
@@ -246,6 +260,10 @@ export class ActiveDirectoryHelper {
 
 
     private async getBatched<T extends ActiveDirectoryEntity>(urls: string[], sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+
+        if (urls.length === 0) { 
+            return { items: [], failedRequests: [] };
+        }
 
         const requestsAll = this.getBatchGetRequests(urls);
 
@@ -290,6 +308,10 @@ export class ActiveDirectoryHelper {
     }
 
     private async getBatchedValue<T extends ActiveDirectoryEntity>(urls: string[], sorter: (a: T, b: T) => number): Promise<{ items: Array<T>, failedRequests: Array<string> }> {
+
+        if (urls.length === 0) {
+            return { items: [], failedRequests: [] };
+        }
 
         const requestsAll = this.getBatchGetRequests(urls);
 

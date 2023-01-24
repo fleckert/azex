@@ -1,7 +1,7 @@
 import { AuthorizationManagementClient } from "@azure/arm-authorization";
+import { Guid                          } from "./Guid";
 import { PrincipalType, RoleAssignment } from "@azure/arm-authorization/esm/models";
 import { TokenCredential               } from "@azure/identity";
-import { v4 as uuidv4                  } from "uuid";
 
 export class RoleAssignmentHelper {
 
@@ -34,7 +34,7 @@ export class RoleAssignmentHelper {
     const reponse =
       await this.authorizationManagementClient.roleAssignments.create(
         scope,
-        uuidv4(),
+        Guid.newGuid(),
         {
           principalId,
           roleDefinitionId,

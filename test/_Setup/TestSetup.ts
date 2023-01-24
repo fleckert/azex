@@ -4,12 +4,12 @@ import { ActiveDirectoryHelper           } from "../../src/ActiveDirectoryHelper
 import { ActiveDirectoryServicePrincipal } from "../../src/models/ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser             } from "../../src/models/ActiveDirectoryUser";
 import { AzureRoleAssignmentsExtender    } from "../../src/AzureRoleAssignmentsExtender";
+import { Guid                            } from "../../src/Guid";
 import { PrincipalType, RoleAssignment   } from "@azure/arm-authorization/esm/models";
 import { RbacDefinition                  } from "../../src/models/RbacDefinition";
 import { ResourceManagementClient        } from "@azure/arm-resources";
 import { RoleAssignmentHelper            } from "../../src/RoleAssignmentHelper";
 import { TokenCredential                 } from "@azure/identity";
-import { v4 as uuidv4                    } from "uuid";
 
 export class TestSetup {
     static async ensureTestUsersExist(activeDirectoryHelper: ActiveDirectoryHelper, names: Array<string>, domain: string)
@@ -26,7 +26,7 @@ export class TestSetup {
                 userPrincipalName: `${name}@${domain}`,
                 passwordProfile: {
                     forceChangePasswordNextSignIn: true,
-                    password: `${uuidv4()}-${uuidv4().toUpperCase()}`
+                    password: `${Guid.newGuid()}-${Guid.newGuid().toUpperCase()}`
                 }
             };
         }
