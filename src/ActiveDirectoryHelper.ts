@@ -76,7 +76,25 @@ export class ActiveDirectoryHelper {
 
         for (const id of ids) {
             if (principals.find(p => p.id.toLocaleLowerCase() === id.toLowerCase()) === undefined) {
-                failedRequests.push(`${this.microsoftGraphV1Endpoint} - Failed to resolve id '${id}'.`);
+
+                const userFailedRequests             = users            .failedRequests.filter(p => p.indexOf(id));
+                const groupFailedRequests            = groups           .failedRequests.filter(p => p.indexOf(id));
+                const servicePrincipalFailedRequests = serviceprincipals.failedRequests.filter(p => p.indexOf(id));
+                const applicationFailedRequests      = applications     .failedRequests.filter(p => p.indexOf(id));
+
+                const failedRequestsAll = [
+                    ...userFailedRequests,
+                    ...groupFailedRequests,
+                    ...servicePrincipalFailedRequests,
+                    ...applicationFailedRequests
+                ];
+
+                failedRequestsAll.sort();
+
+                failedRequests.push(JSON.stringify({
+                    message: `${this.microsoftGraphV1Endpoint} - Failed to resolve id '${id}'.`,
+                    failedRequests: failedRequestsAll
+                }, null, 2));
             }
         }
 
@@ -289,7 +307,7 @@ export class ActiveDirectoryHelper {
 
                     for (const item of itemsInResponeFailed) {
                         const request = requests.find(p => `${p.id}` === `${item.id}`);
-                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${request?.url}`);
+                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${request?.url} [${(item as any).body?.error?.code}] [${(item as any).body?.error.message}]`);
                     }
                 }
                 else {
@@ -341,7 +359,7 @@ export class ActiveDirectoryHelper {
 
                     for (const item of itemsInResponseFailed) {
                         const request = requests.find(p => `${p.id}` === `${item.id}`);
-                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${request?.url}`);
+                        collectionFailed.push(`${this.microsoftGraphV1Endpoint}${request?.url} [${(item as any).body?.error?.code}] [${(item as any).body?.error?.message}]`);
                     }
                 }
                 else {

@@ -68,6 +68,8 @@ test('ActiveDirectoryHelper-getPrincipalsbyId-new-guid', async () => {
 
     const principalsById = await TestConfigurationProvider.getActiveDirectoryHelper().getPrincipalsbyId([id]);
 
+    console.log(principalsById);
+    
     if (principalsById.failedRequests.length === 0) {
         throw new Error(`principalsById.failedRequests.length === 0 for '${JSON.stringify({ id }, null, 2)}'.`);
     }
