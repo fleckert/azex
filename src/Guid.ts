@@ -1,4 +1,4 @@
-import { validate } from "uuid";
+import { validate, v4 } from "uuid";
 
 export  class Guid{
     static isGuid(value: string | undefined | null): boolean {
@@ -7,5 +7,9 @@ export  class Guid{
         if (value === ''       ) { return false; }
 
         return validate(value);
+    }
+
+    static newGuid(): string {
+        return v4();
     }
 }
