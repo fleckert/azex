@@ -20,10 +20,13 @@ export class AzureRoleAssignmentsConverter {
     mapMinimalNoIds(collection: Array<AzureRoleAssignment>): any {
         return collection.map(p => {
             return {
-                scope             : p.roleAssignment.scope,
-                roleDefinitionName: p.roleDefinition.roleName,
-                principalType     : p.roleAssignment.principalType,
-                principalName     : this.getPrincipalName(p.principal),
+                ...{
+                    scope             : p.roleAssignment.scope,
+                    roleDefinitionName: p.roleDefinition.roleName,
+                    principalType     : p.roleAssignment.principalType,
+                    principalName     : this.getPrincipalName(p.principal),
+                },
+                ...this.getPrincipalProperties(p.principal)
             }
         })
     }
@@ -50,7 +53,7 @@ export class AzureRoleAssignmentsConverter {
                     principalType     : p.roleAssignment.principalType,
                     principalName     : this.getPrincipalName(p.principal),
                     managementGroup   : AzureRoleAssignmentHelper.getManagementGroupName(p)
-                } ,
+                },
                 ...this.getPrincipalProperties(p.principal)
             }
         })
@@ -68,7 +71,7 @@ export class AzureRoleAssignmentsConverter {
                     principalName       : this.getPrincipalName(p.principal),
                     managementGroup     : AzureRoleAssignmentHelper.getManagementGroupName(p),
                     roleAssignmentStatus: p.roleAssignmentStatus
-                } ,
+                },
                 ...this.getPrincipalProperties(p.principal)
             }
         })
