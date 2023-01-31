@@ -35,6 +35,10 @@
         "zzz-test-app--#--chars",
         "zzz-test-app--'--chars"
     ],
+    "azureDevOps": {
+        "organization": "",
+        "projectName": ""
+    },
     "azureResources": {
         "location": "westeurope",
         "resourceGroupNames": [

@@ -161,4 +161,36 @@ export class Markdown {
             default: return undefined;
         }
     }
+
+    static getMermaidDiagramForHierarchy(items: Array<{ container: string | undefined, member: string | undefined }>):string{
+        /*
+            ::: mermaid
+            graph BT;            
+                member --> |member of| container
+            :::
+        */
+
+        const sanitize = (value: string | undefined) => value?.replaceAll('\\', "\\u005c")
+                                                              .replaceAll('/' , "\\u002f")
+                                                              .replaceAll('@' , '\\u0040')
+                                                              .replaceAll('[' , ' \\u005b')
+                                                              .replaceAll(']' , '\\u005d');
+
+
+        const id = (value: string | undefined) => Buffer.from(value ?? '').toString('hex');
+        const itemToMarkdown = (value: string | undefined) => `${id(value)}[${sanitize(value)}]`;
+
+        const lines = new Array<string>();
+
+        lines.push('::: mermaid');
+        lines.push('graph BT;');
+        lines.push('');
+        for (const item of items) {
+            lines.push(`${itemToMarkdown(item.member)} --> |member of| ${itemToMarkdown(item.container)}`);
+        }
+        lines.push(':::');
+
+
+        return lines.join('\n');
+    }
 }

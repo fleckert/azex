@@ -12,6 +12,10 @@ export interface TestConfiguration {
     userNames            : Array<string>;
     groupNames           : Array<string>;
     servicePrincipalNames: Array<string>;
+    azureDevOps: {
+        organization: string,
+        projectName : string
+    },
     azureResources: {
         location: string,
         resourceGroupNames: Array<string>,
