@@ -161,4 +161,36 @@ export class Html {
             default: return undefined;
         }
     }
+
+    static getMermaidDiagramForHierarchy(title: string, items: Array<{ container: string | undefined, member: string | undefined }>):string{
+        const id = (value: string | undefined) => Buffer.from(value ?? '').toString('hex');
+        const itemToMarkdown = (value: string | undefined) => `${id(value)}["${value}"]`;
+
+        const lines = new Array<string>();
+
+        lines.push('<!DOCTYPE html>');
+        lines.push('<html lang="en">');
+        lines.push('<head>');
+        lines.push('    <meta charset="UTF-8">');
+        lines.push('    <meta http-equiv="X-UA-Compatible" content="IE=edge">');
+        lines.push('    <meta name="viewport" content="width=device-width, initial-scale=1.0">');
+        lines.push(`    <title>${title}</title>`);
+        lines.push('    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>');
+        lines.push('    <script>mermaid.initialize({startOnLoad:true});</script>');
+        lines.push('</head>');
+        lines.push('');
+        lines.push('<body>');
+        lines.push('    <div class="mermaid">');
+        lines.push('        graph BT;');
+        lines.push('        ');
+        
+        for (const item of items) {
+            lines.push(`            ${itemToMarkdown(item.member)} --> |member of| ${itemToMarkdown(item.container)}`);
+        }
+        lines.push('    </div>');
+        lines.push('</body>');
+        lines.push('</html>');
+
+        return lines.join('\n');
+    }
 }

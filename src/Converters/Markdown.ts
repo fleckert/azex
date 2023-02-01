@@ -163,22 +163,8 @@ export class Markdown {
     }
 
     static getMermaidDiagramForHierarchy(items: Array<{ container: string | undefined, member: string | undefined }>):string{
-        /*
-            ::: mermaid
-            graph BT;            
-                member --> |member of| container
-            :::
-        */
-
-        const sanitize = (value: string | undefined) => value?.replaceAll('\\', "\\u005c")
-                                                              .replaceAll('/' , "\\u002f")
-                                                              .replaceAll('@' , '\\u0040')
-                                                              .replaceAll('[' , ' \\u005b')
-                                                              .replaceAll(']' , '\\u005d');
-
-
         const id = (value: string | undefined) => Buffer.from(value ?? '').toString('hex');
-        const itemToMarkdown = (value: string | undefined) => `${id(value)}[${sanitize(value)}]`;
+        const itemToMarkdown = (value: string | undefined) => `${id(value)}["${value}"]`;
 
         const lines = new Array<string>();
 
