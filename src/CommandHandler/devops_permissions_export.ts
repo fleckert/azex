@@ -1,5 +1,6 @@
 import { AzureDevOpsPermissionsResolver } from "../AzureDevOpsPermissionsResolver";
 import { GraphSubject, GraphMember      } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Html                           } from "../Converters/Html";
 import { Markdown                       } from "../Converters/Markdown";
 import { writeFile                      } from "fs/promises";
 
@@ -29,6 +30,14 @@ export class devops_permissions_export {
                     .map(p => { return { container: p.container.principalName, member: p.member.principalName } })
                 );
                 await writeFile(`${path}-${organization}-${project}-groupMembers.md`, mermaid);
+
+                const mermaidHtml = Html.getMermaidDiagramForHierarchy(
+                    `${organization}-${project}`,
+                    groupMembersFlat
+                    .filter(p => `${p.container.principalName}`.indexOf('Project Valid Users') < 0)
+                    .map(p => { return { container: p.container.principalName, member: p.member.principalName } })
+                );
+                await writeFile(`${path}-${organization}-${project}-groupMembers.html`, mermaidHtml);
 
                 const groupMembersFlatReduced = groupMembersFlat
                     .map(p => {
@@ -67,7 +76,8 @@ export class devops_permissions_export {
                     files: [
                         `${path}-${organization}-${project}-groupMembers.json`,
                         `${path}-${organization}-${project}-groupMembers-reduced.json`,
-                        `${path}-${organization}-${project}-groupMembers.md`
+                        `${path}-${organization}-${project}-groupMembers.md`,
+                        `${path}-${organization}-${project}-groupMembers.html`
                     ]
                 });
             }
