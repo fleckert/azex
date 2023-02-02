@@ -10,51 +10,38 @@ export class AzureDevOpsPermissionsResolver {
 
         const azureDevOpsHelper =  new AzureDevOpsHelper();
 
-        const project = await azureDevOpsHelper.projectByName(organization, projectName);
+        const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName);
 
-        if (project.error !== undefined) {
-            return { items: undefined, error: project.error };
+        if (groups.error !== undefined) {
+            return { items: undefined, error: groups.error };
         }
-        else if (project.projectInfo === undefined) {
-            return { items: undefined, error: new Error(`Failed to resolve project '${projectName}'.`) };
-        }
-        else if (project.projectInfo.id === undefined) {
-            return { items: undefined, error: new Error('Failed to resolve project.id.') };
+        else if (groups.value === undefined) {
+            return { items: undefined, error: new Error('Failed to resolve groups.') };
         }
         else {
-            const groups = await azureDevOpsHelper.graphGroupsListForProject(organization, project.projectInfo.id);
+            const groupsWithGraphMemberShips = await this.getGroupsWithMemberships(azureDevOpsHelper, organization, groups.value);
 
-            if (groups.error !== undefined) {
-                return { items: undefined, error: groups.error };
+            if (groupsWithGraphMemberShips.error !== undefined) {
+                return { items: undefined, error: groupsWithGraphMemberShips.error };
             }
-            else if (groups.items === undefined) {
-                return { items: undefined, error: new Error('Failed to resolve groups.') };
+            else if (groupsWithGraphMemberShips.items === undefined) {
+                return { items: undefined, error: new Error('Failed to resolve groupsWithGraphMemberShips.') };
             }
             else {
-                const groupsWithGraphMemberShips = await this.getGroupsWithMemberships(azureDevOpsHelper, organization, groups.items);
+                const subjectDescriptors = this.getSubjectDescriptors(groupsWithGraphMemberShips.items);
 
-                if (groupsWithGraphMemberShips.error !== undefined) {
-                    return { items: undefined, error: groupsWithGraphMemberShips.error };
+                const graphSubjects = await azureDevOpsHelper.graphSubjectLookup(organization, subjectDescriptors);
+
+                if (graphSubjects.error !== undefined) {
+                    return { items: undefined, error: new Error(`Failed to resolve graphSubjects. [${graphSubjects.error}]`) };
                 }
-                else if (groupsWithGraphMemberShips.items === undefined) {
-                    return { items: undefined, error: new Error('Failed to resolve groupsWithGraphMemberShips.') };
+                else if (graphSubjects.value === undefined) {
+                    return { items: undefined, error: new Error('graphSubjects.items === undefined') };
                 }
                 else {
-                    const subjectDescriptors = this.getSubjectDescriptors(groupsWithGraphMemberShips.items);
+                    const groupsWithMembers = this.getGroupsWithMembers(groupsWithGraphMemberShips.items, graphSubjects.value);
 
-                    const graphSubjects = await azureDevOpsHelper.graphSubjectLookup(organization, subjectDescriptors);
-
-                    if (graphSubjects.error !== undefined) {
-                        return { items: undefined, error: new Error(`Failed to resolve graphSubjects. [${graphSubjects.error}]`) };
-                    }
-                    else if (graphSubjects.items === undefined) {
-                        return { items: undefined, error: new Error('graphSubjects.items === undefined') };
-                    }
-                    else {
-                        const groupsWithMembers = this.getGroupsWithMembers(groupsWithGraphMemberShips.items, graphSubjects.items);
-
-                        return { items: groupsWithMembers, error: undefined };
-                    }
+                    return { items: groupsWithMembers, error: undefined };
                 }
             }
         }
@@ -88,13 +75,13 @@ export class AzureDevOpsPermissionsResolver {
                 if (memberships.error !== undefined) {
                     return { items: undefined, error: memberships.error };
                 }
-                else if (memberships.items === undefined) {
+                else if (memberships.value === undefined) {
                     return { items: undefined, error: new Error('Failed to resolve memberShips.') };
                 }
                 else {
                     groupsWithGraphMemberShips.push({
                         group,
-                        graphMemberships: memberships.items
+                        graphMemberships: memberships.value
                     });
                 }
             }
