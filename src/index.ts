@@ -1,11 +1,12 @@
 #! /usr/bin/env node
 
-import { rbac_apply              } from "./CommandHandler/rbac_apply";
-import { rbac_export             } from "./CommandHandler/rbac_export";
-import { rbac_extend             } from "./CommandHandler/rbac_extend";
-import { rbac_verify             } from "./CommandHandler/rbac_verify";
-import { SubscriptionIdResolver  } from "./SubscriptionIdResolver";
-import { TokenCredentialProvider } from "./TokenCredentialProvider";
+import { devops_permissions_export } from "./CommandHandler/devops_permissions_export";
+import { rbac_apply                } from "./CommandHandler/rbac_apply";
+import { rbac_export               } from "./CommandHandler/rbac_export";
+import { rbac_extend               } from "./CommandHandler/rbac_extend";
+import { rbac_verify               } from "./CommandHandler/rbac_verify";
+import { SubscriptionIdResolver    } from "./SubscriptionIdResolver";
+import { TokenCredentialProvider   } from "./TokenCredentialProvider";
 
 const args = process.argv.slice(2);
 
@@ -17,8 +18,7 @@ if (args[0]?.toLowerCase() === "rbac") {
         .then(async subscriptionId => {
             checkSubscriptionId(subscriptionId);
             await rbac_export.handle(TokenCredentialProvider.get(), subscriptionId!, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}`);
-        })
-        .catch(p => console.error(p));
+        });
     }
     else if (args[1]?.toLowerCase() === "verify")
     {
@@ -30,8 +30,7 @@ if (args[0]?.toLowerCase() === "rbac") {
             .then(async subscriptionId => {
                 checkSubscriptionId(subscriptionId);
                 await rbac_verify.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}`);
-            })
-            .catch(console.error);
+            });
         }
     }
     else if (args[1]?.toLowerCase() === "extend")
@@ -44,8 +43,7 @@ if (args[0]?.toLowerCase() === "rbac") {
             .then(async subscriptionId => {
                 checkSubscriptionId(subscriptionId);
                 await rbac_extend.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}`);
-            })
-            .catch(console.error);
+            });
         }
     }
     else if (args[1]?.toLowerCase() === "apply")
@@ -63,7 +61,26 @@ if (args[0]?.toLowerCase() === "rbac") {
         }
     }
     else {
-        console.error("rbac - Unknown command");
+        console.error(`${args[0]?.toLowerCase()} ${args[1]?.toLowerCase()} - Unknown command`);
+    }
+}
+else if (args[0]?.toLowerCase() === "devops") {
+    if (args[1]?.toLowerCase() === "permissions") {
+        if (args[2]?.toLowerCase() === "export") {
+            var argv = require('minimist')(process.argv.slice(3));
+
+                 if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
+            else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
+            else {
+                devops_permissions_export.handle(argv.organization, argv.project, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}-${args[2]?.toLowerCase()}`);
+            }
+        }
+        else {
+            console.error(`${args[0]?.toLowerCase()} ${args[1]?.toLowerCase()} ${args[2]?.toLowerCase()} - Unknown command`);
+        }
+    }
+    else {
+        console.error(`${args[0]?.toLowerCase()} ${args[1]?.toLowerCase()} - Unknown command`);
     }
 }
 else {
