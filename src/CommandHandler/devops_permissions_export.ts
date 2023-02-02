@@ -23,21 +23,24 @@ export class devops_permissions_export {
                 await writeFile(`${path}-${organization}-${project}-groupMembers.json`, JSON.stringify(result.items, null, 2));
 
                 const groupMembersFlat = azureDevOpsPermissionsResolver.getContainerMembersFlat(result.items.map(p => { return { container: p.group as GraphMember, members: p.members.map(n => n as GraphMember) } }));
+                
+                const mapper                  = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
+                const filterProjectValidUsers = (item: { container: GraphMember, member: GraphMember }) => `${item.container.principalName}`.indexOf('Project Valid Users') < 0;
+                const filterUsers             = (item: { container: GraphMember, member: GraphMember }) => `${item.member.subjectKind?.toLowerCase()}` !== 'user';
+                
+                const titleHtml     = `${organization}-${project}`;
+                const suffixAll     = "groupMembers-all";
+                const suffixNoUsers = "groupMembers-noUsers";
+                const suffix        = "groupMembers";
 
-                const mermaid = Markdown.getMermaidDiagramForHierarchy(
-                    groupMembersFlat
-                    .filter(p => `${p.container.principalName}`.indexOf('Project Valid Users') < 0)
-                    .map(p => { return { container: p.container.principalName, member: p.member.principalName } })
-                );
-                await writeFile(`${path}-${organization}-${project}-groupMembers.md`, mermaid);
-
-                const mermaidHtml = Html.getMermaidDiagramForHierarchy(
-                    `${organization}-${project}`,
-                    groupMembersFlat
-                    .filter(p => `${p.container.principalName}`.indexOf('Project Valid Users') < 0)
-                    .map(p => { return { container: p.container.principalName, member: p.member.principalName } })
-                );
-                await writeFile(`${path}-${organization}-${project}-groupMembers.html`, mermaidHtml);
+                await Promise.all([
+                    writeFile(`${path}-${organization}-${project}-${suffixAll    }.md`  , Markdown.getMermaidDiagramForHierarchy(                                 groupMembersFlat                                                    .map(mapper))),
+                    writeFile(`${path}-${organization}-${project}-${suffix       }.md`  , Markdown.getMermaidDiagramForHierarchy(                                 groupMembersFlat.filter(filterProjectValidUsers)                    .map(mapper))),
+                    writeFile(`${path}-${organization}-${project}-${suffixNoUsers}.md`  , Markdown.getMermaidDiagramForHierarchy(                                 groupMembersFlat.filter(filterProjectValidUsers).filter(filterUsers).map(mapper))),
+                    writeFile(`${path}-${organization}-${project}-${suffixAll    }.html`, Html    .getMermaidDiagramForHierarchy(`${titleHtml}-${suffixAll}`    , groupMembersFlat                                                    .map(mapper))),
+                    writeFile(`${path}-${organization}-${project}-${suffix       }.html`, Html    .getMermaidDiagramForHierarchy(`${titleHtml}-${suffix}`       , groupMembersFlat.filter(filterProjectValidUsers)                    .map(mapper))),
+                    writeFile(`${path}-${organization}-${project}-${suffixNoUsers}.html`, Html    .getMermaidDiagramForHierarchy(`${titleHtml}-${suffixNoUsers}`, groupMembersFlat.filter(filterProjectValidUsers).filter(filterUsers).map(mapper))),
+                ]);
 
                 const groupMembersFlatReduced = groupMembersFlat
                     .map(p => {
@@ -76,8 +79,12 @@ export class devops_permissions_export {
                     files: [
                         `${path}-${organization}-${project}-groupMembers.json`,
                         `${path}-${organization}-${project}-groupMembers-reduced.json`,
+                        `${path}-${organization}-${project}-groupMembers-all.md`,
                         `${path}-${organization}-${project}-groupMembers.md`,
-                        `${path}-${organization}-${project}-groupMembers.html`
+                        `${path}-${organization}-${project}-groupMembers-noUser.md`,
+                        `${path}-${organization}-${project}-groupMembers-all.html`,
+                        `${path}-${organization}-${project}-groupMembers.html`,
+                        `${path}-${organization}-${project}-groupMembers-noUser.html`
                     ]
                 });
             }
@@ -85,12 +92,5 @@ export class devops_permissions_export {
             console.error(e);
             throw e;
         }
-    }
-
-    private static getMemberIdentifier(graphSubject: GraphSubject): string | undefined {
-        if (graphSubject.subjectKind === 'user' ) { return (graphSubject as GraphMember).principalName; }
-        if (graphSubject.subjectKind === 'group') { return (graphSubject as GraphMember).principalName; }
-
-        return graphSubject.originId;
     }
 }
