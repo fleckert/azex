@@ -1,5 +1,5 @@
 import { AzureDevOpsPermissionsResolver } from "../AzureDevOpsPermissionsResolver";
-import { GraphSubject, GraphMember      } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { GraphMember                    } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Html                           } from "../Converters/Html";
 import { Markdown                       } from "../Converters/Markdown";
 import { writeFile                      } from "fs/promises";
