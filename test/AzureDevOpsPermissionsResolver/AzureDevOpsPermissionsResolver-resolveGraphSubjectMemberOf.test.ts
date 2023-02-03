@@ -1,16 +1,16 @@
-import   path                                      from "path";
-import { AzureDevOpsHelper                       } from "../../src/AzureDevOpsHelper";
-import { AzureDevOpsPermissionsHierarchyResolver } from "../../src/AzureDevOpsPermissionsHierarchyResolver";
-import { GraphMember                             } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { Html                                    } from "../../src/Converters/Html";
-import { Markdown                                } from "../../src/Converters/Markdown";
-import { TestConfigurationProvider               } from "../_Configuration/TestConfiguration";
-import { writeFile                               } from "fs/promises";
+import   path                             from "path";
+import { AzureDevOpsHelper              } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsPermissionsResolver } from "../../src/AzureDevOpsPermissionsResolver";
+import { GraphMember                    } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Html                           } from "../../src/Converters/Html";
+import { Markdown                       } from "../../src/Converters/Markdown";
+import { TestConfigurationProvider      } from "../_Configuration/TestConfiguration";
+import { writeFile                      } from "fs/promises";
 
-test('AzureDevOpsPermissionsHierarchyResolver-resolve', async () => {
+test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
 
-    const azureDevOpsPermissionsHierarchyResolver = new AzureDevOpsPermissionsHierarchyResolver();
-    const azureDevOpsHelper                       = new AzureDevOpsHelper                      ();
+    const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
+    const azureDevOpsHelper              = new AzureDevOpsHelper             ();
 
     const config = await TestConfigurationProvider.get();
 
@@ -19,19 +19,21 @@ test('AzureDevOpsPermissionsHierarchyResolver-resolve', async () => {
     if (users.error !== undefined) { throw users.error; }
     if (users.value === undefined) { throw new Error("users.value === undefined"); }
 
-    for (const graphSubject of users.value.slice(0,10)) {
+    const maxNumerOfTests = 10;
+
+    for (const graphSubject of users.value.slice(0, maxNumerOfTests)) {
         if (graphSubject.descriptor === undefined) { throw new Error("graphSubject.descriptor === undefined"); }
 
-        const graphSubjectMemberOf = await azureDevOpsPermissionsHierarchyResolver.resolveGraphSubjectMemberOf(config.azureDevOps.organization, config.azureDevOps.projectName, graphSubject.descriptor);
+        const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(config.azureDevOps.organization, config.azureDevOps.projectName, graphSubject.descriptor);
 
         if (graphSubjectMemberOf.error !== undefined) { throw graphSubjectMemberOf.error; }
         if (graphSubjectMemberOf.value === undefined) { throw new Error("graphSubjectMemberOf.value === undefined"); }
 
-        const groupMembersFlat = azureDevOpsPermissionsHierarchyResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf.value);
+        const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf.value);
 
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
-        const pathOut = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsHierarchyResolver-resolve-`);
+        const pathOut = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
         const title = `${config.azureDevOps.organization                    }-`
                     + `${config.azureDevOps.projectName                     }-`
                     + `${graphSubjectMemberOf.value.graphSubject.subjectKind}-`

@@ -8,5 +8,5 @@ test/CommandHandler/rbac/out/**.md
 test/CommandHandler/devops/permissions/out/**.json
 test/CommandHandler/devops/permissions/out/**.html
 test/CommandHandler/devops/permissions/out/**.md
-test/AzureDevOpsPermissionsHierarchyResolver/out/**.html
-test/AzureDevOpsPermissionsHierarchyResolver/out/**.md
+test/AzureDevOpsPermissionsResolver/out/**.html
+test/AzureDevOpsPermissionsResolver/out/**.md
