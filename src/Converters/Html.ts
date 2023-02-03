@@ -162,7 +162,7 @@ export class Html {
         }
     }
 
-    static getMermaidDiagramForHierarchy(title: string, items: Array<{ container: string | undefined, member: string | undefined }>):string{
+    static getMermaidDiagramForHierarchy(items: Array<{ container: string | undefined, member: string | undefined }>, title: string): string {
         const id = (value: string | undefined) => Buffer.from(value ?? '').toString('hex');
         const itemToMarkdown = (value: string | undefined) => `${id(value)}["${value}"]`;
 

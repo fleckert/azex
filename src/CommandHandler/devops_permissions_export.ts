@@ -34,12 +34,12 @@ export class devops_permissions_export {
                 const suffix        = "groupMembers";
 
                 await Promise.all([
-                    writeFile(`${path}-${organization}-${project}-${suffixAll    }.md`  , Markdown.getMermaidDiagramForHierarchy(                                 groupMembersFlat                                                    .map(mapper))),
-                    writeFile(`${path}-${organization}-${project}-${suffix       }.md`  , Markdown.getMermaidDiagramForHierarchy(                                 groupMembersFlat.filter(filterProjectValidUsers)                    .map(mapper))),
-                    writeFile(`${path}-${organization}-${project}-${suffixNoUsers}.md`  , Markdown.getMermaidDiagramForHierarchy(                                 groupMembersFlat.filter(filterProjectValidUsers).filter(filterUsers).map(mapper))),
-                    writeFile(`${path}-${organization}-${project}-${suffixAll    }.html`, Html    .getMermaidDiagramForHierarchy(`${titleHtml}-${suffixAll}`    , groupMembersFlat                                                    .map(mapper))),
-                    writeFile(`${path}-${organization}-${project}-${suffix       }.html`, Html    .getMermaidDiagramForHierarchy(`${titleHtml}-${suffix}`       , groupMembersFlat.filter(filterProjectValidUsers)                    .map(mapper))),
-                    writeFile(`${path}-${organization}-${project}-${suffixNoUsers}.html`, Html    .getMermaidDiagramForHierarchy(`${titleHtml}-${suffixNoUsers}`, groupMembersFlat.filter(filterProjectValidUsers).filter(filterUsers).map(mapper))),
+                    writeFile(`${path}-${organization}-${project}-${suffixAll    }.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat                                                    .map(mapper)                                 )),
+                    writeFile(`${path}-${organization}-${project}-${suffix       }.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.filter(filterProjectValidUsers)                    .map(mapper)                                 )),
+                    writeFile(`${path}-${organization}-${project}-${suffixNoUsers}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.filter(filterProjectValidUsers).filter(filterUsers).map(mapper)                                 )),
+                    writeFile(`${path}-${organization}-${project}-${suffixAll    }.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat                                                    .map(mapper), `${titleHtml}-${suffixAll}`    )),
+                    writeFile(`${path}-${organization}-${project}-${suffix       }.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.filter(filterProjectValidUsers)                    .map(mapper), `${titleHtml}-${suffix}`       )),
+                    writeFile(`${path}-${organization}-${project}-${suffixNoUsers}.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.filter(filterProjectValidUsers).filter(filterUsers).map(mapper), `${titleHtml}-${suffixNoUsers}`)),
                 ]);
 
                 const groupMembersFlatReduced = groupMembersFlat

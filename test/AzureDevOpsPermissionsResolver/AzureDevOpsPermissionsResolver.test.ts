@@ -1,10 +1,11 @@
-import { GraphMember                            } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { writeFile                              } from "fs/promises";
-import { AzureDevOpsPermissionsResolver         } from "../../src/AzureDevOpsPermissionsResolver";
-import { AzureDevOpsPermissionsResolverBottomUp } from "../../src/AzureDevOpsPermissionsResolverBottomUp";
-import { Markdown                               } from "../../src/Converters/Markdown";
-import { Html                                   } from "../../src/Converters/Html";
-import { TestConfigurationProvider              } from "../_Configuration/TestConfiguration";
+import   path                                      from "path";
+import { GraphMember                             } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { writeFile                               } from "fs/promises";
+import { AzureDevOpsPermissionsResolver          } from "../../src/AzureDevOpsPermissionsResolver";
+import { AzureDevOpsPermissionsHierarchyResolver } from "../../src/AzureDevOpsPermissionsHierarchyResolver";
+import { Markdown                                } from "../../src/Converters/Markdown";
+import { Html                                    } from "../../src/Converters/Html";
+import { TestConfigurationProvider               } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsPermissionsResolver', async () => {
     const config = await TestConfigurationProvider.get();
@@ -14,25 +15,21 @@ test('AzureDevOpsPermissionsResolver', async () => {
     if (error !== undefined) { throw error; }
     if (items === undefined) { throw new Error("items === undefined"); }
 
-    const memberHierarchy = new AzureDevOpsPermissionsResolverBottomUp().getGraphContainerMemberHierarchies(items);
+    const graphSubjects = new AzureDevOpsPermissionsHierarchyResolver().getGraphSubjects(items);
 
-    if (memberHierarchy.length === 0) { throw new Error("memberHierarchy.length === 0"); }
+    for (const graphSubject of graphSubjects) {
+        const graphSubjectMemberOf = new AzureDevOpsPermissionsHierarchyResolver().getHierarchy(graphSubject, items);
 
-    await writeFile("test.json", JSON.stringify(memberHierarchy, null, 2));
-
-    for(const item of memberHierarchy){
-        const groupMembersFlat = new AzureDevOpsPermissionsResolverBottomUp().getOneGraphSubjectMemberOfFlat(item);
+        const groupMembersFlat = new AzureDevOpsPermissionsHierarchyResolver().flattenHierarchy(graphSubjectMemberOf);
 
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
-        const titleHtml     = `${config.azureDevOps.organization}-${config.azureDevOps.projectName}-${item.graphSubject.displayName}`;
-        const suffixAll     = "members-all";
-        const path          = "./temp/test-test-test";
-        const suffixDescriptor = `${item.graphSubject.displayName}-${item.graphSubject.originId}`;
+        const pathOut = path.join(__dirname, 'out', `azex-test-devops-permissions-hierarchy`);
+        const title   = `${config.azureDevOps.organization}-${config.azureDevOps.projectName}-${graphSubjectMemberOf.graphSubject.subjectKind}-${graphSubjectMemberOf.graphSubject.displayName}-${graphSubjectMemberOf.graphSubject.originId}`;
 
         await Promise.all([
-            writeFile(`${path}-${config.azureDevOps.organization}-${config.azureDevOps.projectName}-${suffixDescriptor}-${suffixAll    }.md`  , Markdown.getMermaidDiagramForHierarchy(                             groupMembersFlat.map(mapper))),
-            writeFile(`${path}-${config.azureDevOps.organization}-${config.azureDevOps.projectName}-${suffixDescriptor}-${suffixAll    }.html`, Html    .getMermaidDiagramForHierarchy(`${titleHtml}-${suffixAll}`, groupMembersFlat.map(mapper))),
+            writeFile(`${pathOut}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)      )),
+            writeFile(`${pathOut}-${title}.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper),title)),
         ]);
     }
 }, 100000);
