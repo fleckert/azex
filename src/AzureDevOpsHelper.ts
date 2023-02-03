@@ -1,7 +1,7 @@
 
 import axios from "axios";
-import { ProjectInfo                               } from "azure-devops-node-api/interfaces/CoreInterfaces";
-import { GraphGroup, GraphMembership, GraphSubject } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { ProjectInfo                                          } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { GraphGroup, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
 
 export class AzureDevOpsHelper {
 
@@ -15,6 +15,11 @@ export class AzureDevOpsHelper {
     graphGroupsList(organization: string): Promise<{ value: GraphGroup[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/groups/list?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getItemsWithContinuation(`https://vssps.dev.azure.com/${organization}/_apis/graph/groups?api-version=7.1-preview.1`);
+    }
+
+    graphUsersList(organization: string): Promise<{ value: GraphUser[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/list?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.getItemsWithContinuation(`https://vssps.dev.azure.com/${organization}/_apis/graph/users?api-version=7.1-preview.1`);
     }
 
     graphGroupsListForScopeDescriptor(organization: string, scopeDescriptor: string): Promise<{ value: GraphGroup[] | undefined, error: Error | undefined }> {
@@ -89,7 +94,7 @@ export class AzureDevOpsHelper {
         }
     }
 
-    async graphSubjectLookup(organization: string, descriptors: string[]): Promise<{ value: { [id: string] : GraphSubject; } | undefined, error: Error | undefined }> {
+    async graphSubjectsLookup(organization: string, descriptors: string[]): Promise<{ value: { [id: string] : GraphSubject; } | undefined, error: Error | undefined }> {
         if (descriptors.length === 0) {
             return { value: {}, error: undefined };
         }
@@ -112,6 +117,20 @@ export class AzureDevOpsHelper {
         }
         catch (error: any) {
             return { value: undefined, error };
+        }
+    }
+
+    async graphSubjectLookup(organization: string, descriptor: string): Promise<{ value: GraphSubject | undefined, error: Error | undefined }> {
+        const graphSubjects = await this.graphSubjectsLookup(organization, [descriptor]);
+
+        if (graphSubjects.error !== undefined) {
+            return { value: undefined, error: graphSubjects.error };
+        }
+        else if (graphSubjects.value === undefined) {
+            return { value: undefined, error: new Error(`Failed to resolve graphSubject for organization[${organization}] descriptor[${descriptor}].`) };
+        }
+        else {
+            return { value: graphSubjects.value[descriptor], error: undefined };
         }
     }
 

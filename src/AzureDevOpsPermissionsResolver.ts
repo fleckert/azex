@@ -1,9 +1,8 @@
 import { GraphGroup, GraphMember, GraphMembership, GraphSubject } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { AzureDevOpsHelper                                      } from "./AzureDevOpsHelper";
 
-
 export class AzureDevOpsPermissionsResolver {
-    async resolve(
+    async resolveGroupMembers(
         organization: string,
         projectName : string
     ): Promise<{ items: Array<{ group: GraphGroup, members: GraphSubject[] }> | undefined, error: Error | undefined }> {
@@ -16,7 +15,7 @@ export class AzureDevOpsPermissionsResolver {
             return { items: undefined, error: groups.error };
         }
         else if (groups.value === undefined) {
-            return { items: undefined, error: new Error('Failed to resolve groups.') };
+            return { items: undefined, error: new Error(`Failed to resolve groups for organization[${organization}] projectName[${projectName}].`) };
         }
         else {
             const groupsWithGraphMemberShips = await this.getGroupsWithMemberships(azureDevOpsHelper, organization, groups.value);
@@ -24,13 +23,13 @@ export class AzureDevOpsPermissionsResolver {
             if (groupsWithGraphMemberShips.error !== undefined) {
                 return { items: undefined, error: groupsWithGraphMemberShips.error };
             }
-            else if (groupsWithGraphMemberShips.items === undefined) {
+            else if (groupsWithGraphMemberShips.value === undefined) {
                 return { items: undefined, error: new Error('Failed to resolve groupsWithGraphMemberShips.') };
             }
             else {
-                const subjectDescriptors = this.getSubjectDescriptors(groupsWithGraphMemberShips.items);
+                const subjectDescriptors = this.getSubjectDescriptors(groupsWithGraphMemberShips.value);
 
-                const graphSubjects = await azureDevOpsHelper.graphSubjectLookup(organization, subjectDescriptors);
+                const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
 
                 if (graphSubjects.error !== undefined) {
                     return { items: undefined, error: new Error(`Failed to resolve graphSubjects. [${graphSubjects.error}]`) };
@@ -39,7 +38,7 @@ export class AzureDevOpsPermissionsResolver {
                     return { items: undefined, error: new Error('graphSubjects.items === undefined') };
                 }
                 else {
-                    const groupsWithMembers = this.getGroupsWithMembers(groupsWithGraphMemberShips.items, graphSubjects.value);
+                    const groupsWithMembers = this.getGroupsWithMembers(groupsWithGraphMemberShips.value, graphSubjects.value);
 
                     return { items: groupsWithMembers, error: undefined };
                 }
@@ -47,7 +46,7 @@ export class AzureDevOpsPermissionsResolver {
         }
     }
 
-    getContainerMembersFlat(items: Array<{ container: GraphMember, members: GraphMember[] }>): Array<{ container: GraphMember, member: GraphMember }> {
+    flattenGraphMembers(items: Array<{ container: GraphMember, members: GraphMember[] }>): Array<{ container: GraphMember, member: GraphMember }> {
         const collection = new Array<{ container: GraphMember, member: GraphMember }>();
 
         for (const item of items) {
@@ -62,21 +61,21 @@ export class AzureDevOpsPermissionsResolver {
         return collection;
     }
 
-    private async getGroupsWithMemberships(azureDevOpsHelper: AzureDevOpsHelper, organization: string, groups: Array<GraphGroup>): Promise<{ items: Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }> | undefined, error: Error | undefined }> {
+    private async getGroupsWithMemberships(azureDevOpsHelper: AzureDevOpsHelper, organization: string, groups: Array<GraphGroup>): Promise<{ value: Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }> | undefined, error: Error | undefined }> {
         const groupsWithGraphMemberShips = new Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }>();
 
         for (const group of groups) {
             if (group.descriptor === undefined) {
-                return { items: undefined, error: new Error('group.descriptor === undefined') };
+                return { value: undefined, error: new Error('group.descriptor === undefined') };
             }
             else {
                 const memberships = await azureDevOpsHelper.graphMembershipsList(organization, group.descriptor, 'down');
 
                 if (memberships.error !== undefined) {
-                    return { items: undefined, error: memberships.error };
+                    return { value: undefined, error: memberships.error };
                 }
                 else if (memberships.value === undefined) {
-                    return { items: undefined, error: new Error('Failed to resolve memberShips.') };
+                    return { value: undefined, error: new Error('Failed to resolve memberShips.') };
                 }
                 else {
                     groupsWithGraphMemberShips.push({
@@ -87,7 +86,7 @@ export class AzureDevOpsPermissionsResolver {
             }
         }
 
-        return { items: groupsWithGraphMemberShips, error: undefined };
+        return { value: groupsWithGraphMemberShips, error: undefined };
     }
 
     private getSubjectDescriptors(items: Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }>): Array<string> {

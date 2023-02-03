@@ -11,7 +11,7 @@ export class devops_permissions_export {
         const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
 
         try {
-            const result = await azureDevOpsPermissionsResolver.resolve(organization, project);
+            const result = await azureDevOpsPermissionsResolver.resolveGroupMembers(organization, project);
 
             if (result.error !== undefined) {
                 throw new Error(`Failed to resolve permissions for Azure DevOps organization '${organization}' and project '${project}'. [${result.error}]`);
@@ -22,7 +22,7 @@ export class devops_permissions_export {
             else {
                 await writeFile(`${path}-${organization}-${project}-groupMembers.json`, JSON.stringify(result.items, null, 2));
 
-                const groupMembersFlat = azureDevOpsPermissionsResolver.getContainerMembersFlat(result.items.map(p => { return { container: p.group as GraphMember, members: p.members.map(n => n as GraphMember) } }));
+                const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphMembers(result.items.map(p => { return { container: p.group as GraphMember, members: p.members.map(n => n as GraphMember) } }));
                 
                 const mapper                  = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
                 const filterProjectValidUsers = (item: { container: GraphMember, member: GraphMember }) => `${item.container.principalName}`.indexOf('Project Valid Users') < 0;
