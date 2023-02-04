@@ -10,6 +10,7 @@ import { SubscriptionIdResolver    } from "./SubscriptionIdResolver";
 import { TokenCredentialProvider   } from "./TokenCredentialProvider";
 
 const args = process.argv.slice(2);
+const commandName = 'azex';
 
 if (args[0]?.toLowerCase() === "rbac") {
     if (args[1]?.toLowerCase() === "export") {
@@ -18,7 +19,7 @@ if (args[0]?.toLowerCase() === "rbac") {
         new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
         .then(async subscriptionId => {
             checkSubscriptionId(subscriptionId);
-            await rbac_export.handle(TokenCredentialProvider.get(), subscriptionId!, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}`);
+            await rbac_export.handle(TokenCredentialProvider.get(), subscriptionId!, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
         });
     }
     else if (args[1]?.toLowerCase() === "verify")
@@ -30,7 +31,7 @@ if (args[0]?.toLowerCase() === "rbac") {
             new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
             .then(async subscriptionId => {
                 checkSubscriptionId(subscriptionId);
-                await rbac_verify.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}`);
+                await rbac_verify.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
             });
         }
     }
@@ -43,7 +44,7 @@ if (args[0]?.toLowerCase() === "rbac") {
             new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
             .then(async subscriptionId => {
                 checkSubscriptionId(subscriptionId);
-                await rbac_extend.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}`);
+                await rbac_extend.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
             });
         }
     }
@@ -73,7 +74,7 @@ else if (args[0]?.toLowerCase() === "devops") {
                  if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
             else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
             else {
-                devops_permissions_export.handle(argv.organization, argv.project, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}-${args[2]?.toLowerCase()}`);
+                devops_permissions_export.handle(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
             }
         }
         else if (args[2]?.toLowerCase() === "show") {
@@ -82,19 +83,19 @@ else if (args[0]?.toLowerCase() === "devops") {
                  if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
             else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
             else {
-                devops_permissions_show.handle(argv.organization, argv.project, argv.principalName, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}-${args[2]?.toLowerCase()}`);
+                devops_permissions_show.handle(argv.organization, argv.project, argv.principalName, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
             }
         }
         else {
-            console.error(`${args[0]?.toLowerCase()} ${args[1]?.toLowerCase()} ${args[2]?.toLowerCase()} - Unknown command`);
+            console.error(`${args[0]} ${args[1]} ${args[2]} - unknown command`.toLowerCase());
         }
     }
     else {
-        console.error(`${args[0]?.toLowerCase()} ${args[1]?.toLowerCase()} - Unknown command`);
+        console.error(`${args[0]} ${args[1]} - unknown command`.toLowerCase());
     }
 }
 else {
-    console.error("Unknown command");
+    console.error("unknown command");
 }
 
 const checkSubscriptionId = (subscriptionId : string | undefined) => {
