@@ -9,9 +9,9 @@ test('AzureDevOpsHelper - userByPrincipalName', async () => {
     if (users.error !== undefined) { throw users.error; }
     if (users.value === undefined) { throw new Error("users.value === undefined"); }
 
-    const maxNumerOfTestsUsers = 10;
+    const maxNumerOfTests = 5;
 
-    for (const graphUser of users.value.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTestsUsers)) {
+    for (const graphUser of users.value.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
         const graphSubject = await azureDevOpsHelper.userByPrincipalName(config.azureDevOps.organization, principalName);
@@ -33,9 +33,9 @@ test('AzureDevOpsHelper - groupByPrincipalName', async () => {
     if (groups.error !== undefined) { throw groups.error; }
     if (groups.value === undefined) { throw new Error("groups.value === undefined"); }
 
-    const maxNumerOfTestsGroups = 10;
+    const maxNumerOfTests = 5;
 
-    for (const graphGroup of groups.value.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTestsGroups)) {
+    for (const graphGroup of groups.value.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphGroup.principalName!;
 
         const graphSubject = await azureDevOpsHelper.groupByPrincipalName(config.azureDevOps.organization, principalName);

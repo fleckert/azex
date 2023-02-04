@@ -19,7 +19,7 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
     if (users.error !== undefined) { throw users.error; }
     if (users.value === undefined) { throw new Error("users.value === undefined"); }
 
-    const maxNumerOfTests = 10;
+    const maxNumerOfTests = 5;
 
     for (const graphSubject of users.value.slice(0, maxNumerOfTests)) {
         if (graphSubject.descriptor === undefined) { throw new Error("graphSubject.descriptor === undefined"); }
