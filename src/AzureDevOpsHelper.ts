@@ -37,6 +37,14 @@ export class AzureDevOpsHelper {
         return this.getValue(`https://vssps.dev.azure.com/${organization}/_apis/graph/Memberships/${subjectDescriptor}?direction=${direction}&api-version=7.1-preview.1`);
     }
 
+    userByPrincipalName(organization: string, principalName: string): Promise<{ value: GraphSubject | undefined, error: Error | undefined }> {
+        return this.graphSubjectQueryByPrincipalName(organization, ['User'], principalName);
+    }
+
+    groupByPrincipalName(organization: string, principalName: string): Promise<{ value: GraphSubject | undefined, error: Error | undefined }> {
+        return this.graphSubjectQueryByPrincipalName(organization, ['Group'], principalName);
+    }
+
     async projectByName(organization: string, projectName: string): Promise<{ value: ProjectInfo | undefined, error: Error | undefined }> {
         const projects = await this.projectsList(organization);
 
@@ -131,6 +139,31 @@ export class AzureDevOpsHelper {
         }
         else {
             return { value: graphSubjects.value[descriptor], error: undefined };
+        }
+    }
+
+    private async graphSubjectQueryByPrincipalName(organization: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group'], principalName: string): Promise<{ value: GraphSubject | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/subject-query/query?view=azure-devops-rest-7.1
+        try {
+            const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/subjectquery?api-version=7.1-preview.1`;
+            const data = JSON.stringify({
+                query:`${principalName}`,
+                subjectKind
+             });
+
+            const response = await axios.post(url, data, { headers: this.getHeaders() });
+
+            if (response.status === 200) {
+                return response.data.count === 1 
+                     ? { value: response.data.value[0], error: undefined } 
+                     : { value: undefined             , error: undefined };
+            }
+            else {
+                return { value: undefined, error: new Error(`url[${url}] status[${response.status}] statusText[${response.statusText}]`) };
+            }
+        }
+        catch (error: any) {
+            return { value: undefined, error };
         }
     }
 
