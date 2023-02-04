@@ -6,7 +6,7 @@ import { Markdown                       } from "../Converters/Markdown";
 import { writeFile                      } from "fs/promises";
 
 export class devops_permissions_show {
-    static async handle(organization: string, project: string, principalName: string, path: string): Promise<void> {
+    static async handle(organization: string, project: string | undefined, principalName: string, path: string): Promise<void> {
         const startDate = new Date();
 
         const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
@@ -34,9 +34,9 @@ export class devops_permissions_show {
             const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
     
             const title = `${organization                                       }-`
-                        + `${project                                            }-`
+                        + `${project ===undefined ? '': `${project}-`           }`
                         + `${graphSubjectMemberOf.value.graphSubject.subjectKind}-`
-                        + `${principalName.replaceAll('\\','').replaceAll('[','') .replaceAll(']','')}`;
+                        + `${principalName.replaceAll('\\','_')                 }`;
     
             await Promise.all([
                 writeFile(`${path}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)      )),

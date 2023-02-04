@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 
 import { devops_permissions_export } from "./CommandHandler/devops_permissions_export";
+import { devops_permissions_show } from "./CommandHandler/devops_permissions_show";
 import { rbac_apply                } from "./CommandHandler/rbac_apply";
 import { rbac_export               } from "./CommandHandler/rbac_export";
 import { rbac_extend               } from "./CommandHandler/rbac_extend";
@@ -73,6 +74,15 @@ else if (args[0]?.toLowerCase() === "devops") {
             else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
             else {
                 devops_permissions_export.handle(argv.organization, argv.project, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}-${args[2]?.toLowerCase()}`);
+            }
+        }
+        else if (args[2]?.toLowerCase() === "show") {
+            var argv = require('minimist')(process.argv.slice(3));
+
+                 if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+            else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
+            else {
+                devops_permissions_show.handle(argv.organization, argv.project, argv.principalName, argv.out ?? `azex-${args[0].toLowerCase()}-${args[1].toLowerCase()}-${args[2]?.toLowerCase()}`);
             }
         }
         else {

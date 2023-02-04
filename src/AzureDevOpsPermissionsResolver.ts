@@ -51,7 +51,7 @@ export class AzureDevOpsPermissionsResolver {
 
     async resolveGraphSubjectMemberOf(
         organization     : string,
-        projectName      : string,
+        projectName      : string | undefined,
         subjectDescriptor: string
     ): Promise<{ value: GraphSubjectMemberOf | undefined, error: Error | undefined }> {
 
@@ -66,9 +66,11 @@ export class AzureDevOpsPermissionsResolver {
             return { value: undefined, error: new Error(`Failed to resolve graphSubject for organization[${organization}] projectName[${projectName}] subjectDescriptor[${subjectDescriptor}].`) };
         }
         else {
-            const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName);
+            const groups = projectName !== undefined
+                         ? await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName)
+                         : await azureDevOpsHelper.graphGroupsList              (organization             );
 
-            if (groups.error !== undefined) {
+                         if (groups.error !== undefined) {
                 return { value: undefined, error: groups.error };
             }
             else if (groups.value === undefined) {
