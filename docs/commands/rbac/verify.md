@@ -1,4 +1,4 @@
-[home](/readme.md) / [commands](/docs/commands/readme.md) / [rbac](/docs/commands/rbac/readme.md)
+[home](/readme.md) / [commands](/docs/commands/readme.md) / [rbac](/docs/commands/rbac/readme.md) / verify
 
 # rbac verify
 
