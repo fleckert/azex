@@ -1,4 +1,5 @@
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsSecurityTokens } from "../../src/AzureDevOpsSecurityTokens";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - userByPrincipalName', async () => {
@@ -47,4 +48,275 @@ test('AzureDevOpsHelper - groupByPrincipalName', async () => {
     const graphSubject = await azureDevOpsHelper.groupByPrincipalName(config.azureDevOps.organization, principalName);
     if (graphSubject.error !== undefined) { throw graphSubject.error; }
     if (graphSubject.value !== undefined) { throw new Error(`Resolved non-existent group for organization[${config.azureDevOps.organization}] principalName[${principalName}].`); }
+}, 100000);
+
+test('AzureDevOpsHelper - securityNamespaces', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+
+    const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
+    if (securityNamespaces.error !== undefined) { throw securityNamespaces.error; }
+    if (securityNamespaces.value === undefined) { throw new Error(`securityNamespaces(${organization}).value === undefined`); }
+
+    const maxNumerOfTests = 5;
+
+    for (const securityNamespace of securityNamespaces.value.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+        const namespaceId = securityNamespace.namespaceId!;
+
+        const securityNamespaceForId = await azureDevOpsHelper.securityNamespace(organization, namespaceId);
+        if (securityNamespaceForId.error !== undefined) { throw securityNamespaceForId.error; }
+        if (securityNamespaceForId.value === undefined) { throw new Error(`securityNamespaces(${organization}, ${namespaceId}).value === undefined`); }
+    }
+}, 100000);
+
+test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+
+    const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
+    if (securityNamespaces.error !== undefined) { throw securityNamespaces.error; }
+    if (securityNamespaces.value === undefined) { throw new Error(`securityNamespaces(${organization}).value === undefined`); }
+
+    const maxNumerOfTests = 5;
+
+    for (const securityNamespace of securityNamespaces.value.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+        const securityNamespaceId = securityNamespace.namespaceId!;
+
+        const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId });
+        if (accessControlLists.error !== undefined) { throw accessControlLists.error; }
+        if (accessControlLists.value === undefined) { throw new Error(`accessControlLists(${organization}, ${securityNamespaceId}).value === undefined`); }
+
+        for (const accessControlList of accessControlLists.value) {
+            for (const descriptor in accessControlList.acesDictionary) {
+                const identities = await azureDevOpsHelper.identitiesByDescriptors(organization, [descriptor]);
+                if (identities.error !== undefined) { throw identities.error; }
+                if (identities.value === undefined) { throw new Error(`identitiesByDescriptors(${organization}, [${descriptor}]).value === undefined`); }
+                if (identities.value.length !== 1) { throw new Error(`identitiesByDescriptors(${organization}, [${descriptor}]) returns ${identities.value.length} items.`) }
+
+                const identity = await azureDevOpsHelper.identityByDescriptor(organization, descriptor);
+                if (identity.error !== undefined) { throw identity.error; }
+                if (identity.value === undefined) { throw new Error(`identityByDescriptor(${organization}, [${descriptor}]).value === undefined`); }
+            }
+        }
+    }
+}, 100000);
+
+test('AzureDevOpsHelper - gitRepositories', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+    const projectName  = config.azureDevOps.projectName;
+
+    const gitRepositories = await azureDevOpsHelper.gitRepositories(organization, projectName);
+    if (gitRepositories.error !== undefined) { throw gitRepositories.error; }
+    if (gitRepositories.value === undefined) { throw new Error(`gitRepositories(${organization}, ${projectName}).value === undefined`); }
+
+    const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, 'Git Repositories')
+    if (securityNamespace.error !== undefined) { throw securityNamespace.error; }
+    if (securityNamespace.value === undefined) { throw new Error(`securityNamespaceByName(${organization}, 'Git Repositories').value === undefined`); }
+    if (securityNamespace.value.namespaceId === undefined) { throw new Error(`securityNamespaceByName(${organization}, 'Git Repositories').value.namespaceId === undefined`); }
+
+    const maxNumerOfTests = 5;
+
+    for (const gitRepository of gitRepositories.value.slice(0, maxNumerOfTests)) {
+        const projectId         = gitRepository.project?.id  ; if (projectId         === undefined) { throw new Error("projectId === undefined"        ); }
+        const repositoryId      = gitRepository.id           ; if (repositoryId      === undefined) { throw new Error("repositoryId === undefined"     ); }
+        const securityNamespaceId = securityNamespace.value.namespaceId;
+
+        {
+            const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project(projectId)
+
+            const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId, token: securityToken });
+            if (accessControlLists.error !== undefined) { throw accessControlLists.error; }
+            if (accessControlLists.value === undefined) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value === undefined`); }
+            if (accessControlLists.value.length === 0 ) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value.length === 0` ); }
+        }
+
+        {
+            const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project_Repository(projectId, repositoryId)
+
+            const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId, token: securityToken });
+            if (accessControlLists.error !== undefined) { throw accessControlLists.error; }
+            if (accessControlLists.value === undefined) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value === undefined`); }
+            if (accessControlLists.value.length === 0 ) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value.length === 0` ); }
+        }
+
+        {
+            if (gitRepository.defaultBranch !== undefined) {
+                const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project_Repository_Branch(projectId, repositoryId, gitRepository.defaultBranch)
+
+                const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId, token: securityToken });
+                if (accessControlLists.error !== undefined) { throw accessControlLists.error; }
+                if (accessControlLists.value === undefined) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value === undefined`); }
+                if (accessControlLists.value.length === 0 ) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value.length === 0` ); }
+            }
+        }
+
+    }
+}, 100000);
+
+const accessControlListsTest = async (azureDevOpsHelper: AzureDevOpsHelper, parameters: {
+    organization        : string,
+    securityNamespaceId : string,
+    token?              : string,
+    descriptors?        : Array<string>,
+    includeExtendedInfo?: boolean,
+    recurse?            : boolean
+}): Promise<void> => {
+
+    const accessControlLists = await azureDevOpsHelper.accessControlLists(parameters);
+    if (accessControlLists.error !== undefined) { throw accessControlLists.error; }
+    if (accessControlLists.value === undefined) { throw new Error(`accessControlLists(${JSON.stringify(parameters)}).value === undefined`); }
+
+    const maxNumerOfTests = 500;
+
+    for (const accessControlList of accessControlLists.value.slice(0, maxNumerOfTests)) {
+        parameters.token = accessControlList.token!;
+        const accessControlListsItem = await azureDevOpsHelper.accessControlLists(parameters);
+        if (accessControlListsItem.error !== undefined) { throw accessControlListsItem.error; }
+        if (accessControlListsItem.value === undefined) { throw new Error(`accessControlLists(${JSON.stringify(parameters)}).value === undefined`); }
+    }
+
+    for (const accessControlList of accessControlLists.value.slice(0, maxNumerOfTests)) {
+        parameters.token = undefined;
+        parameters.descriptors = new Array<string>();
+        for(const key in  accessControlList.acesDictionary)
+        {
+            parameters.descriptors.push(key);
+        }
+        const accessControlListsItem = await azureDevOpsHelper.accessControlLists(parameters);
+        if (accessControlListsItem.error !== undefined) { throw accessControlListsItem.error; }
+        if (accessControlListsItem.value === undefined) { throw new Error(`accessControlLists(${JSON.stringify(parameters)}).value === undefined`); }
+    }
+}
+
+test('AzureDevOpsHelper - accessControlLists', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+
+    const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
+    if (securityNamespaces.error !== undefined) { throw securityNamespaces.error; }
+    if (securityNamespaces.value === undefined) { throw new Error(`securityNamespaces(${organization}).value === undefined`); }
+
+    const maxNumerOfTests = 500;
+
+    for (const securityNamespace of securityNamespaces.value.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+        const securityNamespaceId = securityNamespace.namespaceId!;
+
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: undefined, recurse: undefined });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: undefined, recurse: false     });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: undefined, recurse: true      });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: false    , recurse: undefined });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: false    , recurse: false     });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: false    , recurse: true      });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: true     , recurse: undefined });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: true     , recurse: false     });
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: true     , recurse: true      }); 
+    }
+}, 100000);
+
+test('AzureDevOpsHelper - workIterations - accessControlList', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+
+    const teams = await azureDevOpsHelper.teams(organization);
+    if (teams.error !== undefined) { throw teams.error; }
+    if (teams.value === undefined) { throw new Error(`teams(${organization}).value === undefined`); }
+
+    const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
+    if (securityNamespaces.error !== undefined) { throw securityNamespaces.error; }
+    if (securityNamespaces.value === undefined) { throw new Error(`securityNamespaces(${organization}).value === undefined`); }
+
+    const securityNamespaceId = securityNamespaces.value.find(p => p.name === "Iteration")?.namespaceId;
+    if (securityNamespaceId === undefined) { throw new Error(`securityNamespaceId === undefined`); }
+
+    const maxNumerOfTests = 5;
+
+    for (const team of teams.value.filter(p => p.id !== undefined && p.projectId !== undefined).slice(0, maxNumerOfTests)) {
+        const teamId = team.id!;
+        const project = team.projectId!;
+
+        const workTeamSettings = await azureDevOpsHelper.workTeamSettings(organization, project, teamId);
+        if (workTeamSettings.error !== undefined) { throw teams.error; }
+        if (workTeamSettings.value === undefined) { throw new Error(`workTeamSettings(${JSON.stringify({ organization, project, teamId })}).value === undefined`); }
+
+        const workIterations = await azureDevOpsHelper.workIterations(organization, project, teamId);
+        if (workIterations.error !== undefined) { throw teams.error; }
+        if (workIterations.value === undefined) { throw new Error(`workIterations(${JSON.stringify({ organization, project, teamId })}).value === undefined`); }
+
+        for (const workIteration of workIterations.value.slice(0, maxNumerOfTests)) {
+            const token = AzureDevOpsSecurityTokens.Iteration_Team_Iterations(workTeamSettings.value, workIteration)
+            await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, token });
+        }
+
+        const token = AzureDevOpsSecurityTokens.Iteration_Team_Iteration(workTeamSettings.value)
+        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, token });
+    }
+}, 100000);
+
+test('AzureDevOpsHelper - workIterations', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+    const project = config.azureDevOps.projectName;
+
+    const teams = await azureDevOpsHelper.teams(organization);
+    if (teams.error !== undefined) { throw teams.error; }
+    if (teams.value === undefined) { throw new Error(`teams(${organization}).value === undefined`); }
+
+    const maxNumerOfTests = 5;
+
+    for (const team of teams.value.filter(p => p.id !== undefined).slice(0, maxNumerOfTests)) {
+        const teamId = team.id!;
+
+        const workIterations = await azureDevOpsHelper.workIterations(organization, project, teamId);
+        if (workIterations.error !== undefined) { throw teams.error; }
+        if (workIterations.value === undefined) { throw new Error(`workIterations(${JSON.stringify({organization, project, teamId})}).value === undefined`); }
+    }
+}, 100000);
+
+test('AzureDevOpsHelper - workBacklogs', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+    const project = config.azureDevOps.projectName;
+
+    const teams = await azureDevOpsHelper.teams(organization);
+    if (teams.error !== undefined) { throw teams.error; }
+    if (teams.value === undefined) { throw new Error(`teams(${organization}).value === undefined`); }
+
+    const maxNumerOfTests = 5;
+
+    for (const team of teams.value.filter(p => p.id !== undefined).slice(0, maxNumerOfTests)) {
+        const teamId = team.id!;
+
+        const workBacklogs = await azureDevOpsHelper.workBacklogs(organization, project, teamId);
+        if (workBacklogs.error !== undefined) { throw teams.error; }
+        if (workBacklogs.value === undefined) { throw new Error(`workBacklogs(${JSON.stringify({ organization, project, teamId })}).value === undefined`); }
+    }
+}, 100000);
+
+test('AzureDevOpsHelper - workTeamSettings', async () => {
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+    const project = config.azureDevOps.projectName;
+
+    const teams = await azureDevOpsHelper.teams(organization);
+    if (teams.error !== undefined) { throw teams.error; }
+    if (teams.value === undefined) { throw new Error(`teams(${organization}).value === undefined`); }
+
+    const maxNumerOfTests = 5;
+
+    for (const team of teams.value.filter(p => p.id !== undefined).slice(0, maxNumerOfTests)) {
+        const teamId = team.id!;
+
+        const workTeamSettings = await azureDevOpsHelper.workTeamSettings(organization, project, teamId);
+        if (workTeamSettings.error !== undefined) { throw teams.error; }
+        if (workTeamSettings.value === undefined) { throw new Error(`workTeamSettings(${JSON.stringify({ organization, project, teamId })}).value === undefined`); }
+    }
 }, 100000);

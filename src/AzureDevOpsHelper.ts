@@ -1,7 +1,12 @@
 
 import axios from "axios";
-import { ProjectInfo                                          } from "azure-devops-node-api/interfaces/CoreInterfaces";
-import { GraphGroup, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { AzureDevOpsAccessControlList                                  } from "./models/AzureDevOpsAccessControlEntry";
+import { AzureDevOpsSecurityNamespace                                  } from "./models/AzureDevOpsSecurityNamespace";
+import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration } from "azure-devops-node-api/interfaces/WorkInterfaces";
+import { GitRepository                                                 } from "azure-devops-node-api/interfaces/GitInterfaces";
+import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
+import { ProjectInfo, WebApiTeam                                       } from "azure-devops-node-api/interfaces/CoreInterfaces";
 
 export class AzureDevOpsHelper {
 
@@ -35,6 +40,131 @@ export class AzureDevOpsHelper {
     graphMembershipsList(organization: string, subjectDescriptor: string, direction: 'up' | 'down'): Promise<{ value: GraphMembership[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/list?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getValue(`https://vssps.dev.azure.com/${organization}/_apis/graph/Memberships/${subjectDescriptor}?direction=${direction}&api-version=7.1-preview.1`);
+    }
+
+    teams(organization: string): Promise<{ value: WebApiTeam[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/teams/get-all-teams?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.getValue(`https://dev.azure.com/${organization}/_apis/teams?api-version=7.1-preview.3`);
+    }
+
+    async team(organization: string, projectName:string,  teamName: string): Promise<{ value: WebApiTeam | undefined, error: Error | undefined }> {
+        const teams = await this.teams(organization);
+
+        if (teams.error !== undefined) {
+            return { value: undefined, error: teams.error };
+        }
+        else if (teams.value === undefined) {
+            return { value: undefined, error: new Error(`teams(${organization}).value === undefined`) };
+        }
+        else {
+            return { value: teams.value.find(p => p.name?.toLowerCase() === teamName.toLowerCase() && p.projectName?.toLowerCase() === projectName.toLowerCase()), error: undefined };
+        }
+    }
+
+    workIterations(organization: string, project: string, team: string): Promise<{ value: TeamSettingsIteration[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/work/iterations/list?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.getValue(`https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations?api-version=7.1-preview.1`);
+    }
+
+    async workIteration(organization: string, project: string, team: string, iterationName: string): Promise<{ value: TeamSettingsIteration | undefined, error: Error | undefined }> {
+        const teams = await this.workIterations(organization, project, team);
+
+        if (teams.error !== undefined) {
+            return { value: undefined, error: teams.error };
+        }
+        else if (teams.value === undefined) {
+            return { value: undefined, error: new Error(`workIterations(${organization}, ${project}, ${team}).value === undefined`) };
+        }
+        else {
+            return { value: teams.value.find(p => p.name?.toLowerCase() === iterationName.toLowerCase()), error: undefined };
+        }
+    }
+
+    workBacklogs(organization: string, project: string, team: string): Promise<{ value: BacklogLevelConfiguration[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/work/backlogs/list?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.getValue(`https://dev.azure.com/${organization}/${project}/${team}/_apis/work/backlogs?api-version=7.1-preview.1`);
+    }
+
+    workTeamSettings(organization: string, project: string, team: string): Promise<{ value: TeamSetting | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/work/teamsettings/get?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.get(`https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings?api-version=7.1-preview.1`);
+    }
+
+    accessControlLists(query: {organization: string, securityNamespaceId: string, token?: string, descriptors?: Array<string>, includeExtendedInfo?: boolean, recurse?: boolean}): Promise<{ value: AzureDevOpsAccessControlList[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/security/access-control-lists/query?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.getValue(
+            `https://dev.azure.com/${query.organization}/_apis/accesscontrollists/${query.securityNamespaceId}?api-version=7.1-preview.1` +
+                (query.token               === undefined ? '' : `&token=${               query.token                                   }`)+
+                (query.descriptors         === undefined ? '' : `&descriptors=${         query.descriptors.join(',')                   }`)+
+                (query.includeExtendedInfo === undefined ? '' : `&includeExtendedInfo=${(query.includeExtendedInfo ? 'true' : 'false') }`)+
+                (query.recurse             === undefined ? '' : `&recurse=${            (query.recurse             ? 'true' : 'false') }`)
+        );
+    }
+
+    identitiesByDescriptors(organization: string, identityDescriptors: Array<string>): Promise<{ value: Identity[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/ims/identities/read-identities?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.getValue(`https://vssps.dev.azure.com/${organization}/_apis/identities?descriptors=${identityDescriptors.join(',')}&api-version=7.1-preview.1`);
+    }
+
+    gitRepositories(organization: string,project: string): Promise<{ value: GitRepository[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list?view=azure-devops-rest-7.1&tabs=HTTP
+        return this.getValue(`https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`)
+    }
+
+    async identityByDescriptor(organization: string, identityDescriptor: string): Promise<{ value: Identity | undefined, error: Error | undefined }> {
+        const identity = await this.identitiesByDescriptors(organization, [identityDescriptor]);
+        if (identity.error !== undefined) {
+            return { value: undefined, error: identity.error };
+        }
+        else if (identity.value === undefined) {
+            return { value: undefined, error: new Error(`identitiesByDescriptors(${organization}, [${identityDescriptor}]).value === undefined`) };
+        }
+        else if (identity.value.length !== 1) {
+            return { value: undefined, error: new Error(`identitiesByDescriptors(${organization}, [${identityDescriptor}]) returns ${identity.value.length} items.`) };
+        }
+        else {
+            return { value: identity.value[0], error: undefined };
+        }
+    }
+
+    securityNamespaces(organization: string): Promise<{ value: AzureDevOpsSecurityNamespace[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/security/security-namespaces/query?view=azure-devops-rest-7.1&tabs=HTTP#all-security-namespaces
+        return this.getValue(`https://dev.azure.com/${organization}/_apis/securitynamespaces?api-version=7.1-preview.1`);
+    }
+
+    async securityNamespaceByName(organization: string, name: string): Promise<{ value: AzureDevOpsSecurityNamespace | undefined, error: Error | undefined }> {
+        const response = await this.securityNamespaces(organization);
+
+        if (response.error !== undefined) {
+            return { value: undefined, error: response.error };
+        }
+        else if (response.value === undefined) {
+            return { value: undefined, error: new Error(`securityNamespaces(${organization}).value === undefined`) };
+        }
+        else {
+            const value = response.value.find(p => p.name?.toLowerCase() === name.toLowerCase());
+            return { value, error: undefined };
+        }
+    }
+
+    async securityNamespace(organization: string, securityNamespaceId: string): Promise<{ value: AzureDevOpsSecurityNamespace | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/security/security-namespaces/query?view=azure-devops-rest-7.1&tabs=HTTP#all-security-namespaces
+        const url = `https://dev.azure.com/${organization}/_apis/securitynamespaces/${securityNamespaceId}?api-version=7.1-preview.1`;
+
+        const response = await this.getValue<AzureDevOpsSecurityNamespace[]>(url);
+
+        if (response.error !== undefined) {
+            return { value: undefined, error: response.error };
+        }
+        else if (response.value === undefined) {
+            return { value: undefined, error: new Error(`getValue(${url}).value === undefined`) };
+        }
+        else if (response.value.length !== 1) {
+            return { value: undefined, error: new Error(`getValue(${url}).value returns ${response.value.length} items`) };
+        }
+        else {
+            return { value: response.value[0], error: undefined };
+        }
     }
 
     userByPrincipalName(organization: string, principalName: string): Promise<{ value: GraphSubject | undefined, error: Error | undefined }> {
@@ -176,6 +306,24 @@ export class AzureDevOpsHelper {
         };
 
         return headers;
+    }
+
+    private async get<T>(url: string): Promise<{ value: T | undefined, error: Error | undefined }> {
+        try {
+            const response = await axios.get(url, { headers: this.getHeaders() });
+
+            if (response.status === 200) {
+                const value: T = response.data;
+
+                return { value, error: undefined };
+            }
+            else {
+                return { value: undefined, error: new Error(`url[${url}] status[${response.status}] statusText[${response.statusText}]`) };
+            }
+        }
+        catch (error: any) {
+            return { value: undefined, error };
+        }
     }
 
     private async getValue<T>(url: string): Promise<{ value: T | undefined, error: Error | undefined }> {
