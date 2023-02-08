@@ -2,11 +2,6 @@ node_modules
 build
 temp
 
-test/CommandHandler/rbac/out/**.json
-test/CommandHandler/rbac/out/**.html
-test/CommandHandler/rbac/out/**.md
-test/CommandHandler/devops/permissions/out/**.json
-test/CommandHandler/devops/permissions/out/**.html
-test/CommandHandler/devops/permissions/out/**.md
-test/AzureDevOpsPermissionsResolver/out/**.html
-test/AzureDevOpsPermissionsResolver/out/**.md
+test/**/out/**.html
+test/**/out/**.json
+test/**/out/**.md

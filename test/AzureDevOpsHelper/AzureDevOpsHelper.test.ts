@@ -1,6 +1,8 @@
+import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsSecurityTokens } from "../../src/AzureDevOpsSecurityTokens";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - userByPrincipalName', async () => {
     const config = await TestConfigurationProvider.get();
@@ -218,46 +220,6 @@ test('AzureDevOpsHelper - accessControlLists', async () => {
     }
 }, 100000);
 
-test('AzureDevOpsHelper - workIterations - accessControlList', async () => {
-    const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
-    const organization = config.azureDevOps.organization;
-
-    const teams = await azureDevOpsHelper.teams(organization);
-    if (teams.error !== undefined) { throw teams.error; }
-    if (teams.value === undefined) { throw new Error(`teams(${organization}).value === undefined`); }
-
-    const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
-    if (securityNamespaces.error !== undefined) { throw securityNamespaces.error; }
-    if (securityNamespaces.value === undefined) { throw new Error(`securityNamespaces(${organization}).value === undefined`); }
-
-    const securityNamespaceId = securityNamespaces.value.find(p => p.name === "Iteration")?.namespaceId;
-    if (securityNamespaceId === undefined) { throw new Error(`securityNamespaceId === undefined`); }
-
-    const maxNumerOfTests = 5;
-
-    for (const team of teams.value.filter(p => p.id !== undefined && p.projectId !== undefined).slice(0, maxNumerOfTests)) {
-        const teamId = team.id!;
-        const project = team.projectId!;
-
-        const workTeamSettings = await azureDevOpsHelper.workTeamSettings(organization, project, teamId);
-        if (workTeamSettings.error !== undefined) { throw teams.error; }
-        if (workTeamSettings.value === undefined) { throw new Error(`workTeamSettings(${JSON.stringify({ organization, project, teamId })}).value === undefined`); }
-
-        const workIterations = await azureDevOpsHelper.workIterations(organization, project, teamId);
-        if (workIterations.error !== undefined) { throw teams.error; }
-        if (workIterations.value === undefined) { throw new Error(`workIterations(${JSON.stringify({ organization, project, teamId })}).value === undefined`); }
-
-        for (const workIteration of workIterations.value.slice(0, maxNumerOfTests)) {
-            const token = AzureDevOpsSecurityTokens.Iteration_Team_Iterations(workTeamSettings.value, workIteration)
-            await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, token });
-        }
-
-        const token = AzureDevOpsSecurityTokens.Iteration_Team_Iteration(workTeamSettings.value)
-        await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, token });
-    }
-}, 100000);
-
 test('AzureDevOpsHelper - workIterations', async () => {
     const config = await TestConfigurationProvider.get();
     const azureDevOpsHelper = new AzureDevOpsHelper();
@@ -268,14 +230,22 @@ test('AzureDevOpsHelper - workIterations', async () => {
     if (teams.error !== undefined) { throw teams.error; }
     if (teams.value === undefined) { throw new Error(`teams(${organization}).value === undefined`); }
 
-    const maxNumerOfTests = 5;
+    const maxNumerOfTests = 10;
 
     for (const team of teams.value.filter(p => p.id !== undefined).slice(0, maxNumerOfTests)) {
         const teamId = team.id!;
 
         const workIterations = await azureDevOpsHelper.workIterations(organization, project, teamId);
         if (workIterations.error !== undefined) { throw teams.error; }
-        if (workIterations.value === undefined) { throw new Error(`workIterations(${JSON.stringify({organization, project, teamId})}).value === undefined`); }
+        if (workIterations.value === undefined) { throw new Error(`workIterations.value === undefined ${JSON.stringify({organization, project, team})}`); }
+
+        for(const workIteration of workIterations.value.slice(0, maxNumerOfTests)){
+            if (workIteration.path === undefined) { throw new Error(`workIteration.path === undefined ${JSON.stringify({ organization, project, team, workIteration })}`); }
+
+            const workIterationResponse = await azureDevOpsHelper.workIteration(organization, project, teamId, workIteration.path);
+            if (workIterationResponse.error !== undefined) { throw teams.error; }
+            if (workIterationResponse.value === undefined) { throw new Error(`workIterationResponse.value === undefined ${JSON.stringify({ organization, project, team, workIteration })}`); }
+        }
     }
 }, 100000);
 
@@ -319,4 +289,21 @@ test('AzureDevOpsHelper - workTeamSettings', async () => {
         if (workTeamSettings.error !== undefined) { throw teams.error; }
         if (workTeamSettings.value === undefined) { throw new Error(`workTeamSettings(${JSON.stringify({ organization, project, teamId })}).value === undefined`); }
     }
+}, 100000);
+
+test('AzureDevOpsHelper - classificationNodes', async () => {
+    const file = path.join(__dirname, 'out', 'classificationNodes.json');
+    await writeFile(file, JSON.stringify({ message: 'test started' }, null, 2));
+
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+    const project      = config.azureDevOps.projectName;
+
+    const parameters = { organization, project, depth: 10000 };
+    const classificationNodes = await azureDevOpsHelper.classificationNodes(parameters);
+    if (classificationNodes.error !== undefined) { throw classificationNodes.error; }
+    if (classificationNodes.value === undefined) { throw new Error(`value === undefined for ${JSON.stringify({ parameters })}`); }
+
+    await writeFile(file, JSON.stringify(classificationNodes.value, null, 2));
 }, 100000);

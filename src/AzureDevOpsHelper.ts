@@ -7,6 +7,7 @@ import { GitRepository                                                 } from "a
 import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { ProjectInfo, WebApiTeam                                       } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 
 export class AzureDevOpsHelper {
 
@@ -61,22 +62,32 @@ export class AzureDevOpsHelper {
         }
     }
 
+    classificationNodes(parameters: { organization: string, project: string, depth?: number, ids?: number[], errorPolicy?: 'omit' | 'fail' }): Promise<{ value: WorkItemClassificationNode[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/classification-nodes/get-classification-nodes?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${parameters.organization}/${parameters.project}/_apis/wit/classificationnodes?api-version=7.1-preview.2`
+                  + (parameters.depth === undefined                                ? '' : `&$depth=${parameters.depth           }`)
+                  + (parameters.ids   === undefined || parameters.ids.length === 0 ? '' : `&ids=${parameters.ids.join(',')      }`)
+                  + (parameters.errorPolicy === undefined                          ? '' : `&errorPolicy=${parameters.errorPolicy}`);
+
+        return this.getValue(url);
+    }
+
     workIterations(organization: string, project: string, team: string): Promise<{ value: TeamSettingsIteration[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/work/iterations/list?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getValue(`https://dev.azure.com/${organization}/${project}/${team}/_apis/work/teamsettings/iterations?api-version=7.1-preview.1`);
     }
 
-    async workIteration(organization: string, project: string, team: string, iterationName: string): Promise<{ value: TeamSettingsIteration | undefined, error: Error | undefined }> {
-        const teams = await this.workIterations(organization, project, team);
+    async workIteration(organization: string, project: string, team: string, iterationPath: string): Promise<{ value: TeamSettingsIteration | undefined, error: Error | undefined }> {
+        const collection = await this.workIterations(organization, project, team);
 
-        if (teams.error !== undefined) {
-            return { value: undefined, error: teams.error };
+        if (collection.error !== undefined) {
+            return { value: undefined, error: collection.error };
         }
-        else if (teams.value === undefined) {
+        else if (collection.value === undefined) {
             return { value: undefined, error: new Error(`workIterations(${organization}, ${project}, ${team}).value === undefined`) };
         }
         else {
-            return { value: teams.value.find(p => p.name?.toLowerCase() === iterationName.toLowerCase()), error: undefined };
+            return { value: collection.value.find(p => p.path?.toLowerCase() === iterationPath.toLowerCase()), error: undefined };
         }
     }
 

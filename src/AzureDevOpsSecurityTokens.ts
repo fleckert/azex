@@ -1,5 +1,5 @@
-import { TeamSetting, TeamSettingsIteration } from "azure-devops-node-api/interfaces/WorkInterfaces";
-import { AzureDevOpsHelper } from "./AzureDevOpsHelper";
+import { AzureDevOpsHelper          } from "./AzureDevOpsHelper";
+import { WorkItemClassificationNode } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 
 export class AzureDevOpsSecurityTokens {
     static GitRepositories_Project                  (projectId: string                                          ) { return `repoV2/${projectId}`                              ; }
@@ -15,74 +15,62 @@ export class AzureDevOpsSecurityTokens {
         return `repoV2/${projectId}/${repositoryId}/${partsEncoded}/`;
     }
 
-    static Iteration_Team_Iteration(teamSetting: TeamSetting) {
-        return `vstfs:///Classification/Node/${teamSetting.backlogIteration.id}`;
-    }
-
-    static Iteration_Team_Iterations(teamSetting: TeamSetting, teamSettingsIteration: TeamSettingsIteration) {
-        return `vstfs:///Classification/Node/${teamSetting.backlogIteration.id}:vstfs:///Classification/Node/${teamSettingsIteration.id}`;
-    }
-
-    static async Iteration(azureDevOpsHelper: AzureDevOpsHelper, organization: string, projectName: string, teamName: string, iterationName: string | undefined): Promise<{ value: string | undefined, error: Error | undefined }> {
-        const team = await azureDevOpsHelper.team(organization, projectName, teamName);
-        if (team.error !== undefined) {
-            return { value: undefined, error: new Error(`Failed to resolve team for ${JSON.stringify({organization, projectName, teamName})}. [${team.error }]`) };
+    static async classificationNodes(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<{ value: Array<{ path: string, token: string }> | undefined, error: Error | undefined }> {
+        const depth = 10000;
+        const parameters = { organization, project, depth };
+        const classificationNodes = await azureDevOpsHelper.classificationNodes(parameters);
+        if (classificationNodes.error !== undefined) {
+            return { value: undefined, error: new Error(`Failed to resolve classificationNodes for ${JSON.stringify({ parameters })} [${classificationNodes.error}].`) }
         }
-        else if (team.value === undefined) {
-            return { value: undefined, error: new Error(`Failed to resolve team for ${JSON.stringify({organization, projectName, teamName})}.`) };
-        }
-        else if (team.value.id === undefined) {
-            return { value: undefined, error: new Error(`Failed to resolve id for team for ${JSON.stringify({organization, projectName, teamName})}.`) };
-        }
-        else if (team.value.projectId === undefined) {
-            return { value: undefined, error: new Error(`Failed to resolve projectId for ${JSON.stringify({organization, projectName, teamName})}.`) };
+        else if (classificationNodes.value === undefined) {
+            return { value: undefined, error: new Error(`Failed to resolve classificationNodes for ${JSON.stringify({ parameters })}.`) }
         }
         else {
-            const securityNamespaceName = 'Iteration';
-            const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-            if (securityNamespace.error !== undefined) {
-                return { value: undefined, error: new Error(`Failed to resolve securityNamespaces for ${JSON.stringify({organization, securityNamespaceName})}. [${securityNamespace.error}]`) };
-            }
-            else if (securityNamespace.value === undefined) {
-                return { value: undefined, error: new Error(`Failed to resolve securityNamespaces for ${JSON.stringify({organization, securityNamespaceName})}.`) };
-            }
-            else {
-                const securityNamespaceId = securityNamespace.value.namespaceId;
-                if (securityNamespaceId === undefined) {
-                    return { value: undefined, error: new Error(`Failed to resolve securityNamespace.id for ${JSON.stringify({organization, securityNamespaceName})}.`) };
-                }
-                else {
-                    const teamId = team.value.id;
-                    const project = team.value.projectId;
+            const collection = new Array<{ path: string, token: string }>();
 
-                    const workTeamSettings = await azureDevOpsHelper.workTeamSettings(organization, project, teamId);
-                    if (workTeamSettings.error !== undefined) {
-                        return { value: undefined, error: new Error(`Failed to resolve teamSettings for ${JSON.stringify({organization, project, teamName, teamId})}. [${workTeamSettings.error}]`) };
-                    }
-                    else if (workTeamSettings.value === undefined) {
-                        return { value: undefined, error: new Error(`Failed to resolve teamSettings for ${JSON.stringify({organization, project, teamName, teamId})}.`) };
-                    }
-                    else if (iterationName === undefined) {
-                        const token = AzureDevOpsSecurityTokens.Iteration_Team_Iteration(workTeamSettings.value);
+            const paths = this.resolvePaths(classificationNodes.value);
+            for (const path of paths) {
+                const nodes = this.resolveNodes(path, classificationNodes.value);
+                const token = nodes.map(p => `vstfs:///Classification/Node/${p.identifier}`).join(':');
 
-                        return { value: token, error: undefined };
-                    }
-                    else {
-                        const workIteration = await azureDevOpsHelper.workIteration(organization, project, teamId, iterationName);
-                        if (workIteration.error !== undefined) {
-                            return { value: undefined, error: new Error(`Failed to resolve iteration for ${JSON.stringify({organization, project, teamName, teamId, iterationName})}. [${workIteration.error}]`) };
-                        }
-                        else if (workIteration.value === undefined) {
-                            return { value: undefined, error: new Error(`Failed to resolve iteration for ${JSON.stringify({organization, project, teamName, teamId, iterationName})}.`) };
-                        }
-                        else {
-                            const token = AzureDevOpsSecurityTokens.Iteration_Team_Iterations(workTeamSettings.value, workIteration.value);
-
-                            return { value: token, error: undefined };
-                        }
-                    }
-                }
+                collection.push({ path, token });
             }
+
+            return { value: collection, error: undefined };
+        }
+    }
+
+    private static resolvePaths(nodes: WorkItemClassificationNode[]): string[] {
+        const paths = new Array<string>();
+
+        for (const node of nodes) {
+            if (node.path !== undefined) {
+                paths.push(node.path);
+            }
+            if (node.children !== undefined) {
+                const childPaths = this.resolvePaths(node.children);
+
+                paths.push(...childPaths);
+            }
+        }
+
+        return paths;
+    }
+
+    private static resolveNodes(path: string, nodes: WorkItemClassificationNode[]): WorkItemClassificationNode[] {
+        const node = nodes.find(p => p.path !== undefined && path.toLowerCase().startsWith(p.path!.toLowerCase()));
+
+        if (node === undefined) {
+            return new Array<WorkItemClassificationNode>();
+        }
+        else if (path.toLowerCase() === node.path?.toLowerCase()) {
+            return [node];
+        }
+        else if (node.children !== undefined) {
+            return [node, ...this.resolveNodes(path, node.children)];
+        }
+        else {
+            return new Array<WorkItemClassificationNode>();
         }
     }
 
