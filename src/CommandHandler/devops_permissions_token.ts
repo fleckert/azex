@@ -49,7 +49,7 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-${project}-classificationNodes`;
-            const valuesMapped =response.value.map(p => [p.path, p.token]);
+            const valuesMapped = response.value.map(p => [p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
@@ -87,7 +87,7 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-${project}-gitRepositories`;
-            const valuesMapped = response.value.map(p => [p.repository, p.token]);
+            const valuesMapped = response.value.map(p => [p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
@@ -125,7 +125,7 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-projects`;
-            const valuesMapped = response.value.map(p => [p.project, p.token]);
+            const valuesMapped = response.value.map(p => [p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
@@ -162,7 +162,7 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-tagging`;
-            const valuesMapped = response.value.map(p => [p.project, p.token]);
+            const valuesMapped = response.value.map(p => [p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
@@ -199,7 +199,7 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-buildDefinitions`;
-            const valuesMapped = response.value.map(p => [p.buildDefinition, p.token]);
+            const valuesMapped = response.value.map(p => [p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
@@ -237,7 +237,7 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-releaseDefinitions`;
-            const valuesMapped = response.value.map(p => [p.releaseDefinition, p.token]);
+            const valuesMapped = response.value.map(p => [p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
