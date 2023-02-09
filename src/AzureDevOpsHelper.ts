@@ -8,6 +8,8 @@ import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "a
 import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { ProjectInfo, WebApiTeam                                       } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
+import { BuildDefinition, BuildDefinitionReference } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { ReleaseDefinition, ReleaseDefinitionExpands } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 
 export class AzureDevOpsHelper {
 
@@ -16,6 +18,17 @@ export class AzureDevOpsHelper {
     projectsList(organization: string): Promise<{ value: ProjectInfo[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/projects/list?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getItemsWithContinuation(`https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`);
+    }
+
+    buildDefinitions(organization: string, project:string): Promise<{ value: BuildDefinitionReference[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/list?view=azure-devops-rest-7.1
+        return this.getItemsWithContinuation(`https://dev.azure.com/${organization}/${project}/_apis/build/definitions?api-version=7.1-preview.7`);
+    }
+
+    releaseDefinitions(organization: string, project:string): Promise<{ value: ReleaseDefinition[] | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/release/definitions/list?view=azure-devops-rest-7.1&tabs=HTTP
+
+        return this.getItemsWithContinuation(`https://vsrm.dev.azure.com/${organization}/${project}/_apis/release/definitions?api-version=7.1-preview.4&$expand=environments`);
     }
 
     graphGroupsList(organization: string): Promise<{ value: GraphGroup[] | undefined, error: Error | undefined }> {
@@ -197,6 +210,25 @@ export class AzureDevOpsHelper {
         }
         else {
             const item = projects.value.find(p => p.name?.toLowerCase() === projectName.toLowerCase());
+
+            return { value: item, error: undefined };
+        }
+    }
+
+    async projectByNameOrId(organization: string, projectNameOrId: string): Promise<{ value: ProjectInfo | undefined, error: Error | undefined }> {
+        const projects = await this.projectsList(organization);
+
+        if (projects.error !== undefined) {
+            return { value: undefined, error: projects.error };
+        }
+        else if (projects.value === undefined) {
+            return { value: undefined, error: new Error(`Failed to resolve projects for organization[${organization}].`) };
+        }
+        else {
+            const item = projects.value.find(
+                p => p.name?.toLowerCase() === projectNameOrId.toLowerCase() 
+                  || p.id?.  toLowerCase() === projectNameOrId.toLowerCase()
+            );
 
             return { value: item, error: undefined };
         }
