@@ -5,17 +5,6 @@ import { Markdown                  } from "../Converters/Markdown";
 import { Html                      } from "../Converters/Html";
 
 export class devops_permissions_token {
-    static async allold(organization: string, project: string, path: string): Promise<void>{
-        await Promise.all([
-            this.classificationNodes(organization, project, path),
-            this.gitRepositories    (organization, project, path),
-            this.projects           (organization,          path),
-            this.tagging            (organization,          path),
-            this.buildDefinitions   (organization, project, path),
-            this.releaseDefinitions (organization, project, path)
-        ])
-    }
-
     static async all(organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
@@ -122,11 +111,11 @@ export class devops_permissions_token {
         }
     }
 
-    static async projects(organization: string, path: string): Promise<void> {
+    static async projects(organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
         const azureDevOpsHelper = new AzureDevOpsHelper();
-        const response = await AzureDevOpsSecurityTokens.projects(azureDevOpsHelper, organization);
+        const response = await AzureDevOpsSecurityTokens.project(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
             throw new Error(`Failed to resolve projects ${JSON.stringify({ organization })}. [${response.error}]`);
@@ -159,11 +148,11 @@ export class devops_permissions_token {
         }
     }
 
-    static async tagging(organization: string, path: string): Promise<void> {
+    static async tagging(organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
         const azureDevOpsHelper = new AzureDevOpsHelper();
-        const response = await AzureDevOpsSecurityTokens.tagging(azureDevOpsHelper, organization);
+        const response = await AzureDevOpsSecurityTokens.tagging(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
             throw new Error(`Failed to resolve projects ${JSON.stringify({ organization })}. [${response.error}]`);

@@ -3,13 +3,14 @@ import axios from "axios";
 import { AzureDevOpsAccessControlList                                  } from "./models/AzureDevOpsAccessControlEntry";
 import { AzureDevOpsSecurityNamespace                                  } from "./models/AzureDevOpsSecurityNamespace";
 import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration } from "azure-devops-node-api/interfaces/WorkInterfaces";
+import { BuildDefinitionReference                                      } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { CommandRunner                                                 } from "./CommandRunner";
 import { GitRepository                                                 } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { ProjectInfo, WebApiTeam                                       } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { ReleaseDefinition                                             } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
-import { BuildDefinition, BuildDefinitionReference } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import { ReleaseDefinition, ReleaseDefinitionExpands } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 
 export class AzureDevOpsHelper {
 
@@ -285,7 +286,7 @@ export class AzureDevOpsHelper {
             const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/subjectlookup?api-version=7.1-preview.1`;
             const data = JSON.stringify({ lookupKeys: descriptors.map(descriptor => { return { descriptor } }) });
 
-            const response = await axios.post(url, data, { headers: this.getHeaders() });
+            const response = await axios.post(url, data, { headers: await this.getHeaders() });
 
             if (response.status === 200) {
                 const items: { [id: string] : GraphSubject; } = response.data.value;
@@ -324,7 +325,7 @@ export class AzureDevOpsHelper {
                 subjectKind
              });
 
-            const response = await axios.post(url, data, { headers: this.getHeaders() });
+            const response = await axios.post(url, data, { headers: await this.getHeaders() });
 
             if (response.status === 200) {
                 return response.data.count === 1 
@@ -340,20 +341,41 @@ export class AzureDevOpsHelper {
         }
     }
 
-    private getHeaders() {
+    private accessToken: string | undefined = undefined;
+
+    private async getHeaders() {
         const token = process.env.AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN;
+        if (token !== undefined && token.trim().length > 0) {
+            const headers = {
+                "Authorization": `Basic ${Buffer.from(`:${token}`, 'ascii').toString('base64')}`,
+                "Content-Type": "application/json"
+            };
+            return headers;
+        }
+
+        if (this.accessToken === undefined) {
+            // https://www.dylanberry.com/2021/02/21/how-to-get-a-pat-personal-access-token-for-azure-devops-from-the-az-cli/
+            const command = 'az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken --output tsv'
+
+            const { stdout, stderr } = await CommandRunner.runAndMap(command, stdOut => stdOut?.trim(), stdErr => stdErr?.trim());
+
+            if (stdout !== undefined && stderr?.length === 0) {
+                this.accessToken = stdout;
+            }
+        }
 
         const headers = {
-            "Authorization": `Basic ${Buffer.from(`:${token}`, 'ascii').toString('base64')}`,
+            'Authorization': `Basic ${Buffer.from(`:${this.accessToken}`, 'ascii').toString('base64')}`,
+            //'X-VSS-ForceMsaPassThrough': 'true',
             "Content-Type": "application/json"
-        };
+        }
 
         return headers;
     }
 
     private async get<T>(url: string): Promise<{ value: T | undefined, error: Error | undefined }> {
         try {
-            const response = await axios.get(url, { headers: this.getHeaders() });
+            const response = await axios.get(url, { headers: await this.getHeaders() });
 
             if (response.status === 200) {
                 const value: T = response.data;
@@ -371,7 +393,7 @@ export class AzureDevOpsHelper {
 
     private async getValue<T>(url: string): Promise<{ value: T | undefined, error: Error | undefined }> {
         try {
-            const response = await axios.get(url, { headers: this.getHeaders() });
+            const response = await axios.get(url, { headers: await this.getHeaders() });
 
             if (response.status === 200) {
                 const value: T = response.data.value;
@@ -391,7 +413,7 @@ export class AzureDevOpsHelper {
         try {
             const urlWithContinuation = continuationToken === undefined ? url : `${url}&continuationToken=${continuationToken}`;
 
-            const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
+            const response = await axios.get(urlWithContinuation, { headers: await this.getHeaders() });
 
             if (response.status === 200) {
                 const items: T[] = response.data.value;
