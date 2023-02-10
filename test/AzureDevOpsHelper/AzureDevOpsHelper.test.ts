@@ -3,6 +3,128 @@ import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsSecurityTokens } from "../../src/AzureDevOpsSecurityTokens";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { writeFile                 } from "fs/promises";
+import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Guid                      } from "../../src/Guid";
+
+test('AzureDevOpsHelper - graphUsersList', async () => {
+
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+
+    const file = path.join(__dirname, 'out', `test-graphUsersList-${organization}.json`);
+    await writeFile(file, JSON.stringify({ message: 'test started' }, null, 2));
+
+    const users = await azureDevOpsHelper.graphUsersList(organization);
+    if (users.error !== undefined) { throw users.error; }
+    if (users.value === undefined) { throw new Error("users.value === undefined"); }
+    await writeFile(file, JSON.stringify(users.value, null, 2));
+
+    users.value.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
+
+    const groups = await azureDevOpsHelper.graphGroupsList(organization);
+    if (groups.error !== undefined) { throw users.error; }
+    if (groups.value === undefined) { throw new Error("groups.value === undefined"); }
+
+    const usersGroups = new Array<{ user: GraphUser, groups: Array<GraphGroup> }>
+    for (const user of users.value.slice(0, 500)) { //todo
+        if (Guid.isGuid(user.principalName)) {
+            // skip the build in accounts
+            continue;
+        }
+        if (user.descriptor === undefined) {
+            continue;
+        }
+        const memberships = await azureDevOpsHelper.graphMembershipsList(organization, user.descriptor, 'up');
+        if (memberships.error !== undefined) { throw memberships.error; }
+        if (memberships.value === undefined) { throw new Error(`memberships.value === undefined`); }
+
+        const userGroups = { user, groups: new Array<GraphGroup>() };
+        for (const membership of memberships.value) {
+            const group = groups.value.find(p => p.descriptor === membership.containerDescriptor);
+            if (group !== undefined) {
+                userGroups.groups.push(group);
+            }
+        }
+        usersGroups.push(userGroups);
+    }
+
+    const getProjectNameFromGroup = (grp: GraphGroup): string => { return `${grp.principalName}`.split('\\')[0]?.replaceAll('[', '').replaceAll(']', '') }
+    const sortUsersGroupsFlat = (a: { user: { displayName: string | undefined } }, b: { user: { displayName: string | undefined } }) => `${a.user.displayName?.toLowerCase()}`.localeCompare(`${b.user.displayName?.toLowerCase()}`)
+
+    const usersGroupsFlat = usersGroups.map(userGroups => {
+        return {
+            user: {
+                principalName: userGroups.user.principalName,
+                displayName: userGroups.user.displayName
+            },
+            projects: [...new Set<string>(userGroups.groups.map(getProjectNameFromGroup))]
+        }
+    });
+
+    usersGroupsFlat.sort(sortUsersGroupsFlat);
+
+    const distinctProjects = new Set<string>();
+    for (const userGroupsFlat of usersGroupsFlat) {
+        for (const project of userGroupsFlat.projects) {
+            distinctProjects.add(project);
+        }
+    }
+    const distinctProjectsSorted = [...distinctProjects];
+    distinctProjectsSorted.sort();
+
+    const organizationFromProjects = distinctProjectsSorted.find(p => p.toLowerCase() === config.azureDevOps.organization.toLowerCase());
+    const projectsWithoutOrganization = distinctProjectsSorted.filter(p => p.toLowerCase() !== config.azureDevOps.organization.toLowerCase());
+    const distinctProjectsSortedWithorganizationFirst = [organizationFromProjects, ...projectsWithoutOrganization];
+    const lines = new Array<string>();
+    lines.push(`||${  distinctProjectsSortedWithorganizationFirst.map(p => `${p}|`).join('')}`);
+    lines.push(`|:-|${distinctProjectsSortedWithorganizationFirst.map(p => ':-:|' ).join('')}` );
+    for (const userGroupsFlat of usersGroupsFlat) {
+        const line = Array<string | undefined>();
+        line.push(`[${userGroupsFlat.user.displayName}](${userGroupsFlat.user.principalName})`);
+        for (const project of distinctProjectsSortedWithorganizationFirst) {
+            line.push(
+                userGroupsFlat.projects.find(p => p === project) === undefined
+                    ? undefined
+                    : 'x'
+            );
+        }
+        lines.push(`|${line.join('|')}|`);
+    }
+
+    await writeFile(file+'table.md', lines.join('\n'));
+    
+    // await writeFile(file + '.md', users.value.filter(p => Guid.isGuid(p.principalName) === false).map(p => `|${p.displayName}||${p.principalName}||\n`));
+}, 100000);
+
+test('AzureDevOpsHelper - userEntitlements', async () => {
+
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+
+    const users = await azureDevOpsHelper.graphUsersList(organization);
+    if (users.error !== undefined) { throw users.error; }
+    if (users.value === undefined) { throw new Error("users.value === undefined"); }
+    
+    const maxNumerOfTests = 5;
+
+    for (const user of users.value.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
+        const file = path.join(__dirname, 'out', `test-userEntitlements-${organization}-${user.principalName}.json`);
+        await writeFile(file, JSON.stringify({ message: 'test started' }, null, 2));
+       
+        const userEntitlements = await azureDevOpsHelper.userEntitlements(organization, user.descriptor!);
+        if (userEntitlements.error !== undefined) { throw users.error; }
+        if (userEntitlements.value === undefined) { throw new Error("userEntitlements.value === undefined"); }
+
+        await writeFile(file, JSON.stringify(userEntitlements.value , null, 2));
+    }
+  
+
+    // await writeFile(file+'table.md', lines.join('\n'));
+    
+    // await writeFile(file + '.md', users.value.filter(p => Guid.isGuid(p.principalName) === false).map(p => `|${p.displayName}||${p.principalName}||\n`));
+}, 100000);
 
 test('AzureDevOpsHelper - userByPrincipalName', async () => {
     const config = await TestConfigurationProvider.get();
@@ -26,6 +148,28 @@ test('AzureDevOpsHelper - userByPrincipalName', async () => {
     const graphSubject = await azureDevOpsHelper.userByPrincipalName(config.azureDevOps.organization, principalName);
     if (graphSubject.error !== undefined) { throw graphSubject.error; }
     if (graphSubject.value !== undefined) { throw new Error(`Resolved non-existent user for organization[${config.azureDevOps.organization}] principalName[${principalName}].`); }
+}, 100000);
+
+test('AzureDevOpsHelper - identityByDescriptor', async () => {
+    
+    const config = await TestConfigurationProvider.get();
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const organization = config.azureDevOps.organization;
+
+    const file = path.join(__dirname, 'out', `test-graphUsersList-${organization}.json`);
+    await writeFile(file, JSON.stringify({ message: 'test started' }, null, 2));
+
+    const users = await azureDevOpsHelper.graphUsersList(organization);
+    if (users.error !== undefined) { throw users.error; }
+    if (users.value === undefined) { throw new Error("users.value === undefined"); }
+
+    for (const user of users.value) {
+        if (user.descriptor !== undefined) {
+            const identity = await azureDevOpsHelper.identityByDescriptor(organization, user.descriptor)
+            if (identity.error !== undefined) { throw users.error; }
+            if (identity.value === undefined) { throw new Error("identity.value === undefined"); }
+        }
+    }
 }, 100000);
 
 test('AzureDevOpsHelper - groupByPrincipalName', async () => {

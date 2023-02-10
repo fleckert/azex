@@ -57,6 +57,13 @@ export class AzureDevOpsHelper {
         return this.getValue(`https://vssps.dev.azure.com/${organization}/_apis/graph/Memberships/${subjectDescriptor}?direction=${direction}&api-version=7.1-preview.1`);
     }
 
+    userEntitlements(organization: string, descriptor: string): Promise<{ value: any | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/get?view=azure-devops-rest-7.1&tabs=HTTP
+        // npm package has no definitions for this...?!?
+        const url = `https://vsaex.dev.azure.com/${organization}/_apis/userentitlements/${descriptor}?api-version=7.1-preview.3`;
+        return this.get(url);
+    }
+
     teams(organization: string): Promise<{ value: WebApiTeam[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/teams/get-all-teams?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getValue(`https://dev.azure.com/${organization}/_apis/teams?api-version=7.1-preview.3`);
@@ -117,18 +124,19 @@ export class AzureDevOpsHelper {
 
     accessControlLists(query: {organization: string, securityNamespaceId: string, token?: string, descriptors?: Array<string>, includeExtendedInfo?: boolean, recurse?: boolean}): Promise<{ value: AzureDevOpsAccessControlList[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/security/access-control-lists/query?view=azure-devops-rest-7.1&tabs=HTTP
-        return this.getValue(
-            `https://dev.azure.com/${query.organization}/_apis/accesscontrollists/${query.securityNamespaceId}?api-version=7.1-preview.1` +
-                (query.token               === undefined ? '' : `&token=${               query.token                                   }`)+
-                (query.descriptors         === undefined ? '' : `&descriptors=${         query.descriptors.join(',')                   }`)+
-                (query.includeExtendedInfo === undefined ? '' : `&includeExtendedInfo=${(query.includeExtendedInfo ? 'true' : 'false') }`)+
-                (query.recurse             === undefined ? '' : `&recurse=${            (query.recurse             ? 'true' : 'false') }`)
-        );
+        const url =  `https://dev.azure.com/${query.organization}/_apis/accesscontrollists/${query.securityNamespaceId}?api-version=7.1-preview.1` +
+                    (query.token               === undefined ? '' : `&token=${               query.token                                   }`) +
+                    (query.descriptors         === undefined ? '' : `&descriptors=${         query.descriptors.join(',')                   }`) +
+                    (query.includeExtendedInfo === undefined ? '' : `&includeExtendedInfo=${(query.includeExtendedInfo ? 'true' : 'false') }`) +
+                    (query.recurse             === undefined ? '' : `&recurse=${            (query.recurse             ? 'true' : 'false') }`);
+
+        return this.getValue(url);
     }
 
     identitiesByDescriptors(organization: string, identityDescriptors: Array<string>): Promise<{ value: Identity[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/ims/identities/read-identities?view=azure-devops-rest-7.1&tabs=HTTP
-        return this.getValue(`https://vssps.dev.azure.com/${organization}/_apis/identities?descriptors=${identityDescriptors.join(',')}&api-version=7.1-preview.1`);
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/identities?descriptors=${identityDescriptors.join(',')}&api-version=7.1-preview.1`;
+        return this.getValue(url);
     }
 
     gitRepositories(organization: string,project: string): Promise<{ value: GitRepository[] | undefined, error: Error | undefined }> {
@@ -148,7 +156,7 @@ export class AzureDevOpsHelper {
             return { value: undefined, error: new Error(`identitiesByDescriptors(${organization}, [${identityDescriptor}]) returns ${identity.value.length} items.`) };
         }
         else {
-            return { value: identity.value[0], error: undefined };
+            return { value: identity.value[0] === null ? undefined : identity.value[0], error: undefined };
         }
     }
 
@@ -188,7 +196,7 @@ export class AzureDevOpsHelper {
             return { value: undefined, error: new Error(`getValue(${url}).value returns ${response.value.length} items`) };
         }
         else {
-            return { value: response.value[0], error: undefined };
+            return { value: response.value[0] === null ? undefined : response.value[0], error: undefined };
         }
     }
 
