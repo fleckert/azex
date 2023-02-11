@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import { devops_identity_show } from "./CommandHandler/devops_identity_show";
 import { devops_permissions_export } from "./CommandHandler/devops_permissions_export";
 import { devops_permissions_show } from "./CommandHandler/devops_permissions_show";
 import { devops_permissions_token } from "./CommandHandler/devops_permissions_token";
@@ -94,6 +95,40 @@ else if (args[0]?.toLowerCase() === "devops") {
             else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
             else {
                 devops_permissions_token.classificationNodes(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+            }
+        }
+        else {
+            console.error(`${args[0]} ${args[1]} ${args[2]} - unknown command`.toLowerCase());
+        }
+    }
+    else if (args[1]?.toLowerCase() === "identity") {
+        if (args[2]?.toLowerCase() === "show") {
+            if (args[3]?.toLowerCase() === "user") {
+                var argv = require('minimist')(process.argv.slice(4));
+
+                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+                else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
+                else {
+                    devops_identity_show.resolve(argv.organization, argv.principalName, ['User']);
+                }
+            }
+            else if (args[3]?.toLowerCase() === "group") {
+                var argv = require('minimist')(process.argv.slice(4));
+
+                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+                else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
+                else {
+                    devops_identity_show.resolve(argv.organization, argv.principalName, ['Group']);
+                }
+            }
+            else{
+                var argv = require('minimist')(process.argv.slice(3));
+
+                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+                else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
+                else {
+                    devops_identity_show.resolve(argv.organization, argv.principalName, ['User', 'Group']);
+                }
             }
         }
         else {

@@ -139,24 +139,63 @@ export class AzureDevOpsHelper {
         return this.getValue(url);
     }
 
+    identitiesBySubjectDescriptors(organization: string, subjectDescriptors: Array<string>): Promise<{ value: Identity[]  | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/ims/identities/read-identities?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/identities?subjectDescriptors=${subjectDescriptors.join(',')}&api-version=7.1-preview.1`;
+        return this.getValue(url);
+    }
+
+    async userFromIdentity(organization: string, identityDescriptor: string): Promise<{ value: GraphUser | undefined, error: Error | undefined }> {
+        const identity = await this.identityByDescriptor(organization, identityDescriptor);
+        if (identity.error !== undefined) {
+            return { value: undefined, error: identity.error };
+        }
+        else if (identity.value === undefined) {
+            return { value: undefined, error: new Error(`identityByDescriptor(${organization}, ${identityDescriptor}).value === undefined`) };
+        }
+        else if (identity.value.subjectDescriptor === undefined) {
+            return { value: undefined, error: new Error(`identityByDescriptor(${organization}, ${identityDescriptor}).value.subjectDescriptor === undefined`) };
+        }
+        else {
+            return await this.userBySubjectDescriptor(organization, identity.value.subjectDescriptor);
+        }
+    }
+
     gitRepositories(organization: string,project: string): Promise<{ value: GitRepository[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getValue(`https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`)
     }
 
     async identityByDescriptor(organization: string, identityDescriptor: string): Promise<{ value: Identity | undefined, error: Error | undefined }> {
-        const identity = await this.identitiesByDescriptors(organization, [identityDescriptor]);
-        if (identity.error !== undefined) {
-            return { value: undefined, error: identity.error };
+        const identities = await this.identitiesByDescriptors(organization, [identityDescriptor]);
+        if (identities.error !== undefined) {
+            return { value: undefined, error: identities.error };
         }
-        else if (identity.value === undefined) {
+        else if (identities.value === undefined) {
             return { value: undefined, error: new Error(`identitiesByDescriptors(${organization}, [${identityDescriptor}]).value === undefined`) };
         }
-        else if (identity.value.length !== 1) {
-            return { value: undefined, error: new Error(`identitiesByDescriptors(${organization}, [${identityDescriptor}]) returns ${identity.value.length} items.`) };
+        else if (identities.value.length !== 1) {
+            return { value: undefined, error: new Error(`identitiesByDescriptors(${organization}, [${identityDescriptor}]).value.length !== 1`) };
         }
         else {
-            return { value: identity.value[0] === null ? undefined : identity.value[0], error: undefined };
+            return { value: identities.value[0] === null ? undefined : identities.value[0], error: undefined };
+        }
+    }
+
+    async identityBySubjectDescriptor(organization: string, subjectDescriptor: string): Promise<{ value: Identity | undefined, error: Error | undefined }> {
+        const identities = await this.identitiesBySubjectDescriptors(organization, [subjectDescriptor]);
+
+        if (identities.error !== undefined) {
+            return { value: undefined, error: identities.error };
+        }
+        else if (identities.value === undefined) {
+            return { value: undefined, error: new Error(`identityBySubjectDescriptor(${organization}, [${subjectDescriptor}]).value === undefined`) };
+        }
+        else if (identities.value.length !== 1) {
+            return { value: undefined, error: new Error(`identityBySubjectDescriptor(${organization}, [${subjectDescriptor}]).value.length !== 1`) };
+        }
+        else {
+            return { value: identities.value[0]=== null?undefined : identities.value[0], error: undefined };
         }
     }
 
@@ -202,6 +241,12 @@ export class AzureDevOpsHelper {
 
     userByPrincipalName(organization: string, principalName: string): Promise<{ value: GraphSubject | undefined, error: Error | undefined }> {
         return this.graphSubjectQueryByPrincipalName(organization, ['User'], principalName);
+    }
+
+    userBySubjectDescriptor(organization: string, subjectDescriptor: string): Promise<{ value: GraphUser | undefined, error: Error | undefined }> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/get?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/users/${subjectDescriptor}?api-version=7.1-preview.1`;
+        return this.get(url);
     }
 
     groupByPrincipalName(organization: string, principalName: string): Promise<{ value: GraphSubject | undefined, error: Error | undefined }> {

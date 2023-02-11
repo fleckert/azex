@@ -11,13 +11,14 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
 
     const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
     const azureDevOpsHelper              = new AzureDevOpsHelper             ();
+    const pathOut = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
 
     const config = await TestConfigurationProvider.get();
 
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);
-
     if (users.error !== undefined) { throw users.error; }
     if (users.value === undefined) { throw new Error("users.value === undefined"); }
+    await writeFile(`${pathOut}-users.json`, JSON.stringify(users.value, null, 2));
 
     const maxNumerOfTests = 5;
 
@@ -33,7 +34,7 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
 
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
-        const pathOut = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
+        
         const title = `${config.azureDevOps.organization                    }-`
                     + `${config.azureDevOps.projectName                     }-`
                     + `${graphSubjectMemberOf.value.graphSubject.subjectKind}-`
