@@ -5,7 +5,7 @@ import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { writeFile                 } from "fs/promises";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
-import { TestHelper } from "../_TestHelper/TestHelper";
+import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('AzureDevOpsHelper - user-per-project', async () => {
 
