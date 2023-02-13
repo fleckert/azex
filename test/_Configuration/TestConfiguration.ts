@@ -13,6 +13,7 @@ export interface TestConfiguration {
     groupNames           : Array<string>;
     servicePrincipalNames: Array<string>;
     azureDevOps: {
+        baseUrl     : string,
         organization: string,
         projectName : string
     },
