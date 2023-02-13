@@ -12,8 +12,7 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
     const baseUrl = config.azureDevOps.baseUrl;
 
     const azureDevOpsHelper = new AzureDevOpsHelper();
-    const token = await azureDevOpsHelper.getPersonalAccessToken();
-    const azureDevOpsWrapper = new AzureDevOpsWrapper(baseUrl, token);
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl);
 
     const gitRepositories = await azureDevOpsWrapper.gitRepositories(projectName);
 

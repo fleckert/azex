@@ -13,15 +13,14 @@ test('AzureDevOpsHelper - user-per-project', async () => {
     const organization = config.azureDevOps.organization;
     const baseUrl = config.azureDevOps.baseUrl;
     const azureDevOpsHelper = new AzureDevOpsHelper();
-    const token = await azureDevOpsHelper.getPersonalAccessToken();
-    const azureDevOpsWrapper = new AzureDevOpsWrapper(baseUrl, token);
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl);
 
     const maxNumerOfTests = 500;
 
     const file = path.join(__dirname, 'out', `user-per-project-${organization}-1.md`);
     await writeFile(file, 'test started');
 
-    const projectsList = await azureDevOpsWrapper.projects(organization);
+    const projectsList = await azureDevOpsWrapper.projects();
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
     TestHelper.checkValueAndError(users, { organization });
