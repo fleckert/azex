@@ -8,7 +8,7 @@ import { CommandRunner                                                 } from ".
 import { GitRepository                                                 } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
-import { ProjectInfo, WebApiTeam                                       } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { TeamProjectReference, WebApiTeam                              } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { ReleaseDefinition                                             } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 
@@ -16,7 +16,7 @@ export class AzureDevOpsHelper {
 
     private readonly continuationTokenHeader = "x-ms-continuationtoken";
 
-    projectsList(organization: string): Promise<{ value: ProjectInfo[] | undefined, error: Error | undefined }> {
+    projectsList(organization: string): Promise<{ value: TeamProjectReference[] | undefined, error: Error | undefined }> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/projects/list?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getItemsWithContinuation(`https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`);
     }
@@ -253,7 +253,7 @@ export class AzureDevOpsHelper {
         return this.graphSubjectQueryByPrincipalName(organization, ['Group'], principalName);
     }
 
-    async projectByName(organization: string, projectName: string): Promise<{ value: ProjectInfo | undefined, error: Error | undefined }> {
+    async projectByName(organization: string, projectName: string): Promise<{ value: TeamProjectReference | undefined, error: Error | undefined }> {
         const projects = await this.projectsList(organization);
 
         if (projects.error !== undefined) {
@@ -269,7 +269,7 @@ export class AzureDevOpsHelper {
         }
     }
 
-    async projectByNameOrId(organization: string, projectNameOrId: string): Promise<{ value: ProjectInfo | undefined, error: Error | undefined }> {
+    async projectByNameOrId(organization: string, projectNameOrId: string): Promise<{ value: TeamProjectReference | undefined, error: Error | undefined }> {
         const projects = await this.projectsList(organization);
 
         if (projects.error !== undefined) {
@@ -396,14 +396,13 @@ export class AzureDevOpsHelper {
 
     private accessToken: string | undefined = undefined;
 
-    private async getHeaders() {
-        const token = process.env.AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN;
-        if (token !== undefined && token.trim().length > 0) {
-            const headers = {
-                "Authorization": `Basic ${Buffer.from(`:${token}`, 'ascii').toString('base64')}`,
-                "Content-Type": "application/json"
-            };
-            return headers;
+    async getPersonalAccessToken(): Promise<string> {
+
+        if (this.accessToken === undefined) {
+            const token = process.env.AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN;
+            if (token !== undefined && token.trim().length > 0) {
+                return token;
+            }
         }
 
         if (this.accessToken === undefined) {
@@ -417,8 +416,16 @@ export class AzureDevOpsHelper {
             }
         }
 
+        if (this.accessToken === undefined) {
+            throw new Error('Failed to resolve accessToken');
+        }
+        return this.accessToken;
+    }
+
+    private async getHeaders() {
+       const token = await this.getPersonalAccessToken();
         const headers = {
-            'Authorization': `Basic ${Buffer.from(`:${this.accessToken}`, 'ascii').toString('base64')}`,
+            'Authorization': `Basic ${Buffer.from(`:${token}`, 'ascii').toString('base64')}`,
             //'X-VSS-ForceMsaPassThrough': 'true',
             "Content-Type": "application/json"
         }

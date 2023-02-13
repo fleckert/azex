@@ -1,32 +1,38 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsWrapper        } from "../../src/AzureDevOpsWrapper";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { writeFile                 } from "fs/promises";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
+import { TestHelper } from "../_TestHelper/TestHelper";
 
 test('AzureDevOpsHelper - user-per-project', async () => {
 
     const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
     const organization = config.azureDevOps.organization;
-    const maxNumerOfTests = 1000;
+    const baseUrl = config.azureDevOps.baseUrl;
+    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const token = await azureDevOpsHelper.getPersonalAccessToken();
+    const azureDevOpsWrapper = new AzureDevOpsWrapper(baseUrl, token);
 
-    const file = path.join(__dirname, 'out', `user-per-project-${organization}.md`);
+    const maxNumerOfTests = 500;
+
+    const file = path.join(__dirname, 'out', `user-per-project-${organization}-1.md`);
     await writeFile(file, 'test started');
 
-    const users = await azureDevOpsHelper.graphUsersList(organization);
-    if (users.error !== undefined) { throw users.error; }
-    if (users.value === undefined) { throw new Error("users.value === undefined"); }
+    const projectsList = await azureDevOpsWrapper.projects(organization);
 
-    users.value.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
+    const users = await azureDevOpsHelper.graphUsersList(organization);
+    TestHelper.checkValueAndError(users, { organization });
+
+    users.value!.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization);
-    if (groups.error !== undefined) { throw users.error; }
-    if (groups.value === undefined) { throw new Error("groups.value === undefined"); }
+    TestHelper.checkValueAndError(groups, { organization });
 
     const usersGroups = new Array<{ user: GraphUser, groups: Array<GraphGroup> }>
-    for (const user of users.value.slice(0, maxNumerOfTests)) {
+    for (const user of users.value!.slice(0, maxNumerOfTests)) {
         if (Guid.isGuid(user.principalName)) {
             // skip the build in accounts
             continue;
@@ -34,13 +40,14 @@ test('AzureDevOpsHelper - user-per-project', async () => {
         if (user.descriptor === undefined) {
             continue;
         }
-        const memberships = await azureDevOpsHelper.graphMembershipsList(organization, user.descriptor, 'up');
-        if (memberships.error !== undefined) { throw memberships.error; }
-        if (memberships.value === undefined) { throw new Error(`memberships.value === undefined`); }
+        const subjectDescriptor = user.descriptor;;
+        const direction = 'up';
+        const memberships = await azureDevOpsHelper.graphMembershipsList(organization, subjectDescriptor, direction);
+        TestHelper.checkValueAndError(memberships, { organization, subjectDescriptor, direction });
 
         const userGroups = { user, groups: new Array<GraphGroup>() };
-        for (const membership of memberships.value) {
-            const group = groups.value.find(p => p.descriptor === membership.containerDescriptor);
+        for (const membership of memberships.value!) {
+            const group = groups.value!.find(p => p.descriptor === membership.containerDescriptor);
             if (group !== undefined) {
                 userGroups.groups.push(group);
             }
@@ -48,64 +55,55 @@ test('AzureDevOpsHelper - user-per-project', async () => {
         usersGroups.push(userGroups);
     }
 
+    usersGroups.sort((a: { user: GraphUser }, b: { user: GraphUser }) => `${a.user.displayName?.toLowerCase()}`.localeCompare(`${b.user.displayName?.toLowerCase()}`));
     const getProjectNameFromGroup = (grp: GraphGroup): string => { return `${grp.principalName}`.split('\\')[0]?.replaceAll('[', '').replaceAll(']', '') }
-    const sortUsersGroupsFlat = (a: { user: { displayName: string | undefined } }, b: { user: { displayName: string | undefined } }) => `${a.user.displayName?.toLowerCase()}`.localeCompare(`${b.user.displayName?.toLowerCase()}`)
-    const containsGroupType = (grps: Array<GraphGroup>, groupType: string): boolean | undefined => {
-        for (const grp of grps) {
-            const parts = `${grp.principalName}`.split('\\');
-            if (parts.length !== 2) { return undefined; }
-            if (parts[1].toLowerCase() === groupType.toLowerCase()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    const usersGroupsFlat = usersGroups.map(userGroups => {
-        return {
-            user: {
-                principalName: userGroups.user.principalName,
-                displayName: userGroups.user.displayName,
-                url: userGroups.user.url
-            },
-            projects: [...new Set<string>(userGroups.groups.map(getProjectNameFromGroup))]
-        }
-    });
-
-    usersGroupsFlat.sort(sortUsersGroupsFlat);
 
     const distinctProjects = new Set<string>();
-    for (const userGroupsFlat of usersGroupsFlat) {
-        for (const project of userGroupsFlat.projects) {
+    for (const userGroupsFlat of usersGroups) {
+        for (const project of userGroupsFlat.groups.map(getProjectNameFromGroup)) {
             distinctProjects.add(project);
         }
     }
     const distinctProjectsSorted = [...distinctProjects];
     distinctProjectsSorted.sort();
-
-    const organizationFromProjects = distinctProjectsSorted.find(p => p.toLowerCase() === config.azureDevOps.organization.toLowerCase());
+    const organizationFromProjects    = distinctProjectsSorted.find  (p => p.toLowerCase() === config.azureDevOps.organization.toLowerCase());
     const projectsWithoutOrganization = distinctProjectsSorted.filter(p => p.toLowerCase() !== config.azureDevOps.organization.toLowerCase());
-    const distinctProjectsSortedWithorganizationFirst = [organizationFromProjects, ...projectsWithoutOrganization];
+    const distinctProjectsSortedWithorganizationFirst = [organizationFromProjects ?? organization, ...projectsWithoutOrganization];
 
     const countsOfUsers = new Array<number>();
     for (const item of distinctProjectsSortedWithorganizationFirst) {
-        const count = usersGroupsFlat.filter(p => p.projects.find(p => p.toLowerCase() === item?.toLowerCase()) !== undefined).length;
+        let count  = 0;
+        for(const userGroups of usersGroups){
+            if(userGroups.groups.find(p => p.principalName?.toLowerCase().startsWith(`[${item?.toLowerCase()}]`)) !== undefined){
+                count++;
+            }
+        }
         countsOfUsers.push(count);
     }
 
+    const lineBreak = "&#013;"
     const lines = new Array<string>();
     lines.push(`|  |${distinctProjectsSortedWithorganizationFirst.map(p => `${p}|`).join('')}`);
     lines.push(`|:-|${distinctProjectsSortedWithorganizationFirst.map(p => ':-: |').join('')}`);
-    lines.push(`|  |${countsOfUsers.map(p => `${p}|`).join('')}`);
-    for (const userGroupsFlat of usersGroupsFlat) {
+    lines.push(`|  |${countsOfUsers                              .map(p => `${p}|`).join('')}`);
+    for (const userGroups of usersGroups) {
         const line = Array<string | undefined>();
-        line.push(`[${userGroupsFlat.user.displayName}](${userGroupsFlat.user.url} "${userGroupsFlat.user.principalName}")`);
+        line.push(`[${userGroups.user.displayName}](${userGroups.user.url} "${userGroups.user.principalName}")`);
         for (const project of distinctProjectsSortedWithorganizationFirst) {
-            line.push(
-                userGroupsFlat.projects.find(p => p === project) === undefined
-                    ? undefined
-                    : '•'
-            );
+            if (userGroups.groups.find(p => p.principalName?.toLowerCase().startsWith(`[${project.toLowerCase()}]`)) === undefined) {
+                line.push(undefined);
+            }
+            else {
+                const projectItem = projectsList.find(p => p.name?.toLowerCase() === project?.toLowerCase());
+
+                const groupsInProject = userGroups.groups.filter(p => p.principalName?.toLowerCase().startsWith(`[${project?.toLowerCase()}]`)).map(p => p.principalName?.split('\\')[1]);
+                groupsInProject.sort();
+                const link = project?.toLowerCase() === organization.toLowerCase()
+                           ? baseUrl
+                           : projectItem?._links?.web?.href?.replaceAll(' ', '%20');
+
+                line.push(`[•](${link ?? ''} "${groupsInProject.map(p => `${p?.trim()}`).join(lineBreak)}")`);
+            }
         }
         lines.push(`|${line.join('|')}|`);
     }
