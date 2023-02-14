@@ -2,7 +2,17 @@
 
 # devops permissions show
 
-![](azex-devops-permissions-show-your-organization-your-project-user-florian.eckert%40expectingsnow.com.png)
-![](azex-devops-permissions-show-your-organization-your-project-user-florian.eckert%40expectingsnow.com.svg)
-![](azex-devops-permissions-show-your-organization-user-florian.eckert%40expectingsnow.com.png)
+
+`azex devops permissions show --organization ... --principalName ... [--project ...] [--out ...]`
+
+<hr/>
+
+`azex devops permissions show --organization your-organization --principalName florian.eckert@expectingsnow.com`
+
 ![](azex-devops-permissions-show-your-organization-user-florian.eckert%40expectingsnow.com.svg)
+
+<hr/>
+
+`azex devops permissions show --organization your-organization --principalName florian.eckert@expectingsnow.com --project your-project`
+
+![](azex-devops-permissions-show-your-organization-your-project-user-florian.eckert%40expectingsnow.com.svg)
