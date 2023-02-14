@@ -36,9 +36,9 @@
         "zzz-test-app--'--chars"
     ],
     "azureDevOps": {
-        "baseUrl": "https://dev.azure.com/xxx",
-        "organization": "xxx",
-        "projectName": "xxx"
+        "baseUrl": "https://dev.azure.com/lseg",
+        "organization": "lseg",
+        "projectName": "foundation"
     },
     "azureResources": {
         "location": "westeurope",

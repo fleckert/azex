@@ -14,24 +14,21 @@ const accessControlListsTest = async (azureDevOpsHelper: AzureDevOpsHelper, para
 }): Promise<void> => {
 
     const accessControlLists = await azureDevOpsHelper.accessControlLists(parameters);
-    TestHelper.checkValueAndError(accessControlLists, parameters);
 
     const maxNumerOfTests = 5;
 
-    for (const accessControlList of accessControlLists.value!.slice(0, maxNumerOfTests)) {
+    for (const accessControlList of accessControlLists.slice(0, maxNumerOfTests)) {
         parameters.token = accessControlList.token!;
         const accessControlListsItem = await azureDevOpsHelper.accessControlLists(parameters);
-        TestHelper.checkValueAndError(accessControlListsItem, parameters);
     }
 
-    for (const accessControlList of accessControlLists.value!.slice(0, maxNumerOfTests)) {
+    for (const accessControlList of accessControlLists.slice(0, maxNumerOfTests)) {
         parameters.token = undefined;
         parameters.descriptors = new Array<string>();
         for (const key in accessControlList.acesDictionary) {
             parameters.descriptors.push(key);
         }
         const accessControlListsItem = await azureDevOpsHelper.accessControlLists(parameters);
-        TestHelper.checkValueAndError(accessControlListsItem, parameters);
     }
 }
 
@@ -45,11 +42,10 @@ test('AzureDevOpsHelper - accessControlLists', async () => {
     await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-securityNamespaces.json`), JSON.stringify({ message: 'test started' }, null, 2));
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
     await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-securityNamespaces.json`), JSON.stringify(securityNamespaces, null, 2));
-    TestHelper.checkValueAndError(securityNamespaces, { organization });
 
     const maxNumerOfTests = 5;
 
-    for (const securityNamespace of securityNamespaces.value!.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+    for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
         const securityNamespaceId = securityNamespace.namespaceId!;
 
         await accessControlListsTest(azureDevOpsHelper, { organization, securityNamespaceId, includeExtendedInfo: undefined, recurse: undefined });

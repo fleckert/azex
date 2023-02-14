@@ -7,12 +7,10 @@ test('devops_identity_show-user', async () => {
     const azureDevOpsHelper = new AzureDevOpsHelper();
 
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);
-    if (users.error !== undefined) { throw users.error; }
-    if (users.value === undefined) { throw new Error("users.value === undefined"); }
 
     const maxNumerOfTests = 5;
 
-    for (const graphUser of users.value.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
         await devops_identity_show.resolve(config.azureDevOps.organization, principalName, ['User']);
@@ -24,12 +22,10 @@ test('devops_identity_show-group', async () => {
     const azureDevOpsHelper = new AzureDevOpsHelper();
 
     const groups = await azureDevOpsHelper.graphGroupsList(config.azureDevOps.organization);
-    if (groups.error !== undefined) { throw groups.error; }
-    if (groups.value === undefined) { throw new Error("users.value === undefined"); }
 
     const maxNumerOfTests = 5;
 
-    for (const graphGroup of groups.value.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+    for (const graphGroup of groups.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphGroup.principalName!;
 
         await devops_identity_show.resolve(config.azureDevOps.organization, principalName, ['Group']);

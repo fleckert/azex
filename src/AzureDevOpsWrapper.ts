@@ -6,6 +6,8 @@ import { TeamProject, TeamProjectReference } from "azure-devops-node-api/interfa
 import { CommandRunner                     } from "./CommandRunner";
 import { WorkItemTrackingProcessApi } from "azure-devops-node-api/WorkItemTrackingProcessApi";
 import { ProcessWorkItemType, ProcessWorkItemTypeField } from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import { WorkApi } from "azure-devops-node-api/WorkApi";
+import { TeamSetting } from "azure-devops-node-api/interfaces/WorkInterfaces";
 
 export class AzureDevOpsWrapper {
     readonly requestHandlers:  IRequestHandler[];
@@ -96,6 +98,10 @@ export class AzureDevOpsWrapper {
         }
 
         return items;
+    }
+
+    workTeamSettings(projectId: string, teamId: string): Promise<TeamSetting> {
+        return new WorkApi(this.baseUrl, this.requestHandlers).getTeamSettings({ projectId, teamId });
     }
 
     private async projectsInternal(): Promise<Array<TeamProjectReference>> {

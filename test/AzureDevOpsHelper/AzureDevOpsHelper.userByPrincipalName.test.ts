@@ -8,11 +8,10 @@ test('AzureDevOpsHelper - userByPrincipalName', async () => {
     const organization = config.azureDevOps.organization;
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
-    TestHelper.checkValueAndError(users, { organization });
 
     const maxNumerOfTests = 5;
 
-    for (const graphUser of users.value!.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
         const graphSubject = await azureDevOpsHelper.userByPrincipalName(organization, principalName);

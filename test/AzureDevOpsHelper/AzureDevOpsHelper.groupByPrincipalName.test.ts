@@ -14,11 +14,10 @@ test('AzureDevOpsHelper - groupByPrincipalName', async () => {
     await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-groups.json`), JSON.stringify({ message: 'test started' }, null, 2));
     const groups = await azureDevOpsHelper.graphGroupsList(organization);
     await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-groups.json`), JSON.stringify(groups, null, 2));
-    TestHelper.checkValueAndError(groups, { organization });
 
     const maxNumerOfTests = 5;
 
-    for (const graphGroup of groups.value!.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+    for (const graphGroup of groups.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphGroup.principalName!;
 
         const graphSubject = await azureDevOpsHelper.groupByPrincipalName(organization, principalName);

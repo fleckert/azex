@@ -16,13 +16,11 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
     const config = await TestConfigurationProvider.get();
 
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);
-    if (users.error !== undefined) { throw users.error; }
-    if (users.value === undefined) { throw new Error("users.value === undefined"); }
-    await writeFile(`${pathOut}-users.json`, JSON.stringify(users.value, null, 2));
+    await writeFile(`${pathOut}-users.json`, JSON.stringify(users, null, 2));
 
     const maxNumerOfTests = 5;
 
-    for (const graphSubject of users.value.slice(0, maxNumerOfTests)) {
+    for (const graphSubject of users.slice(0, maxNumerOfTests)) {
         if (graphSubject.descriptor === undefined) { throw new Error("graphSubject.descriptor === undefined"); }
 
         const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(config.azureDevOps.organization, config.azureDevOps.projectName, graphSubject.descriptor);

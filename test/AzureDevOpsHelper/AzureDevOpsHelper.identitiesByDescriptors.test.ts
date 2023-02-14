@@ -9,24 +9,18 @@ test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
     const organization = config.azureDevOps.organization;
 
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
-    if (securityNamespaces.error !== undefined) { throw securityNamespaces.error; }
-    if (securityNamespaces.value === undefined) { throw new Error(`securityNamespaces(${organization}).value === undefined`); }
 
     const maxNumerOfTests = 5;
 
-    for (const securityNamespace of securityNamespaces.value.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+    for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
         const securityNamespaceId = securityNamespace.namespaceId!;
 
         const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId });
-        if (accessControlLists.error !== undefined) { throw accessControlLists.error; }
-        if (accessControlLists.value === undefined) { throw new Error(`accessControlLists(${organization}, ${securityNamespaceId}).value === undefined`); }
 
-        for (const accessControlList of accessControlLists.value) {
+        for (const accessControlList of accessControlLists) {
             for (const descriptor in accessControlList.acesDictionary) {
                 const identities = await azureDevOpsHelper.identitiesByDescriptors(organization, [descriptor]);
-                if (identities.error !== undefined) { throw identities.error; }
-                if (identities.value === undefined) { throw new Error(`identitiesByDescriptors(${organization}, [${descriptor}]).value === undefined`); }
-                if (identities.value.length !== 1) { throw new Error(`identitiesByDescriptors(${organization}, [${descriptor}]) returns ${identities.value.length} items.`) }
+                if (identities.length !== 1) { throw new Error(`identitiesByDescriptors(${organization}, [${descriptor}]) returns ${identities.length} items.`) }
 
                 const identity = await azureDevOpsHelper.identityByDescriptor(organization, descriptor);
                 if (identity.error !== undefined) { throw identity.error; }
@@ -45,12 +39,10 @@ test('AzureDevOpsHelper - identityBySubjectDescriptor', async () => {
     await writeFile(file, 'test started');
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
-    if (users.error !== undefined) { throw users.error; }
-    if (users.value === undefined) { throw new Error(`users.value === undefined`); }
 
     const maxNumerOfTests = 5;
 
-    for (const user of users.value.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
+    for (const user of users.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
         const subjectDescriptor = user.descriptor!;
 
         await appendFile(file, '\n-----------------------\n');

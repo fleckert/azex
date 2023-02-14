@@ -23,15 +23,13 @@ test('AzureDevOpsHelper - user-per-project', async () => {
     const projectsList = await azureDevOpsWrapper.projects();
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
-    TestHelper.checkValueAndError(users, { organization });
 
-    users.value!.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
+    users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization);
-    TestHelper.checkValueAndError(groups, { organization });
 
     const usersGroups = new Array<{ user: GraphUser, groups: Array<GraphGroup> }>
-    for (const user of users.value!.slice(0, maxNumerOfTests)) {
+    for (const user of users.slice(0, maxNumerOfTests)) {
         if (Guid.isGuid(user.principalName)) {
             // skip the build in accounts
             continue;
@@ -42,11 +40,10 @@ test('AzureDevOpsHelper - user-per-project', async () => {
         const subjectDescriptor = user.descriptor;;
         const direction = 'up';
         const memberships = await azureDevOpsHelper.graphMembershipsList(organization, subjectDescriptor, direction);
-        TestHelper.checkValueAndError(memberships, { organization, subjectDescriptor, direction });
 
         const userGroups = { user, groups: new Array<GraphGroup>() };
-        for (const membership of memberships.value!) {
-            const group = groups.value!.find(p => p.descriptor === membership.containerDescriptor);
+        for (const membership of memberships) {
+            const group = groups.find(p => p.descriptor === membership.containerDescriptor);
             if (group !== undefined) {
                 userGroups.groups.push(group);
             }

@@ -15,7 +15,6 @@ test('AzureDevOpsHelper - classificationNodes', async () => {
 
     const parameters = { organization, project, depth: 10000 };
     const classificationNodes = await azureDevOpsHelper.classificationNodes(parameters);
-    TestHelper.checkValueAndError(classificationNodes, parameters);
-    
-    await writeFile(file, JSON.stringify(classificationNodes.value, null, 2));
+
+    await writeFile(file, JSON.stringify(classificationNodes, null, 2));
 }, 100000);

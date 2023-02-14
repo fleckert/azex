@@ -12,20 +12,18 @@ test('AzureDevOpsHelper - identityBySubjectDescriptor-userFromIdentity', async (
     await writeFile(file, JSON.stringify({ message: 'test started' }, null, 2));
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
-    if (users.error !== undefined) { throw users.error; }
-    if (users.value === undefined) { throw new Error("users.value === undefined"); }
 
     const maxNumerOfTests = 10;
 
-    for (const user of users.value.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
+    for (const user of users.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
         const identity = await azureDevOpsHelper.identityBySubjectDescriptor(organization, user.descriptor!)
-        if (identity.error !== undefined) { throw users.error; }
+        if (identity.error !== undefined) { throw identity.error; }
         if (identity.value === undefined) { throw new Error("identity.value === undefined"); }
         if (identity.value.descriptor === undefined) { throw new Error("identity.value.descriptor === undefined"); }
 
         // identity.value.descriptor is a complex object in the npm package, but here it is a string
         const userNew = await azureDevOpsHelper.userFromIdentity(organization, `${identity.value.descriptor}`);
-        if (userNew.error !== undefined) { throw users.error; }
+        if (userNew.error !== undefined) { throw userNew.error; }
         if (userNew.value === undefined) { throw new Error("userNew.value === undefined"); }
 
         if (user.descriptor !== userNew.value.descriptor) {
