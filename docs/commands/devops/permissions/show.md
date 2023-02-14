@@ -3,5 +3,6 @@
 # devops permissions show
 
 ![](azex-devops-permissions-show-your-organization-your-project-user-florian.eckert%40expectingsnow.com.png)
+![](azex-devops-permissions-show-your-organization-your-project-user-florian.eckert%40expectingsnow.com.svg)
 ![](azex-devops-permissions-show-your-organization-user-florian.eckert%40expectingsnow.com.png)
 ![](azex-devops-permissions-show-your-organization-user-florian.eckert%40expectingsnow.com.svg)
