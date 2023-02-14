@@ -9,16 +9,14 @@ test('AzureDevOpsHelper - securityNamespaces', async () => {
     const organization = config.azureDevOps.organization;
 
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
-    if (securityNamespaces.error !== undefined) { throw securityNamespaces.error; }
-    if (securityNamespaces.value === undefined) { throw new Error(`securityNamespaces(${organization}).value === undefined`); }
 
     const maxNumerOfTests = 5;
 
-    for (const securityNamespace of securityNamespaces.value.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+    for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
         const namespaceId = securityNamespace.namespaceId!;
 
         const securityNamespaceForId = await azureDevOpsHelper.securityNamespace(organization, namespaceId);
-        if (securityNamespaceForId.error !== undefined) { throw securityNamespaceForId.error; }
-        if (securityNamespaceForId.value === undefined) { throw new Error(`securityNamespaces(${organization}, ${namespaceId}).value === undefined`); }
+
+        if(securityNamespaceForId === undefined){throw new Error('');}
     }
 }, 100000);
