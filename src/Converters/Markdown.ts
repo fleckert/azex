@@ -161,4 +161,48 @@ export class Markdown {
             default: return undefined;
         }
     }
+
+    static getMermaidDiagramForHierarchy(items: Array<{ container: string | undefined, member: string | undefined }>):string{
+        const id = (value: string | undefined) => Buffer.from(value ?? '').toString('hex');
+        const itemToMarkdown = (value: string | undefined) => `${id(value)}["${value}"]`;
+
+        const lines = new Array<string>();
+
+        lines.push('::: mermaid');
+        lines.push('graph BT;');
+        lines.push('');
+        for (const item of items) {
+            lines.push(`${itemToMarkdown(item.member)} --> |member of| ${itemToMarkdown(item.container)}`);
+        }
+        lines.push(':::');
+
+
+        return lines.join('\n');
+    }
+
+    static tableKeyValue(keyName: string, valueName: string, items: Array<{ key: string | undefined, value: string | undefined }>): string {
+        const lines = new Array<string>();
+
+        lines.push(`|${keyName}|${valueName}|`);
+        lines.push('|-|-|');
+        for (const item of items) {
+            lines.push(`|${item.key}|${item.value}|`);
+        }
+
+        return lines.join('\n');
+    }
+
+    static table(title:string, headers: Array<string>, collection: Array<Array<string>>): string {
+        const lines = new Array<string>();
+
+        lines.push(`# ${title}`);
+        lines.push(``);
+        lines.push(`|${headers.join('|')}|`);
+        lines.push(`|${headers.map(p => '-').join('|')}|`);
+        for (const items of collection) {
+            lines.push(`|${items.join('|')}|`);
+        }
+
+        return lines.join('\n');
+    }
 }

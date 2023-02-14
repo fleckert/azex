@@ -1,4 +1,10 @@
 export class TestHelper {
+
+    static checkValueAndError(item: { value: any | undefined, error: Error | undefined }, values?: any) {
+        if (item.error !== undefined) { throw item.error; }
+        if (item.value === undefined) { throw new Error(`item.value === undefined ${values === undefined ? undefined : JSON.stringify(values, null, 2)}`); }
+    }
+
     static checkForCorrespondingElements<T>(collectionA: Array<T>, collectionB: Array<T>, compare: (a: T, b: T) => boolean): boolean {
 
         for (const a of collectionA) {

@@ -35,6 +35,11 @@
         "zzz-test-app--#--chars",
         "zzz-test-app--'--chars"
     ],
+    "azureDevOps": {
+        "baseUrl": "https://dev.azure.com/xxx",
+        "organization": "xxx",
+        "projectName": "xxx"
+    },
     "azureResources": {
         "location": "westeurope",
         "resourceGroupNames": [

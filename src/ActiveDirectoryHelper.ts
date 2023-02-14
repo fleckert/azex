@@ -392,7 +392,6 @@ export class ActiveDirectoryHelper {
 
         if (accessToken === null) { throw "Failed to retrieve accessToken for https://graph.microsoft.com/.default."; }
 
-        /// resolve domain from upn
         return accessToken.token;
     }
 
