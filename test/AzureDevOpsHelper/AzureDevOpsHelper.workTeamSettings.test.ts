@@ -7,10 +7,11 @@ import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - workTeamSettings', async () => {
     const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
     const organization = config.azureDevOps.organization;
-    const baseUrl = config.azureDevOps.baseUrl;
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl);
+    const baseUrl      = config.azureDevOps.baseUrl;
+    const tenantId     = config.azureDevOps.tenantId;
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
     const testDir = 'out';
     const testName ='workTeamSettings';
 

@@ -5,7 +5,8 @@ import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - identityBySubjectDescriptor-userFromIdentity', async () => {
     const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const tenantId = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
     const organization = config.azureDevOps.organization;
 
     const file = path.join(__dirname, 'out', `test-graphUsersList-${organization}.json`);
@@ -16,18 +17,17 @@ test('AzureDevOpsHelper - identityBySubjectDescriptor-userFromIdentity', async (
     const maxNumerOfTests = 10;
 
     for (const user of users.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
-        const identity = await azureDevOpsHelper.identityBySubjectDescriptor(organization, user.descriptor!)
-        if (identity.error !== undefined) { throw identity.error; }
-        if (identity.value === undefined) { throw new Error("identity.value === undefined"); }
-        if (identity.value.descriptor === undefined) { throw new Error("identity.value.descriptor === undefined"); }
+        const subjectDescriptor = user.descriptor!;
+        const identity = await azureDevOpsHelper.identityBySubjectDescriptor(organization, subjectDescriptor)
+        if (identity?.descriptor === undefined) { throw new Error(JSON.stringify({ organization, subjectDescriptor, identity }, null, 2)); }
 
         // identity.value.descriptor is a complex object in the npm package, but here it is a string
-        const userNew = await azureDevOpsHelper.userFromIdentity(organization, `${identity.value.descriptor}`);
-        if (userNew.error !== undefined) { throw userNew.error; }
-        if (userNew.value === undefined) { throw new Error("userNew.value === undefined"); }
+        const identityDescriptor = `${identity.descriptor}`;
+        const userNew = await azureDevOpsHelper.userFromIdentity(organization, identityDescriptor);
+        if (userNew === undefined) { throw new Error(JSON.stringify({ organization, identityDescriptor })); }
 
-        if (user.descriptor !== userNew.value.descriptor) {
-            throw new Error(`user.descriptor !== userNew.value.descriptor ${JSON.stringify({ user, identity, userNew }, null, 2)}`);
+        if (user.descriptor !== userNew.descriptor) {
+            throw new Error(JSON.stringify({ user, identity, userNew }, null, 2));
         }
     }
 }, 100000);

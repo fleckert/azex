@@ -30,10 +30,12 @@ export class rbac_export {
                 },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
                 files: {
-                    json_full : `${path}-${subscriptionId}.full.json`,
-                    json_min  : `${path}-${subscriptionId}.min.json`,
-                    json_ext  : `${path}-${subscriptionId}.ext.json`,
-                    json_names: `${path}-${subscriptionId}.names.json`,
+                    json: {
+                        full : `${path}-${subscriptionId}.full.json`,
+                        min  : `${path}-${subscriptionId}.min.json`,
+                        ext  : `${path}-${subscriptionId}.ext.json`,
+                        names: `${path}-${subscriptionId}.names.json`,
+                    },
                     markdown  : `${path}-${subscriptionId}.md`,
                     html      : `${path}-${subscriptionId}.html`,
                 },

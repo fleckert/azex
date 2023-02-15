@@ -9,7 +9,8 @@ test('devops_permissions_show-user-project', async () => {
     const pathOut           = path.join(__dirname, 'out', 'devops_permissions_show-user-project');
     const organization      = config.azureDevOps.organization;
     const project           = config.azureDevOps.projectName;
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const tenantId          = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
@@ -18,7 +19,7 @@ test('devops_permissions_show-user-project', async () => {
     for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
-        await devops_permissions_show.handle(organization, project, principalName, pathOut);
+        await devops_permissions_show.handle(tenantId, organization, project, principalName, pathOut);
     }
 }, 100000);
 
@@ -26,7 +27,9 @@ test('devops_permissions_show-user-collection', async () => {
     const config            = await TestConfigurationProvider.get();
     const pathOut           = path.join(__dirname, 'out', `devops_permissions_show-user-collection`);
     const organization      = config.azureDevOps.organization;
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const projectName       = undefined;
+    const tenantId          = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
@@ -35,7 +38,7 @@ test('devops_permissions_show-user-collection', async () => {
     for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
-        await devops_permissions_show.handle(config.azureDevOps.organization, undefined, principalName, pathOut);
+        await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
 }, 300000);
 
@@ -43,7 +46,9 @@ test('devops_permissions_show-group-project', async () => {
     const config            = await TestConfigurationProvider.get();
     const pathOut           = path.join(__dirname, 'out', `devops_permissions_show-group-project`);
     const organization      = config.azureDevOps.organization;
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const projectName       = config.azureDevOps.projectName;
+    const tenantId          = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization);
 
@@ -52,7 +57,7 @@ test('devops_permissions_show-group-project', async () => {
     for (const graphUser of groups.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
-        await devops_permissions_show.handle(config.azureDevOps.organization, config.azureDevOps.projectName, principalName, pathOut);
+        await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
 }, 100000);
 
@@ -61,7 +66,9 @@ test('devops_permissions_show-group-collection', async () => {
     const config            = await TestConfigurationProvider.get();
     const pathOut           = path.join(__dirname, 'out', `devops_permissions_show-group-collection`);
     const organization      = config.azureDevOps.organization;
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const tenantId          = config.azureDevOps.tenantId;
+    const projectName       = undefined;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization);
 
@@ -70,7 +77,7 @@ test('devops_permissions_show-group-collection', async () => {
     for (const graphUser of groups.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
-        await devops_permissions_show.handle(organization, undefined, principalName, pathOut);
+        await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
 }, 100000);
 
@@ -78,11 +85,12 @@ test('devops_permissions_show-nonExistent', async () => {
     const config        = await TestConfigurationProvider.get();
     const pathOut       = path.join(__dirname, 'out', `devops_permissions_show-nonExistent`);
     const organization  = config.azureDevOps.organization;
+    const tenantId      = config.azureDevOps.tenantId;
     const project       = config.azureDevOps.projectName;
     const principalName = "does-not-exist";
 
     try {
-        await devops_permissions_show.handle(organization, project, principalName, pathOut);
+        await devops_permissions_show.handle(tenantId, organization, project, principalName, pathOut);
         throw new Error(`An expected exception was not raised for 'devops_permissions_show.handle(${organization}, ${project}, ${principalName}, ${pathOut})'.`);
     }
     catch { }

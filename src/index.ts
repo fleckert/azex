@@ -73,28 +73,31 @@ else if (args[0]?.toLowerCase() === "devops") {
         if (args[2]?.toLowerCase() === "export") {
             var argv = require('minimist')(process.argv.slice(3));
 
-                 if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
+                 if (argv.tenantId     === undefined) { console.error("Parameter --tenantId is missing."     ); }
+            else if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
             else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
             else {
-                devops_permissions_export.handle(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+                devops_permissions_export.handle(argv.tenantId, argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
             }
         }
         else if (args[2]?.toLowerCase() === "show") {
             var argv = require('minimist')(process.argv.slice(3));
 
-                 if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+                 if (argv.tenantId      === undefined) { console.error("Parameter --tenantId is missing."     ); }
+            else if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
             else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
             else {
-                devops_permissions_show.handle(argv.organization, argv.project, argv.principalName, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+                devops_permissions_show.handle(argv.tenantId, argv.organization, argv.project, argv.principalName, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
             }
         }
         else if (args[2]?.toLowerCase() === "tokens") {
             var argv = require('minimist')(process.argv.slice(3));
 
-                 if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
+                 if (argv.tenantId     === undefined) { console.error("Parameter --tenantId is missing."     ); }
+            else if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
             else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
             else {
-                devops_permissions_token.all(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+                devops_permissions_token.all(argv.tenantId, argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
             }
         }
         else {
@@ -106,28 +109,31 @@ else if (args[0]?.toLowerCase() === "devops") {
             if (args[3]?.toLowerCase() === "user") {
                 var argv = require('minimist')(process.argv.slice(4));
 
-                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+                     if (argv.tenantId      === undefined) { console.error("Parameter --tenantId is missing."     ); }
+                else if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
                 else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
                 else {
-                    devops_identity_show.resolve(argv.organization, argv.principalName, ['User']);
+                    devops_identity_show.resolve(argv.tenantId, argv.organization, argv.principalName, ['User']);
                 }
             }
             else if (args[3]?.toLowerCase() === "group") {
                 var argv = require('minimist')(process.argv.slice(4));
 
-                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+                     if (argv.tenantId      === undefined) { console.error("Parameter --tenantId is missing."     ); }
+                else if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
                 else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
                 else {
-                    devops_identity_show.resolve(argv.organization, argv.principalName, ['Group']);
+                    devops_identity_show.resolve(argv.tenantId, argv.organization, argv.principalName, ['Group']);
                 }
             }
             else{
                 var argv = require('minimist')(process.argv.slice(3));
 
-                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
+                     if (argv.tenantId      === undefined) { console.error("Parameter --tenantId is missing."     ); }
+                else if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
                 else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
                 else {
-                    devops_identity_show.resolve(argv.organization, argv.principalName, ['User', 'Group']);
+                    devops_identity_show.resolve(argv.tenantId, argv.organization, argv.principalName, ['User', 'Group']);
                 }
             }
         }

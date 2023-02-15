@@ -5,10 +5,10 @@ import { Markdown                  } from "../Converters/Markdown";
 import { Html                      } from "../Converters/Html";
 
 export class devops_permissions_token {
-    static async all(organization: string, project: string, path: string): Promise<void> {
+    static async all(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
         const response = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, project);
 
         const title = `${organization}-${project}-tokens`;
@@ -26,19 +26,19 @@ export class devops_permissions_token {
                 project,
                 path
             },
-            files: [
-                `${path}-${title}.json`,
-                `${path}-${title}.md`,
-                `${path}-${title}.html`
-            ],
+            files: {
+                json    : `${path}-${title}.json`,
+                markdown: `${path}-${title}.md`,
+                html    : `${path}-${title}.html`
+            },
             durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
         });
     }
 
-    static async classificationNodes(organization: string, project: string, path: string): Promise<void> {
+    static async classificationNodes(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
         const response = await AzureDevOpsSecurityTokens.classificationNodes(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -63,20 +63,20 @@ export class devops_permissions_token {
                     project,
                     path
                 },
-                files: [
-                    `${path}-${title}.json`,
-                    `${path}-${title}.md`,
-                    `${path}-${title}.html`
-                ],
+                files: {
+                    json    : `${path}-${title}.json`,
+                    markdown: `${path}-${title}.md`,
+                    html    : `${path}-${title}.html`
+                },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
             });
         }
     }
 
-    static async gitRepositories(organization: string, project: string, path: string): Promise<void> {
+    static async gitRepositories(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
         const response = await AzureDevOpsSecurityTokens.gitRepositories(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -101,20 +101,20 @@ export class devops_permissions_token {
                     project,
                     path
                 },
-                files: [
-                    `${path}-${title}.json`,
-                    `${path}-${title}.md`,
-                    `${path}-${title}.html`
-                ],
+                files: {
+                    json    : `${path}-${title}.json`,
+                    markdown: `${path}-${title}.md`,
+                    html    : `${path}-${title}.html`
+                },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
             });
         }
     }
 
-    static async projects(organization: string, project: string, path: string): Promise<void> {
+    static async projects(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
         const response = await AzureDevOpsSecurityTokens.project(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -138,20 +138,20 @@ export class devops_permissions_token {
                     organization,
                     path
                 },
-                files: [
-                    `${path}-${title}.json`,
-                    `${path}-${title}.md`,
-                    `${path}-${title}.html`
-                ],
+                files: {
+                    json    : `${path}-${title}.json`,
+                    markdown: `${path}-${title}.md`,
+                    html    : `${path}-${title}.html`
+                },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
             });
         }
     }
 
-    static async tagging(organization: string, project: string, path: string): Promise<void> {
+    static async tagging(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
         const response = await AzureDevOpsSecurityTokens.tagging(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -175,20 +175,20 @@ export class devops_permissions_token {
                     organization,
                     path
                 },
-                files: [
-                    `${path}-${title}.json`,
-                    `${path}-${title}.md`,
-                    `${path}-${title}.html`
-                ],
+                files: {
+                    json    : `${path}-${title}.json`,
+                    markdown: `${path}-${title}.md`,
+                    html    : `${path}-${title}.html`
+                },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
             });
         }
     }
 
-    static async buildDefinitions(organization: string, project: string, path: string): Promise<void> {
+    static async buildDefinitions(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
         const response = await AzureDevOpsSecurityTokens.buildDefinitions(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -213,20 +213,20 @@ export class devops_permissions_token {
                     project,
                     path
                 },
-                files: [
-                    `${path}-${title}.json`,
-                    `${path}-${title}.md`,
-                    `${path}-${title}.html`
-                ],
+                files: {
+                    json    : `${path}-${title}.json`,
+                    markdown: `${path}-${title}.md`,
+                    html    : `${path}-${title}.html`
+                },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
             });
         }
     }
 
-    static async releaseDefinitions(organization: string, project: string, path: string): Promise<void> {
+    static async releaseDefinitions(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
         const response = await AzureDevOpsSecurityTokens.releaseDefinitions(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -251,11 +251,11 @@ export class devops_permissions_token {
                     project,
                     path
                 },
-                files: [
-                    `${path}-${title}.json`,
-                    `${path}-${title}.md`,
-                    `${path}-${title}.html`
-                ],
+                files: {
+                    json    : `${path}-${title}.json`,
+                    markdown: `${path}-${title}.md`,
+                    html    : `${path}-${title}.html`
+                },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
             });
         }

@@ -1,18 +1,17 @@
-import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsWrapper        } from "../../src/AzureDevOpsWrapper";
 import { AzureDevOpsSecurityTokens } from "../../src/AzureDevOpsSecurityTokens";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('AzureDevOpsHelper - gitRepositories', async () => {
     const config = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
     const projectName = config.azureDevOps.projectName;
-    const baseUrl = config.azureDevOps.baseUrl;
+    const baseUrl     = config.azureDevOps.baseUrl;
+    const tenantId    = config.azureDevOps.tenantId;
 
-    const azureDevOpsHelper = new AzureDevOpsHelper();
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl);
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
 
     const gitRepositories = await azureDevOpsWrapper.gitRepositories(projectName);
 
@@ -49,6 +48,5 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
                 if (accessControlLists.length === 0) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value.length === 0`); }
             }
         }
-
     }
 }, 100000);

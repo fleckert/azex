@@ -7,8 +7,9 @@ test('AzureDevOpsWrapper - workItemProcesses', async () => {
     const config = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization; 
     const baseUrl      = config.azureDevOps.baseUrl;
+    const tenantId     = config.azureDevOps.tenantId;
 
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl);
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
 
     const workItemProcesses = await azureDevOpsWrapper.workItemProcesses();
 

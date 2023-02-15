@@ -7,7 +7,8 @@ test('AzureDevOpsWrapper - tbd', async () => {
     const config = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
     const baseUrl = config.azureDevOps.baseUrl;
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl);
+    const tenantId    = config.azureDevOps.tenantId;
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
     
     const file = path.join(__dirname, 'out', `tbd-${organization}.json`);
     await writeFile(file, 'test started');

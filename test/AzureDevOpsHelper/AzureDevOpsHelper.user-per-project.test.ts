@@ -12,8 +12,9 @@ test('AzureDevOpsHelper - user-per-project', async () => {
     const config = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
     const baseUrl = config.azureDevOps.baseUrl;
-    const azureDevOpsHelper = new AzureDevOpsHelper();
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl);
+    const tenantId    = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
 
     const maxNumerOfTests = 500;
 

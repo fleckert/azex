@@ -18,19 +18,19 @@ export class AzureDevOpsWrapper {
         this.requestHandlers = [getPersonalAccessTokenHandler(token)];
      }
 
-    static async instance(baseUrl: string): Promise<AzureDevOpsWrapper> {
-        const token = await this.getPersonalAccessToken();
+    static async instance(baseUrl: string, tenantId? : string): Promise<AzureDevOpsWrapper> {
+        const token = await this.getPersonalAccessToken(tenantId);
         return new AzureDevOpsWrapper(baseUrl, token);
     }
 
-    static async getPersonalAccessToken(): Promise<string> {
+    static async getPersonalAccessToken(tenantId? : string): Promise<string> {
         const token = process.env.AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN;
         if (token !== undefined && token.trim().length > 0) {
             return token;
         }
 
         // https://www.dylanberry.com/2021/02/21/how-to-get-a-pat-personal-access-token-for-azure-devops-from-the-az-cli/
-        const command = 'az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken --output tsv'
+        const command = `az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken --output tsv ${`${tenantId}`.trim() === '' ? '' : `--tenant ${tenantId}`}`
         const { stdout, stderr } = await CommandRunner.runAndMap(command, stdOut => stdOut?.trim(), stdErr => stdErr?.trim());
         if (stdout !== undefined && stderr?.length === 0) {
             return stdout;

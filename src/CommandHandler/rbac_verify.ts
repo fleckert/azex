@@ -32,13 +32,15 @@ export class rbac_verify {
                     pathOut
                 },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
-                files: [
-                    `${pathOut}-${subscriptionId}.full.json`,
-                    `${pathOut}-${subscriptionId}.min.json`,
-                    `${pathOut}-${subscriptionId}.ext.json`,
-                    `${pathOut}-${subscriptionId}.md`,
-                    `${pathOut}-${subscriptionId}.html`,
-                ],
+                files: {
+                    json: {
+                        full: `${pathOut}-${subscriptionId}.full.json`,
+                        min : `${pathOut}-${subscriptionId}.min.json`,
+                        ext : `${pathOut}-${subscriptionId}.ext.json`
+                    },
+                    markdown: `${pathOut}-${subscriptionId}.md`,
+                    html: `${pathOut}-${subscriptionId}.html`
+                },
                 failedRequests: rbacDefinitionsVerified.failedRequests,
             });
         } catch (e: any) {

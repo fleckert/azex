@@ -1,11 +1,10 @@
-import path from "path";
-import { AzureDevOpsHelper } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { appendFile, writeFile } from "fs/promises";
 
 test('AzureDevOpsHelper - securityNamespaces', async () => {
     const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const tenantId = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
     const organization = config.azureDevOps.organization;
 
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
@@ -13,10 +12,10 @@ test('AzureDevOpsHelper - securityNamespaces', async () => {
     const maxNumerOfTests = 5;
 
     for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
-        const namespaceId = securityNamespace.namespaceId!;
+        const securityNamespaceId = securityNamespace.namespaceId!;
 
-        const securityNamespaceForId = await azureDevOpsHelper.securityNamespace(organization, namespaceId);
+        const securityNamespaceForId = await azureDevOpsHelper.securityNamespace(organization, securityNamespaceId);
 
-        if(securityNamespaceForId === undefined){throw new Error('');}
+        if (securityNamespaceForId === undefined) { throw new Error(JSON.stringify({ organization, namespaceId: securityNamespaceId, securityNamespaceForId }, null, 2)); }
     }
 }, 100000);

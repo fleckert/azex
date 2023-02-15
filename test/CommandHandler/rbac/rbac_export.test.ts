@@ -3,9 +3,10 @@ import { rbac_export                 } from "../../../src/CommandHandler/rbac_ex
 import { TestConfigurationProvider   } from "../../_Configuration/TestConfiguration";
 
 test('rbac_export', async () => {
-    const credentials = TestConfigurationProvider.getCredentials();
-    const config      = await TestConfigurationProvider.get();
-    const pathOut     = path.join(__dirname, 'out', `azex-test-rbac-export`);
+    const credentials  = TestConfigurationProvider.getCredentials();
+    const config       = await TestConfigurationProvider.get();
+    const pathOut      = path.join(__dirname, 'out', `azex-test-rbac-export`);
+    const subscription = config.subscription;
 
-    await rbac_export.handle(credentials, config.subscription, pathOut);
+    await rbac_export.handle(credentials, subscription, pathOut);
 }, 100000);

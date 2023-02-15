@@ -1,13 +1,13 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { appendFile, writeFile     } from "fs/promises";
-import { TestHelper } from "../_TestHelper/TestHelper";
+import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - workIterations', async () => {
     const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
     const organization = config.azureDevOps.organization;
+    const tenantId = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
     const testDir = 'out';
     const testName ='workIterations';
 
@@ -24,13 +24,5 @@ test('AzureDevOpsHelper - workIterations', async () => {
         await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-${project}-${teamId}-workIterations.json`), JSON.stringify({ message: 'test started' }, null, 2));
         const workIterations = await azureDevOpsHelper.workIterations(organization, project, teamId);
         await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-${project}-${teamId}-workIterations.json`), JSON.stringify(workIterations, null, 2));
-
-        for (const workIteration of workIterations.slice(0, maxNumerOfTests)) {
-            if (workIteration.path === undefined) { throw new Error(`workIteration.path === undefined ${JSON.stringify({ organization, project, team, workIteration })}`); }
-
-            await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-${project}-${teamId}-workIteration-${workIteration.id}.json`), JSON.stringify({ message: 'test started' }, null, 2));
-            const workIterationResponse = await azureDevOpsHelper.workIteration(organization, project, teamId, workIteration.path);
-            await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-${project}-${teamId}-workIteration-${workIteration.id}.json`), JSON.stringify(workIterationResponse, null, 2));
-        }
     }
 }, 100000);

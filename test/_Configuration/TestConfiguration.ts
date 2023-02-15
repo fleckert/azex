@@ -14,6 +14,7 @@ export interface TestConfiguration {
     servicePrincipalNames: Array<string>;
     azureDevOps: {
         baseUrl     : string,
+        tenantId    : string,
         organization: string,
         projectName : string
     },

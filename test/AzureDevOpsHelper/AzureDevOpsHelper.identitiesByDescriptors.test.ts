@@ -5,7 +5,8 @@ import { appendFile, writeFile     } from "fs/promises";
 
 test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
     const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const tenantId = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
     const organization = config.azureDevOps.organization;
 
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
@@ -20,11 +21,10 @@ test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
         for (const accessControlList of accessControlLists) {
             for (const descriptor in accessControlList.acesDictionary) {
                 const identities = await azureDevOpsHelper.identitiesByDescriptors(organization, [descriptor]);
-                if (identities.length !== 1) { throw new Error(`identitiesByDescriptors(${organization}, [${descriptor}]) returns ${identities.length} items.`) }
+                if (identities.length !== 1) { throw new Error(JSON.stringify({ organization, descriptor, identities })) }
 
                 const identity = await azureDevOpsHelper.identityByDescriptor(organization, descriptor);
-                if (identity.error !== undefined) { throw identity.error; }
-                if (identity.value === undefined) { throw new Error(`identityByDescriptor(${organization}, [${descriptor}]).value === undefined`); }
+                if (identity === undefined) { throw new Error(JSON.stringify({ organization, descriptor })); }
             }
         }
     }
@@ -32,7 +32,8 @@ test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
 
 test('AzureDevOpsHelper - identityBySubjectDescriptor', async () => {
     const config = await TestConfigurationProvider.get();
-    const azureDevOpsHelper = new AzureDevOpsHelper();
+    const tenantId = config.azureDevOps.tenantId;
+    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
     const organization = config.azureDevOps.organization;
 
     const file = path.join(__dirname, 'out', `identityBySubjectDescriptor-${organization}.md`);
@@ -47,8 +48,6 @@ test('AzureDevOpsHelper - identityBySubjectDescriptor', async () => {
 
         await appendFile(file, '\n-----------------------\n');
         const identity = await azureDevOpsHelper.identityBySubjectDescriptor(organization, subjectDescriptor);
-        if (identity.error !== undefined) { throw identity.error; }
-        if (identity.value === undefined) { throw new Error(`identity.value === undefined [${JSON.stringify({ organization, user }, null, 2)}]`); }
         await appendFile(file, JSON.stringify({ organization, user, identity }, null, 2));
     }
     await appendFile(file, '\n-----------------------\n');
