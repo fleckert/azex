@@ -94,7 +94,7 @@ else if (args[0]?.toLowerCase() === "devops") {
                  if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
             else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
             else {
-                devops_permissions_token.classificationNodes(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+                devops_permissions_token.all(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
             }
         }
         else {

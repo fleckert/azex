@@ -29,14 +29,14 @@ export class rbac_export {
                     path
                 },
                 durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
-                files: [
-                    `${path}-${subscriptionId}.full.json`,
-                    `${path}-${subscriptionId}.min.json`,
-                    `${path}-${subscriptionId}.ext.json`,
-                    `${path}-${subscriptionId}.names.json`,
-                    `${path}-${subscriptionId}.md`,
-                    `${path}-${subscriptionId}.html`,
-                ],
+                files: {
+                    json_full : `${path}-${subscriptionId}.full.json`,
+                    json_min  : `${path}-${subscriptionId}.min.json`,
+                    json_ext  : `${path}-${subscriptionId}.ext.json`,
+                    json_names: `${path}-${subscriptionId}.names.json`,
+                    markdown  : `${path}-${subscriptionId}.md`,
+                    html      : `${path}-${subscriptionId}.html`,
+                },
                 failedRequests: result.failedRequests,
             });
         } catch (e:any) {
