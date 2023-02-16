@@ -10,7 +10,7 @@ import { writeFile                      } from "fs/promises";
 test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
     const config       = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
-    const project      = config.azureDevOps.projectName;
+    const projectName  = config.azureDevOps.projectName;
     const tenantId     = config.azureDevOps.tenantId;
     const pathOut      = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
 
@@ -26,15 +26,15 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
     for (const graphSubject of users.slice(0, maxNumerOfTests)) {
         if (graphSubject.descriptor === undefined) { throw new Error("graphSubject.descriptor === undefined"); }
 
-        const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, project, graphSubject.descriptor);
+        const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, projectName, graphSubject.descriptor);
 
         const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf);
 
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
         
-        const title = `${config.azureDevOps.organization              }-`
-                    + `${config.azureDevOps.projectName               }-`
+        const title = `${organization                                 }-`
+                    + `${projectName                                  }-`
                     + `${graphSubjectMemberOf.graphSubject.subjectKind}-`
                     + `${graphSubjectMemberOf.graphSubject.displayName}-`
                     + `${graphSubjectMemberOf.graphSubject.originId   }`;

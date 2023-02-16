@@ -17,7 +17,7 @@ test('AzureDevOpsHelper - user-per-project', async () => {
 
     const maxNumerOfTests = 50;
 
-    const file = path.join(__dirname, 'out', `user-per-project-${organization}.md`);
+    const file = path.join(__dirname, 'out', `users-per-projects-${organization}.md`);
     await writeFile(file, 'test started');
 
     const projectsList = await azureDevOpsWrapper.projects();

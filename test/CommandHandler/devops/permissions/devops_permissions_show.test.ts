@@ -7,7 +7,7 @@ test('devops_permissions_show-user-project', async () => {
     const config            = await TestConfigurationProvider.get();
     const pathOut           = path.join(__dirname, 'out', 'devops_permissions_show-user-project');
     const organization      = config.azureDevOps.organization;
-    const project           = config.azureDevOps.projectName;
+    const projectName       = config.azureDevOps.projectName;
     const tenantId          = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const maxNumerOfTests   = 5;
@@ -17,7 +17,7 @@ test('devops_permissions_show-user-project', async () => {
     for (const graphUser of collection.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
-        await devops_permissions_show.handle(tenantId, organization, project, principalName, pathOut);
+        await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
 }, 100000);
 
@@ -81,12 +81,12 @@ test('devops_permissions_show-nonExistent', async () => {
     const pathOut       = path.join(__dirname, 'out', `devops_permissions_show-nonExistent`);
     const organization  = config.azureDevOps.organization;
     const tenantId      = config.azureDevOps.tenantId;
-    const project       = config.azureDevOps.projectName;
+    const projectName   = config.azureDevOps.projectName;
     const principalName = "does-not-exist";
 
     try {
-        await devops_permissions_show.handle(tenantId, organization, project, principalName, pathOut);
-        throw new Error(`An expected exception was not raised for 'devops_permissions_show.handle(${organization}, ${project}, ${principalName}, ${pathOut})'.`);
+        await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
+        throw new Error(`An expected exception was not raised for 'devops_permissions_show.handle(${organization}, ${projectName}, ${principalName}, ${pathOut})'.`);
     }
     catch { }
 }, 100000);

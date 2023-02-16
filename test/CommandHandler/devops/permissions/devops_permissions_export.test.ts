@@ -5,9 +5,9 @@ import { TestConfigurationProvider } from "../../../_Configuration/TestConfigura
 test('devops_permissions_export', async () => {
     const config       = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
-    const project      = config.azureDevOps.projectName;
+    const projectName  = config.azureDevOps.projectName;
     const tenantId     = config.azureDevOps.tenantId;
     const pathOut      = path.join(__dirname, 'out', `azex-test-devops-permissions-export`);
 
-    await devops_permissions_export.handle(tenantId, organization, project, pathOut);
+    await devops_permissions_export.handle(tenantId, organization, projectName, pathOut);
 }, 100000);
