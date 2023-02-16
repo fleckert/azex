@@ -13,5 +13,5 @@
 | `AZURE_TENANT_ID`                   | ID of the application's Azure AD tenant                                       |
 | `AZURE_USERNAME`                    | a username (usually an email address)                                         |
 | `AZURE_SUBSCRIPTION_ID`             | Azure Subscription id                                                         |
-| `AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN`| Azure DevOps scopes [Graph (read), Project and team (Read), Identity (Read), Code(Read), Work(Read)]  |
+| `AZURE_DEVOPS_EXT_PAT`              | Azure DevOps scopes [Graph (read), Project and team (Read), Identity (Read), Code(Read), Work(Read)] <br/> see https://learn.microsoft.com/en-us/azure/devops/cli/log-in-via-pat  |
 

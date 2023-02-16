@@ -11,7 +11,7 @@ test('AzureDevOpsHelper - workTeamSettings', async () => {
     const baseUrl      = config.azureDevOps.baseUrl;
     const tenantId     = config.azureDevOps.tenantId;
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const testDir = 'out';
     const testName ='workTeamSettings';
 

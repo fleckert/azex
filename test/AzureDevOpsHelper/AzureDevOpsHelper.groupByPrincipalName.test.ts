@@ -9,7 +9,7 @@ test('AzureDevOpsHelper - groupByPrincipalName', async () => {
     const tenantId = config.azureDevOps.tenantId;
     const testDir = 'out';
     const testName ='groupByPrincipalName';
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
     await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-groups.json`), JSON.stringify({ message: 'test started' }, null, 2));
     const groups = await azureDevOpsHelper.graphGroupsList(organization);

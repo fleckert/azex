@@ -11,11 +11,17 @@ import { Identity                                                      } from "a
 import { TeamProjectReference, WebApiTeam                              } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { ReleaseDefinition                                             } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
+import { AzureDevOpsPat } from "./AzureDevOpsPat";
 
 export class AzureDevOpsHelper {
 
-    constructor(
-        readonly tenantId: string
+    static async instance(tenantId: string | undefined): Promise<AzureDevOpsHelper> {
+        const token = await AzureDevOpsPat.getPersonalAccessToken(tenantId);
+        return new AzureDevOpsHelper(token);
+    }
+
+    private constructor(
+        readonly token: string
     ) { }
 
     private readonly continuationTokenHeader = "x-ms-continuationtoken";
@@ -234,14 +240,19 @@ export class AzureDevOpsHelper {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/subject-lookup/lookup-subjects?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/subjectlookup?api-version=7.1-preview.1`;
         const data = JSON.stringify({ lookupKeys: descriptors.map(descriptor => { return { descriptor } }) });
+     
+        try {
+            const response = await axios.post(url, data, { headers: this.getHeaders() });
 
-        const response = await axios.post(url, data, { headers: await this.getHeaders() });
+            if (response.status === 200) {
+                return response.data.value;
+            }
 
-        if (response.status === 200) {
-            return response.data.value;
+            throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));
         }
-
-        throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, data, status: error.response.status, statusText: error.response.statusText }));
+        }
     }
 
     async graphSubjectLookup(organization: string, descriptor: string): Promise<GraphSubject | undefined> {
@@ -257,48 +268,24 @@ export class AzureDevOpsHelper {
             query: `${principalName}`,
             subjectKind
         });
+        try {
+            const response = await axios.post(url, data, { headers: this.getHeaders() });
 
-        const response = await axios.post(url, data, { headers: await this.getHeaders() });
+            if (response.status === 200) {
+                if (response.data.count !== 1) { return undefined; }
+                return response.data.value[0] == null ? undefined : response.data.value[0];
+            }
 
-        if (response.status === 200) {
-            if (response.data.count !== 1) { return undefined; }
-            return response.data.value[0] == null ? undefined : response.data.value[0];
+            throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));
         }
-
-        throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, data, status: error.response.status, statusText: error.response.statusText }));
+        }
     }
 
-    private accessToken: string | undefined = undefined;
-
-    async getPersonalAccessToken(): Promise<string> {
-
-        if (this.accessToken === undefined) {
-            const token = process.env.AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN;
-            if (token !== undefined && token.trim().length > 0) {
-                return token;
-            }
-        }
-
-        if (this.accessToken === undefined) {
-            // https://www.dylanberry.com/2021/02/21/how-to-get-a-pat-personal-access-token-for-azure-devops-from-the-az-cli/
-            const command = `az account get-access-token --resource 499b84ac-1321-427f-aa17-267ca6975798 --query accessToken --output tsv ${`${this.tenantId}`.trim() === '' ? '' : `--tenant ${this.tenantId}`}`
-
-            const { stdout, stderr } = await CommandRunner.runAndMap(command, stdOut => stdOut?.trim(), stdErr => stdErr?.trim());
-
-            if (stdout !== undefined && stderr?.length === 0) {
-                this.accessToken = stdout;
-            }
-        }
-
-        if (this.accessToken === undefined) { throw new Error('Failed to resolve accessToken'); }
-
-        return this.accessToken;
-    }
-
-    private async getHeaders() {
-       const token = await this.getPersonalAccessToken();
+    private getHeaders() {
         const headers = {
-            'Authorization': `Basic ${Buffer.from(`:${token}`, 'ascii').toString('base64')}`,
+            'Authorization': `Basic ${Buffer.from(`:${this.token}`, 'ascii').toString('base64')}`,
             //'X-VSS-ForceMsaPassThrough': 'true',
             "Content-Type": "application/json"
         }
@@ -307,42 +294,57 @@ export class AzureDevOpsHelper {
     }
 
     private async get<T>(url: string): Promise<T> {
-        const response = await axios.get(url, { headers: await this.getHeaders() });
+        try {
+            const response = await axios.get(url, { headers: this.getHeaders() });
 
-        if (response.status === 200) {
-            return response.data;
+            if (response.status === 200) {
+                return response.data;
+            }
+
+            throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
-
-        throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+        }
     }
 
     private async getValue<T>(url: string): Promise<T> {
-        const response = await axios.get(url, { headers: await this.getHeaders() });
+        try {
+            const response = await axios.get(url, { headers: this.getHeaders() });
 
-        if (response.status === 200) {
-            return response.data.value;
+            if (response.status === 200) {
+                return response.data.value;
+            }
+
+            throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
-
-        throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+        catch (error: any) {
+             throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+        }
     }
 
     private async getItemsWithContinuation<T>(url: string, continuationToken?: string | undefined): Promise<T[]> {
         const urlWithContinuation = continuationToken === undefined ? url : `${url}&continuationToken=${continuationToken}`;
 
-        const response = await axios.get(urlWithContinuation, { headers: await this.getHeaders() });
+        try {
+            const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
 
-        if (response.status === 200) {
-            const collection = new Array<T>(...response.data.value);
+            if (response.status === 200) {
+                const collection = new Array<T>(...response.data.value);
 
-            if (response.headers[this.continuationTokenHeader] !== undefined) {
-                const itemsContinuation = await this.getItemsWithContinuation<T>(url, response.headers[this.continuationTokenHeader]);
+                if (response.headers[this.continuationTokenHeader] !== undefined) {
+                    const itemsContinuation = await this.getItemsWithContinuation<T>(url, response.headers[this.continuationTokenHeader]);
 
-                collection.push(...itemsContinuation);
+                    collection.push(...itemsContinuation);
+                }
+
+                return collection;
             }
 
-            return collection;
+            throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
-
-        throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+        }
     }
 }

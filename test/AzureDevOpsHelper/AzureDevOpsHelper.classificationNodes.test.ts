@@ -11,7 +11,7 @@ test('AzureDevOpsHelper - classificationNodes', async () => {
     const organization = config.azureDevOps.organization;
     const project = config.azureDevOps.projectName;
     const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
     const parameters = { organization, project, depth: 10000 };
     const classificationNodes = await azureDevOpsHelper.classificationNodes(parameters);

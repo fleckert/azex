@@ -10,7 +10,7 @@ export class devops_permissions_show {
         const startDate = new Date();
 
         const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
-        const azureDevOpsHelper              = new AzureDevOpsHelper             (tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         
         const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['User', 'Group'], principalName);
 

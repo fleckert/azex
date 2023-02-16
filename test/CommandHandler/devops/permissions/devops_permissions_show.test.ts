@@ -2,7 +2,6 @@ import path from "path";
 import { devops_permissions_show   } from "../../../../src/CommandHandler/devops_permissions_show";
 import { AzureDevOpsHelper         } from "../../../../src/AzureDevOpsHelper";
 import { TestConfigurationProvider } from "../../../_Configuration/TestConfiguration";
-import { TestHelper                } from "../../../_TestHelper/TestHelper";
 
 test('devops_permissions_show-user-project', async () => {
     const config            = await TestConfigurationProvider.get();
@@ -10,13 +9,12 @@ test('devops_permissions_show-user-project', async () => {
     const organization      = config.azureDevOps.organization;
     const project           = config.azureDevOps.projectName;
     const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const maxNumerOfTests   = 5;
 
-    const users = await azureDevOpsHelper.graphUsersList(organization);
+    const collection = await azureDevOpsHelper.graphUsersList(organization);
 
-    const maxNumerOfTests = 5;
-
-    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+    for (const graphUser of collection.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
         const principalName = graphUser.principalName!;
 
         await devops_permissions_show.handle(tenantId, organization, project, principalName, pathOut);
@@ -29,14 +27,13 @@ test('devops_permissions_show-user-collection', async () => {
     const organization      = config.azureDevOps.organization;
     const projectName       = undefined;
     const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const maxNumerOfTests   = 5;
 
-    const users = await azureDevOpsHelper.graphUsersList(organization);
+    const collection = await azureDevOpsHelper.graphUsersList(organization);
 
-    const maxNumerOfTests = 5;
-
-    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
-        const principalName = graphUser.principalName!;
+    for (const item of collection.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+        const principalName = item.principalName!;
 
         await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
@@ -48,14 +45,13 @@ test('devops_permissions_show-group-project', async () => {
     const organization      = config.azureDevOps.organization;
     const projectName       = config.azureDevOps.projectName;
     const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const maxNumerOfTests   = 5;
 
-    const groups = await azureDevOpsHelper.graphGroupsList(organization);
+    const collection = await azureDevOpsHelper.graphGroupsList(organization);
 
-    const maxNumerOfTests = 5;
-
-    for (const graphUser of groups.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
-        const principalName = graphUser.principalName!;
+    for (const item of collection.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+        const principalName = item.principalName!;
 
         await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
@@ -68,14 +64,13 @@ test('devops_permissions_show-group-collection', async () => {
     const organization      = config.azureDevOps.organization;
     const tenantId          = config.azureDevOps.tenantId;
     const projectName       = undefined;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const maxNumerOfTests   = 5;
 
-    const groups = await azureDevOpsHelper.graphGroupsList(organization);
+    const collection = await azureDevOpsHelper.graphGroupsList(organization);
 
-    const maxNumerOfTests = 5;
-
-    for (const graphUser of groups.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
-        const principalName = graphUser.principalName!;
+    for (const item of collection.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+        const principalName = item.principalName!;
 
         await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }

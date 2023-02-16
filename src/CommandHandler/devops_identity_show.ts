@@ -4,7 +4,7 @@ export class devops_identity_show {
     static async resolve(tenantId: string, organization: string, principalName: string, subjectKind:['User'] | ['Group'] | ['User', 'Group']): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
         const result = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, subjectKind, principalName);
         if (result?.descriptor === undefined) {

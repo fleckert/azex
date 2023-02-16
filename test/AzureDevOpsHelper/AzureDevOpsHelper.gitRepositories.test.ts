@@ -10,7 +10,7 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
     const baseUrl     = config.azureDevOps.baseUrl;
     const tenantId    = config.azureDevOps.tenantId;
 
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
 
     const gitRepositories = await azureDevOpsWrapper.gitRepositories(projectName);

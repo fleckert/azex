@@ -8,7 +8,7 @@ test('AzureDevOpsHelper - userEntitlements', async () => {
     const config = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
     const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 

@@ -7,7 +7,7 @@ test('devops_identity_show-user', async () => {
     const organization = config.azureDevOps.organization;
     const tenantId     = config.azureDevOps.tenantId;
 
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);
 
     const maxNumerOfTests = 5;
@@ -24,7 +24,7 @@ test('devops_identity_show-group', async () => {
     const organization = config.azureDevOps.organization;
     const tenantId     = config.azureDevOps.tenantId;
 
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const groups = await azureDevOpsHelper.graphGroupsList(config.azureDevOps.organization);
 
     const maxNumerOfTests = 5;

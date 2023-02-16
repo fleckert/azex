@@ -2,7 +2,6 @@ import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { writeFile                 } from "fs/promises";
-import { TestHelper                } from "../_TestHelper/TestHelper";
 
 const accessControlListsTest = async (azureDevOpsHelper: AzureDevOpsHelper, parameters: {
     organization: string,
@@ -36,7 +35,7 @@ test('AzureDevOpsHelper - accessControlLists', async () => {
     const config = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
     const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const testDir = 'out';
     const testName ='accessControlLists';
 

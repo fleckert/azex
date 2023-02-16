@@ -10,7 +10,7 @@ export class AzureDevOpsPermissionsResolver {
         projectName : string
     ): Promise<Array<{ group: GraphGroup, members: GraphSubject[] }>> {
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
         const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName);
 
@@ -33,7 +33,7 @@ export class AzureDevOpsPermissionsResolver {
         subjectDescriptor: string
     ): Promise<GraphSubjectMemberOf> {
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
         const graphSubject = await azureDevOpsHelper.graphSubjectLookup(organization, subjectDescriptor);
 

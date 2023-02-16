@@ -6,7 +6,7 @@ import { writeFile                 } from "fs/promises";
 test('AzureDevOpsHelper - identityBySubjectDescriptor-userFromIdentity', async () => {
     const config = await TestConfigurationProvider.get();
     const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const organization = config.azureDevOps.organization;
 
     const file = path.join(__dirname, 'out', `test-graphUsersList-${organization}.json`);

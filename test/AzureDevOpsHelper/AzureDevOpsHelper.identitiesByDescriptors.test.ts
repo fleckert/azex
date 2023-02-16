@@ -6,7 +6,7 @@ import { appendFile, writeFile     } from "fs/promises";
 test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
     const config = await TestConfigurationProvider.get();
     const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const organization = config.azureDevOps.organization;
 
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
@@ -33,7 +33,7 @@ test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
 test('AzureDevOpsHelper - identityBySubjectDescriptor', async () => {
     const config = await TestConfigurationProvider.get();
     const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const organization = config.azureDevOps.organization;
 
     const file = path.join(__dirname, 'out', `identityBySubjectDescriptor-${organization}.md`);

@@ -8,7 +8,7 @@ export class devops_permissions_token {
     static async all(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const response = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, project);
 
         const title = `${organization}-${project}-tokens`;
@@ -38,7 +38,7 @@ export class devops_permissions_token {
     static async classificationNodes(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const response = await AzureDevOpsSecurityTokens.classificationNodes(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -76,7 +76,7 @@ export class devops_permissions_token {
     static async gitRepositories(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const response = await AzureDevOpsSecurityTokens.gitRepositories(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -114,7 +114,7 @@ export class devops_permissions_token {
     static async projects(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const response = await AzureDevOpsSecurityTokens.project(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -151,7 +151,7 @@ export class devops_permissions_token {
     static async tagging(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const response = await AzureDevOpsSecurityTokens.tagging(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -188,7 +188,7 @@ export class devops_permissions_token {
     static async buildDefinitions(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const response = await AzureDevOpsSecurityTokens.buildDefinitions(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {
@@ -226,7 +226,7 @@ export class devops_permissions_token {
     static async releaseDefinitions(tenantId: string, organization: string, project: string, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const response = await AzureDevOpsSecurityTokens.releaseDefinitions(azureDevOpsHelper, organization, project);
 
         if (response.error !== undefined) {

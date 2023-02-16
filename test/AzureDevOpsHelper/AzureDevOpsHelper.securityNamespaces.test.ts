@@ -4,7 +4,7 @@ import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 test('AzureDevOpsHelper - securityNamespaces', async () => {
     const config = await TestConfigurationProvider.get();
     const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const organization = config.azureDevOps.organization;
 
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);

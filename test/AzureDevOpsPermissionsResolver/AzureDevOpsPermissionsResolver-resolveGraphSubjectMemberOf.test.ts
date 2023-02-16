@@ -15,7 +15,7 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
     const pathOut      = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
 
     const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
 
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);

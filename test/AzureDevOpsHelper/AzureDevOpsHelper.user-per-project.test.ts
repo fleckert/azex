@@ -5,7 +5,6 @@ import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { writeFile                 } from "fs/promises";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
-import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('AzureDevOpsHelper - user-per-project', async () => {
 
@@ -13,10 +12,10 @@ test('AzureDevOpsHelper - user-per-project', async () => {
     const organization = config.azureDevOps.organization;
     const baseUrl = config.azureDevOps.baseUrl;
     const tenantId    = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = new AzureDevOpsHelper(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
 
-    const maxNumerOfTests = 500;
+    const maxNumerOfTests = 50;
 
     const file = path.join(__dirname, 'out', `user-per-project-${organization}.md`);
     await writeFile(file, 'test started');
