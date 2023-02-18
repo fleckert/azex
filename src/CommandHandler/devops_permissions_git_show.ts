@@ -1,26 +1,35 @@
-import { AzureDevOpsHelper                  } from "../AzureDevOpsHelper";
-import { GraphSubject                       } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { Html                               } from "../Converters/Html";
-import { Markdown                           } from "../Converters/Markdown";
-import { writeFile                          } from "fs/promises";
-import { AzureDevOpsWrapper                 } from "../AzureDevOpsWrapper";
+import { AzureDevOpsHelper                                                            } from "../AzureDevOpsHelper";
+import { GraphSubject                                                                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Html                                                                         } from "../Converters/Html";
+import { Markdown                                                                     } from "../Converters/Markdown";
+import { writeFile                                                                    } from "fs/promises";
+import { AzureDevOpsWrapper                                                           } from "../AzureDevOpsWrapper";
 import { AzureDevOpsSecurityNamespaceAction, AzureDevOpsSecurityNamespaceActionHelper } from "../models/AzureDevOpsSecurityNamespaceAction";
-import { AzureDevOpsSecurityTokens          } from "../AzureDevOpsSecurityTokens";
-import { Identity                           } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
-import { AzureDevOpsPortalLinks             } from "../AzureDevOpsPortalLinks";
-import { AzureDevOpsAccessControlList, AzureDevOpsAccessControlListHelper } from "../models/AzureDevOpsAccessControlEntry";
-import { AzureDevOpsSecurityNamespace } from "../models/AzureDevOpsSecurityNamespace";
+import { AzureDevOpsSecurityTokens                                                    } from "../AzureDevOpsSecurityTokens";
+import { Identity                                                                     } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
+import { AzureDevOpsPortalLinks                                                       } from "../AzureDevOpsPortalLinks";
+import { AzureDevOpsAccessControlList, AzureDevOpsAccessControlListHelper             } from "../models/AzureDevOpsAccessControlEntry";
+import { AzureDevOpsSecurityNamespace                                                 } from "../models/AzureDevOpsSecurityNamespace";
 
 export class devops_permissions_git_show {
     static async handle(tenantId: string, organization: string, project: string, repository: string, path: string): Promise<void> {
         const startDate = new Date();
+
         const baseUrl=`https://dev.azure.com/${organization}`;
         const securityNamespaceName = 'Git Repositories';
 
-        const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
-        const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
+        const azureDevOpsWrapperPromise = AzureDevOpsWrapper.instance(baseUrl, tenantId);
+        
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
+        if (securityNamespace === undefined) {
+            throw new Error(JSON.stringify({ organization, securityNamespaceName, error: 'Failed to resolve securityNamespace.' }));
+        }
+        securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
 
-        const gitRepository = await azureDevOpsWrapper.gitRepository(project, repository);
+        const azureDevOpsWrapper = await azureDevOpsWrapperPromise;
+        const gitRepositoryPromise = azureDevOpsWrapper.gitRepository(project, repository);
+        const gitRepository = await gitRepositoryPromise;
         const projectId = gitRepository.project?.id;
         if (projectId === undefined) {
             throw new Error(JSON.stringify({ organization, project, repository, gitRepository, error: 'Failed to resolve project.id.' }));
@@ -29,12 +38,6 @@ export class devops_permissions_git_show {
         if (repositoryId === undefined) {
             throw new Error(JSON.stringify({ organization, project, repository, gitRepository, error: 'Failed to resolve gitRepository.id.' }));
         }
-
-        const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        if (securityNamespace === undefined) {
-            throw new Error(JSON.stringify({ organization, securityNamespaceName, error: 'Failed to resolve securityNamespace.' }));
-        }
-        securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
 
         const parameters = {
             organization,
@@ -115,10 +118,10 @@ export class devops_permissions_git_show {
 
                      if (isAllowInherited) { line.push(`|Allow`); }
                 else if (isAllowEffective) { line.push(`|Allow`); }
-                else if (isAllow)          { line.push(`|Allow`); }
-                else if (isDenyInherited)  { line.push(`|Deny` ); }
-                else if (isDenyEffective)  { line.push(`|Deny` ); }
-                else if (isDeny)           { line.push(`|Deny` ); }
+                else if (isAllow         ) { line.push(`|Allow`); }
+                else if (isDenyInherited ) { line.push(`|Deny` ); }
+                else if (isDenyEffective ) { line.push(`|Deny` ); }
+                else if (isDeny          ) { line.push(`|Deny` ); }
                 else                       { line.push(`|`     ); }
             }
             lines.push(line.join(''));
@@ -132,7 +135,7 @@ export class devops_permissions_git_show {
         accessControlLists: Array<AzureDevOpsAccessControlList>,
         identities        : Array<{ identityDescriptor: string, identity: Identity | undefined }>,
         graphSubjects     : Array<GraphSubject>
-    ) :Array<Mapping>{
+    ): Array<Mapping> {
         const accessControlListMapped = new Array<{
             identifier    : string,
             identity      : Identity     | undefined,
@@ -193,15 +196,13 @@ export class devops_permissions_git_show {
 }
 
 interface Mapping {
-
     identifier    : string;
     identity      : Identity     | undefined;
     graphSubject  : GraphSubject | undefined;
-    allow         : {value: number       | undefined,mapping:Array<AzureDevOpsSecurityNamespaceAction>} ;
-    allowInherited: {value: number       | undefined,mapping:Array<AzureDevOpsSecurityNamespaceAction>};
-    allowEffective: {value: number       | undefined,mapping:Array<AzureDevOpsSecurityNamespaceAction>};
-    deny          : {value: number       | undefined,mapping:Array<AzureDevOpsSecurityNamespaceAction>};
-    denyInherited : {value: number       | undefined,mapping:Array<AzureDevOpsSecurityNamespaceAction>};
-    denyEffective : {value: number       | undefined,mapping:Array<AzureDevOpsSecurityNamespaceAction>};
-
+    allow         : { value: number | undefined, mapping: Array<AzureDevOpsSecurityNamespaceAction> };
+    allowInherited: { value: number | undefined, mapping: Array<AzureDevOpsSecurityNamespaceAction> };
+    allowEffective: { value: number | undefined, mapping: Array<AzureDevOpsSecurityNamespaceAction> };
+    deny          : { value: number | undefined, mapping: Array<AzureDevOpsSecurityNamespaceAction> };
+    denyInherited : { value: number | undefined, mapping: Array<AzureDevOpsSecurityNamespaceAction> };
+    denyEffective : { value: number | undefined, mapping: Array<AzureDevOpsSecurityNamespaceAction> };
 }
