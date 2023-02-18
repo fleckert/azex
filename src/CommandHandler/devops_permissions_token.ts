@@ -17,7 +17,7 @@ export class devops_permissions_token {
         await Promise.all([
             writeFile(`${path}-${title}.json`, JSON.stringify(response, null, 2)),
             writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'id', 'token'], valuesMapped)),
-            writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId','id', 'token'], valuesMapped))
+            writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'id', 'token'], valuesMapped))
         ]);
 
         console.log({
@@ -49,12 +49,12 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-${project}-classificationNodes`;
-            const valuesMapped = response.value.map(p => [p.id, p.token]);
+            const valuesMapped = response.value.map(p => [p.securityNamespace?.displayName ?? '', p.securityNamespace?.namespaceId ?? '', p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
-                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['node', 'token'], valuesMapped)),
-                writeFile(`${path}-${title}.html`, Html    .table(title, ['node', 'token'], valuesMapped))
+                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'node', 'token'], valuesMapped)),
+                writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'node', 'token'], valuesMapped))
             ]);
 
             console.log({
@@ -87,12 +87,12 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-${project}-gitRepositories`;
-            const valuesMapped = response.value.map(p => [p.id, p.token]);
+            const valuesMapped = response.value.map(p => [p.securityNamespace?.displayName ?? '', p.securityNamespace?.namespaceId ?? '', p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
-                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['repository', 'token'], valuesMapped)),
-                writeFile(`${path}-${title}.html`, Html    .table(title, ['repository', 'token'], valuesMapped))
+                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'repository', 'token'], valuesMapped)),
+                writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'repository', 'token'], valuesMapped))
             ]);
 
             console.log({
@@ -125,12 +125,12 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-projects`;
-            const valuesMapped = response.value.map(p => [p.id, p.token]);
+            const valuesMapped = response.value.map(p => [p.securityNamespace?.displayName ?? '', p.securityNamespace?.namespaceId ?? '', p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
-                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['project', 'token'], valuesMapped)),
-                writeFile(`${path}-${title}.html`, Html    .table(title, ['project', 'token'], valuesMapped))
+                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'project', 'token'], valuesMapped)),
+                writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'project', 'token'], valuesMapped))
             ]);
 
             console.log({
@@ -162,12 +162,12 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-tagging`;
-            const valuesMapped = response.value.map(p => [p.id, p.token]);
+            const valuesMapped = response.value.map(p => [p.securityNamespace?.displayName ?? '', p.securityNamespace?.namespaceId ?? '', p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
-                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['project', 'token'], valuesMapped)),
-                writeFile(`${path}-${title}.html`, Html    .table(title, ['project', 'token'], valuesMapped))
+                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'project', 'token'], valuesMapped)),
+                writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'project', 'token'], valuesMapped))
             ]);
 
             console.log({
@@ -199,12 +199,12 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-buildDefinitions`;
-            const valuesMapped = response.value.map(p => [p.id, p.token]);
+            const valuesMapped = response.value.map(p => [p.securityNamespace?.displayName ?? '', p.securityNamespace?.namespaceId ?? '', p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
-                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['buildDefinition', 'token'], valuesMapped)),
-                writeFile(`${path}-${title}.html`, Html    .table(title, ['buildDefinition', 'token'], valuesMapped))
+                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'buildDefinition', 'token'], valuesMapped)),
+                writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'buildDefinition', 'token'], valuesMapped))
             ]);
 
             console.log({
@@ -237,12 +237,12 @@ export class devops_permissions_token {
         }
         else {
             const title = `${organization}-releaseDefinitions`;
-            const valuesMapped = response.value.map(p => [p.id, p.token]);
+            const valuesMapped = response.value.map(p => [p.securityNamespace?.displayName ?? '', p.securityNamespace?.namespaceId ?? '', p.id, p.token]);
 
             await Promise.all([
                 writeFile(`${path}-${title}.json`, JSON.stringify(response.value, null, 2)),
-                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['releaseDefinition', 'token'], valuesMapped)),
-                writeFile(`${path}-${title}.html`, Html    .table(title, ['releaseDefinition', 'token'], valuesMapped))
+                writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'releaseDefinition', 'token'], valuesMapped)),
+                writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'releaseDefinition', 'token'], valuesMapped))
             ]);
 
             console.log({
