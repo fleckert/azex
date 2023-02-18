@@ -20,3 +20,23 @@ export interface AzureDevOpsAccessControlList {
     includeExtendedInfo: boolean | undefined; 
     token              : string  | undefined;
 }
+
+export class AzureDevOpsAccessControlListHelper {
+    static getIdentityDescriptors(accessControlLists: AzureDevOpsAccessControlList[]): string[] {
+        const identityDescriptors = new Set<string>();
+
+        for (const accessControlList of accessControlLists) {
+            for (const key in accessControlList.acesDictionary) {
+                const identity = accessControlList.acesDictionary[key];
+                if (identity.descriptor === undefined) {
+                    continue;
+                }
+                identityDescriptors.add(identity.descriptor);
+            }
+        }
+
+        const identityDescriptorsArray = [...identityDescriptors].sort();
+
+        return identityDescriptorsArray;
+    }
+}
