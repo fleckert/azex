@@ -6,12 +6,13 @@ import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration } from "a
 import { BuildDefinitionReference                                      } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import { CommandRunner                                                 } from "./CommandRunner";
 import { GitRepository                                                 } from "azure-devops-node-api/interfaces/GitInterfaces";
-import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { TeamProjectReference, WebApiTeam                              } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { ReleaseDefinition                                             } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 import { AzureDevOpsPat } from "./AzureDevOpsPat";
+import { AzureDevOpsSecurityNamespaceAction } from "./models/AzureDevOpsSecurityNamespaceAction";
 
 export class AzureDevOpsHelper {
 
@@ -132,6 +133,24 @@ export class AzureDevOpsHelper {
         return this.getValue(url);
     }
 
+    async identitiesByDescriptorExplicit(organization: string, identityDescriptors: Array<string>): Promise<Array<{ identityDescriptor: string, identity: Identity | undefined }>> {
+
+        // requesting the identity for 'descriptor-a' may return an identity with 'descriptor-b'
+        // therefore store request and response
+        // this might need batched calls to not run into throttling 
+
+        const requests = identityDescriptors.map(identityDescriptor => { return { identityDescriptor, promise: this.identityByDescriptor(organization, identityDescriptor) } });
+
+        const collection = new Array<{ identityDescriptor: string, identity: Identity | undefined }>();
+
+        for (const request of requests) {
+            const result = await request.promise;
+            collection.push({ identityDescriptor: request.identityDescriptor, identity: result })
+        }
+
+        return collection;
+    }
+
     identitiesBySubjectDescriptors(organization: string, subjectDescriptors: Array<string>): Promise<Identity[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/ims/identities/read-identities?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/identities?subjectDescriptors=${subjectDescriptors.join(',')}&api-version=7.1-preview.1`;
@@ -141,8 +160,31 @@ export class AzureDevOpsHelper {
     async userFromIdentity(organization: string, identityDescriptor: string): Promise<GraphUser | undefined> {
         const identity = await this.identityByDescriptor(organization, identityDescriptor);
         if (identity?.subjectDescriptor === undefined) { return undefined; }
+
         return await this.userBySubjectDescriptor(organization, identity.subjectDescriptor);
     }
+
+    async groupFromIdentity(organization: string, identityDescriptor: string): Promise<GraphGroup | undefined> {
+        const identity = await this.identityByDescriptor(organization, identityDescriptor);
+        if (identity?.subjectDescriptor === undefined) { return undefined; }
+
+        return await this.groupBySubjectDescriptor(organization, identity.subjectDescriptor);
+    }
+
+    async graphMemberFromIdentity(organization: string, identityDescriptor: string): Promise<GraphMember | undefined> {
+        const identity = await this.identityByDescriptor(organization, identityDescriptor);
+        if (identity?.subjectDescriptor === undefined) { return undefined; }
+
+        if (identity?.isContainer === true) {
+            return await this.groupBySubjectDescriptor(organization, identity?.subjectDescriptor);
+        }
+        if (identity?.isContainer === false) {
+            return await this.userBySubjectDescriptor(organization, identity?.subjectDescriptor);
+        }
+
+        return undefined;
+    }
+
 
     gitRepositories(organization: string, project: string): Promise<GitRepository[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list?view=azure-devops-rest-7.1&tabs=HTTP
@@ -166,10 +208,32 @@ export class AzureDevOpsHelper {
         return this.getValue(`https://dev.azure.com/${organization}/_apis/securitynamespaces?api-version=7.1-preview.1`);
     }
 
-    async securityNamespaceByName(organization: string, name: string): Promise<  AzureDevOpsSecurityNamespace | undefined > {
+    static azureDevOpsAccessControlEntryMapping(securityNamespace: AzureDevOpsSecurityNamespace, value: number | undefined): Array<AzureDevOpsSecurityNamespaceAction> {
+        if (value === undefined) {
+            return [];
+        }
+
+        const actions = new Array<AzureDevOpsSecurityNamespaceAction>();
+
+        for (const action of securityNamespace.actions) {
+            if (action.bit === undefined) {
+                continue;
+            }
+
+            const isMatch = (action.bit & value) === action.bit;
+
+            if (isMatch) {
+                actions.push(action);
+            }
+        }
+
+        return actions;
+    }
+
+    async securityNamespaceByName(organization: string, name: string): Promise<AzureDevOpsSecurityNamespace | undefined> {
         const response = await this.securityNamespaces(organization);
 
-        return  response.find(p => p.name?.toLowerCase() === name.toLowerCase()) ;
+        return response.find(p => p.name?.toLowerCase() === name.toLowerCase());
     }
 
     async securityNamespace(organization: string, securityNamespaceId: string): Promise<AzureDevOpsSecurityNamespace | undefined> {
@@ -188,6 +252,12 @@ export class AzureDevOpsHelper {
     userBySubjectDescriptor(organization: string, subjectDescriptor: string): Promise<GraphUser | undefined> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/get?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/users/${subjectDescriptor}?api-version=7.1-preview.1`;
+        return this.get(url);
+    }
+
+    groupBySubjectDescriptor(organization: string, groupDescriptor: string): Promise<GraphGroup | undefined> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/groups/get?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/groups/${groupDescriptor}?api-version=7.1-preview.1`;
         return this.get(url);
     }
 
@@ -253,6 +323,18 @@ export class AzureDevOpsHelper {
         catch (error: any) {
             throw new Error(JSON.stringify({ url, data, status: error.response.status, statusText: error.response.statusText }));
         }
+    }
+
+    async graphSubjectsLookupArray(organization: string, descriptors: string[]): Promise<Array<GraphSubject>> {
+        const response = await this.graphSubjectsLookup(organization, descriptors);
+
+        const collection = new Array<GraphSubject>();
+
+        for (const key in response) {
+            collection.push(response[key]);
+        }
+
+        return collection;
     }
 
     async graphSubjectLookup(organization: string, descriptor: string): Promise<GraphSubject | undefined> {

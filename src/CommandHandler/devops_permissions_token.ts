@@ -12,12 +12,12 @@ export class devops_permissions_token {
         const response = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, project);
 
         const title = `${organization}-${project}-tokens`;
-        const valuesMapped =response.map(p => [p.id, p.token]);
+        const valuesMapped = response.map(p => [p.securityNamespace?.displayName ?? '',p.securityNamespace?.namespaceId ?? '', p.id, p.token]);
 
         await Promise.all([
             writeFile(`${path}-${title}.json`, JSON.stringify(response, null, 2)),
-            writeFile(`${path}-${title}.md`  , Markdown.table(title, ['id', 'token'], valuesMapped)),
-            writeFile(`${path}-${title}.html`, Html    .table(title, ['id', 'token'], valuesMapped))
+            writeFile(`${path}-${title}.md`  , Markdown.table(title, ['namespace', 'namespaceId', 'id', 'token'], valuesMapped)),
+            writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId','id', 'token'], valuesMapped))
         ]);
 
         console.log({

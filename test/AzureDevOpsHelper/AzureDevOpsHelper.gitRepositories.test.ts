@@ -27,14 +27,14 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
         const securityNamespaceId = securityNamespace.namespaceId;
 
         {
-            const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project(projectId)
+            const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project(projectId);
 
             const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId, token: securityToken });
             if (accessControlLists.length === 0) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value.length === 0`); }
         }
 
         {
-            const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project_Repository(projectId, repositoryId)
+            const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project_Repository(projectId, repositoryId);
 
             const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId, token: securityToken });
             if (accessControlLists.length === 0) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value.length === 0`); }
@@ -42,7 +42,7 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
 
         {
             if (gitRepository.defaultBranch !== undefined) {
-                const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project_Repository_Branch(projectId, repositoryId, gitRepository.defaultBranch)
+                const securityToken = AzureDevOpsSecurityTokens.GitRepositories_Project_Repository_Branch(projectId, repositoryId, gitRepository.defaultBranch);
 
                 const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId, token: securityToken });
                 if (accessControlLists.length === 0) { throw new Error(`accessControlLists(${JSON.stringify({ organization, securityNamespaceId, token: securityToken })}).value.length === 0`); }
