@@ -9,6 +9,7 @@ import { ProcessWorkItemType, ProcessWorkItemTypeField } from "azure-devops-node
 import { WorkApi } from "azure-devops-node-api/WorkApi";
 import { TeamSetting } from "azure-devops-node-api/interfaces/WorkInterfaces";
 import { AzureDevOpsPat } from "./AzureDevOpsPat";
+import { WikiApi } from "azure-devops-node-api/WikiApi";
 
 export class AzureDevOpsWrapper {
     readonly requestHandlers:  IRequestHandler[];
@@ -25,6 +26,7 @@ export class AzureDevOpsWrapper {
     }
 
     gitRepositories(project: string) { return new GitApi(this.baseUrl, this.requestHandlers).getRepositories(project); }
+    gitRepository(project: string, repository: string) { return new GitApi(this.baseUrl, this.requestHandlers).getRepository(repository, project); }
     
     project(projectId: string) { return new CoreApi(this.baseUrl, this.requestHandlers).getProject(projectId, true); }
 
@@ -87,6 +89,19 @@ export class AzureDevOpsWrapper {
 
     workTeamSettings(projectId: string, teamId: string): Promise<TeamSetting> {
         return new WorkApi(this.baseUrl, this.requestHandlers).getTeamSettings({ projectId, teamId });
+    }
+
+    async wikiPaths(project?: string) {
+        const client = new WikiApi(this.baseUrl, this.requestHandlers);
+        const wikis = await client.getAllWikis(project);
+
+        for (const wikiId of wikis.filter(p => p.id !== undefined).map(p => p.id!)) {
+            const wiki = await client.getWiki(wikiId!);
+            console.log(wiki);
+        }
+
+        throw new Error('not implemented');
+        return wikis;
     }
 
     private async projectsInternal(): Promise<Array<TeamProjectReference>> {

@@ -3,9 +3,9 @@ import { devops_permissions_git_show } from "../../../../src/CommandHandler/devo
 import { AzureDevOpsWrapper          } from "../../../../src/AzureDevOpsWrapper";
 import { TestConfigurationProvider   } from "../../../_Configuration/TestConfiguration";
 
-test('devops_permissions_git_show', async () => {
+test('devops_permissions_git_showRepo', async () => {
     const config          = await TestConfigurationProvider.get();
-    const pathOut         = path.join(__dirname, 'out', 'devops_permissions_git_show');
+    const pathOut         = path.join(__dirname, 'out', 'devops_permissions_git_showRepo');
     const organization    = config.azureDevOps.organization;
     const projectName     = config.azureDevOps.projectName;
     const baseUrl         = config.azureDevOps.baseUrl;
@@ -17,6 +17,17 @@ test('devops_permissions_git_show', async () => {
     const collection = await azureDevOpsWrapper.gitRepositories(projectName);
 
     for (const item of collection.filter(p => p.name !== undefined).slice(0, maxNumerOfTests)) {
-        await devops_permissions_git_show.handle(tenantId, organization, projectName, item.name!, pathOut);
+        await devops_permissions_git_show.handleRepo(tenantId, organization, projectName, item.name!, pathOut);
     }
+}, 100000);
+
+test('devops_permissions_git_showProject', async () => {
+    const config          = await TestConfigurationProvider.get();
+    const pathOut         = path.join(__dirname, 'out', 'devops_permissions_git_showProject');
+    const organization    = config.azureDevOps.organization;
+    const projectName     = config.azureDevOps.projectName;
+    const tenantId        = config.azureDevOps.tenantId;
+
+    await devops_permissions_git_show.handleProject(tenantId, organization, projectName, pathOut);
+
 }, 100000);
