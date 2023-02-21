@@ -76,7 +76,7 @@ export class devops_permissions_overview_show {
         });
     }
 
-    static toMarkDown(
+    private static toMarkDown(
         securityNamespace: AzureDevOpsSecurityNamespace,
         title            : string,
         collection       : Array<Mapping>
