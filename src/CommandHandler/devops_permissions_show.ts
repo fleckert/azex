@@ -11,44 +11,43 @@ export class devops_permissions_show {
 
         const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
         const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-        
+
         const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['User', 'Group'], principalName);
 
         if (graphSubject?.descriptor === undefined) {
             throw new Error(`Failed to resolve graphSubject.descriptor for ${JSON.stringify({organization, principalName})}.`);
         }
-        else {
-            const subjectDescriptor = graphSubject.descriptor;
 
-            const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, project, subjectDescriptor);
+        const subjectDescriptor = graphSubject.descriptor;
 
-            const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf);
-    
-            const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
-    
-            const title = `${organization                                       }-`
-                        + `${project ===undefined ? '': `${project}-`           }`
-                        + `${graphSubjectMemberOf.graphSubject.subjectKind}-`
-                        + `${principalName.replaceAll('\\','_')                 }`;
-    
-            await Promise.all([
-                writeFile(`${path}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)      )),
-                writeFile(`${path}-${title}.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper),title)),
-            ]);
+        const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, project, subjectDescriptor);
 
-            console.log({
-                parameters: {
-                    organization,
-                    project,
-                    principalName,
-                    path
-                },
-                durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
-                files: {
-                    markdown: `${path}-${title}.md`,
-                    html    : `${path}-${title}.html`
-                }
-            });
-        }
+        const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf);
+
+        const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
+
+        const title = `${organization                                       }-`
+                    + `${project ===undefined ? '': `${project}-`           }`
+                    + `${graphSubjectMemberOf.graphSubject.subjectKind}-`
+                    + `${principalName.replaceAll('\\','_')                 }`;
+
+        await Promise.all([
+            writeFile(`${path}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)      )),
+            writeFile(`${path}-${title}.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper),title)),
+        ]);
+
+        console.log({
+            parameters: {
+                organization,
+                project,
+                principalName,
+                path
+            },
+            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
+            files: {
+                markdown: `${path}-${title}.md`,
+                html    : `${path}-${title}.html`
+            }
+        });
     }
 }

@@ -137,17 +137,21 @@ export class AzureDevOpsHelper {
 
         // requesting the identity for 'descriptor-a' may return an identity with 'descriptor-b'
         // therefore store request and response
-        // this might need batched calls to not run into throttling 
-
-        const requests = identityDescriptors.map(identityDescriptor => { return { identityDescriptor, promise: this.identityByDescriptor(organization, identityDescriptor) } });
 
         const collection = new Array<{ identityDescriptor: string, identity: Identity | undefined }>();
 
-        for (const request of requests) {
-            const result = await request.promise;
-            collection.push({ identityDescriptor: request.identityDescriptor, identity: result })
-        }
+        const batchsize = 20;
 
+        const batches = this.getBatches(identityDescriptors, batchsize);
+
+        for (const batch of batches) {
+            const requests = batch.map(identityDescriptor => { return { identityDescriptor, promise: this.identityByDescriptor(organization, identityDescriptor) } });
+
+            for (const request of requests) {
+                const result = await request.promise;
+                collection.push({ identityDescriptor: request.identityDescriptor, identity: result })
+            }
+        }
         return collection;
     }
 
@@ -202,21 +206,6 @@ export class AzureDevOpsHelper {
 
         return await this.groupBySubjectDescriptor(organization, identity.subjectDescriptor);
     }
-
-    async graphMemberFromIdentity(organization: string, identityDescriptor: string): Promise<GraphMember | undefined> {
-        const identity = await this.identityByDescriptor(organization, identityDescriptor);
-        if (identity?.subjectDescriptor === undefined) { return undefined; }
-
-        if (identity?.isContainer === true) {
-            return await this.groupBySubjectDescriptor(organization, identity?.subjectDescriptor);
-        }
-        if (identity?.isContainer === false) {
-            return await this.userBySubjectDescriptor(organization, identity?.subjectDescriptor);
-        }
-
-        return undefined;
-    }
-
 
     gitRepositories(organization: string, project: string): Promise<GitRepository[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list?view=azure-devops-rest-7.1&tabs=HTTP
@@ -392,11 +381,14 @@ export class AzureDevOpsHelper {
             const response = await axios.post(url, data, { headers: this.getHeaders() });
 
             if (response.status === 200) {
-                if (response.data.count === 1) {
+                if (response.data.count === 0) {
+                    return undefined;
+                }
+                else if (response.data.count === 1) {
                     return response.data.value[0] == null ? undefined : response.data.value[0];
                 }
                 else{
-                    const item = response.data.value.find((p : {principalName:string|undefined})=> p.principalName?.toLowerCase() === principalName.toLocaleLowerCase());
+                    const item = response.data.value.find((p: { principalName: string | undefined }) => p.principalName?.toLowerCase() === principalName.toLocaleLowerCase());
 
                     return item;
                 }

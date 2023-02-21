@@ -90,3 +90,15 @@ test('devops_permissions_show-nonExistent', async () => {
     }
     catch { }
 }, 100000);
+
+test('devops_permissions_show-specific', async () => {
+    const pathOut       = path.join(__dirname, 'out', `devops_permissions_show-specific`);
+    const config        = await TestConfigurationProvider.get();
+    const organization  = config.azureDevOps.organization;
+    const tenantId      = config.azureDevOps.tenantId;
+    const projectName   = config.azureDevOps.projectName;
+    const principalName = '';
+    if (principalName !== '') {
+        await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
+    }
+}, 100000);

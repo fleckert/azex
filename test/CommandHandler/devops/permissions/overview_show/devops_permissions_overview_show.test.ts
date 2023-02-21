@@ -19,10 +19,6 @@ test('devops_permissions_overview_show', async () => {
 
         const securityNamespaceName = item.securityNamespace?.name; if (securityNamespaceName === undefined) { continue; }
         const token = item.token;
-                    // vstfs:///Classification/Node/e4cfd657-81d6-41aa-9058-e0dc97ac167e:vstfs:///Classification/Node/ff692e98-224a-4f9e-89a0-327765c72af4
-        // if (token !== 'vstfs:///Classification/Node/e4cfd657-81d6-41aa-9058-e0dc97ac167e:vstfs:///Classification/Node/ff692e98-224a-4f9e-89a0-327765c72af4') {
-        //     continue;
-        // }
 
         await devops_permissions_overview_show.handle(tenantId, organization, projectName, securityNamespaceName, token, pathOut);
     }
