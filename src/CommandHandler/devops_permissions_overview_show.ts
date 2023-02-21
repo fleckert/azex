@@ -1,49 +1,33 @@
-import { AzureDevOpsHelper                                                            } from "../AzureDevOpsHelper";
-import { GraphSubject                                                                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { Html                                                                         } from "../Converters/Html";
-import { Markdown                                                                     } from "../Converters/Markdown";
-import { writeFile                                                                    } from "fs/promises";
-import { AzureDevOpsWrapper                                                           } from "../AzureDevOpsWrapper";
-import { AzureDevOpsSecurityNamespaceAction, AzureDevOpsSecurityNamespaceActionHelper } from "../models/AzureDevOpsSecurityNamespaceAction";
-import { AzureDevOpsSecurityTokens                                                    } from "../AzureDevOpsSecurityTokens";
-import { Identity                                                                     } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
-import { AzureDevOpsPortalLinks                                                       } from "../AzureDevOpsPortalLinks";
 import { AzureDevOpsAccessControlList, AzureDevOpsAccessControlListHelper             } from "../models/AzureDevOpsAccessControlEntry";
+import { AzureDevOpsHelper                                                            } from "../AzureDevOpsHelper";
 import { AzureDevOpsSecurityNamespace                                                 } from "../models/AzureDevOpsSecurityNamespace";
+import { AzureDevOpsSecurityNamespaceAction, AzureDevOpsSecurityNamespaceActionHelper } from "../models/AzureDevOpsSecurityNamespaceAction";
+import { GraphSubject                                                                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Identity                                                                     } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
+import { writeFile                                                                    } from "fs/promises";
+import { AzureDevOpsSecurityTokens } from "../AzureDevOpsSecurityTokens";
 
-export class devops_permissions_git_show {
-    static async handleRepo(tenantId: string, organization: string, project: string, repository: string, path: string): Promise<void> {
+export class devops_permissions_overview_show {
+    static async handle(tenantId: string, organization: string, project:string, securityNamespaceName: string, token: string, path: string): Promise<void> {
         const startDate = new Date();
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
+        securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
 
-        const baseUrl=`https://dev.azure.com/${organization}`;
-        const securityNamespaceName = 'Git Repositories';
+        const securityTokens = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, project);
+        const securityToken = securityTokens.find(p => p.token === token);
+        if (securityToken === undefined) {
+            throw new Error(JSON.stringify({ organization, project, token, error: 'Failed to resolve securityToken.' }));
+        }
 
-        const azureDevOpsWrapperPromise = AzureDevOpsWrapper.instance(baseUrl, tenantId);
+        const parameters = {
+            organization,
+            securityNamespaceId: securityNamespace.namespaceId!,
+            token,
+            includeExtendedInfo: true
+        };
+        const accessControlLists = await azureDevOpsHelper.accessControlLists(parameters);
         
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-        const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
-
-        const azureDevOpsWrapper = await azureDevOpsWrapperPromise;
-        const gitRepository = await azureDevOpsWrapper.gitRepository(project, repository);
-        const projectId = gitRepository.project?.id;
-        if (projectId === undefined) {
-            throw new Error(JSON.stringify({ organization, project, repository, gitRepository, error: 'Failed to resolve project.id.' }));
-        }
-        const repositoryId = gitRepository.id;
-        if (repositoryId === undefined) {
-            throw new Error(JSON.stringify({ organization, project, repository, gitRepository, error: 'Failed to resolve gitRepository.id.' }));
-        }
-
-        const parameters = {
-            organization,
-            securityNamespaceId: securityNamespace.namespaceId!,
-            token: AzureDevOpsSecurityTokens.GitRepositories_Project_Repository(projectId, repositoryId),
-            includeExtendedInfo: true
-        };
-        const accessControlLists = await azureDevOpsHelper.accessControlLists(parameters);
-        if (accessControlLists.length === 0) { throw new Error(JSON.stringify({ parameters, accessControlLists })) }
-
         const identityDescriptors = AzureDevOpsAccessControlListHelper.getIdentityDescriptors(accessControlLists);
 
         const identities = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptors);
@@ -53,83 +37,24 @@ export class devops_permissions_git_show {
 
         const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, graphSubjects);
 
-        const markdown = this.toMarkDownRepo(
-            organization,
-            gitRepository.project?.name ?? projectId,
-            gitRepository.name ?? repository,
-            repositoryId, securityNamespace,
-            accessControlListMapped
-        );
+        const titleMarkDown = `${organization} / ${project} / ${securityNamespace.name} ${securityNamespace.namespaceId} / ${securityToken.id} / ${token} Security Settings`;
 
-        const title = `${organization}`
-                    + `-${gitRepository.project?.name ?? projectId}`
-                    + `-${gitRepository.name ?? repository}`
-                    + `-permissions`;
-
-        await Promise.all([
-            writeFile(`${path}-${title}.md`, markdown)
-        ]);
-
-        console.log({
-            parameters: {
-                tenantId,
-                organization,
-                project,
-                repository,
-                path
-            },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
-            files: {
-                markdown: `${path}-${title}.md`
-            }
-        });
-    }
-
-    static async handleProject(tenantId: string, organization: string, project: string, path: string): Promise<void> {
-        const startDate = new Date();
-
-        const securityNamespaceName = 'Git Repositories';
-
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-        const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
-
-        const projectResponse = await azureDevOpsHelper.projectByName(organization, project);
-        if (projectResponse === undefined) {
-            throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
-        }
-
-        if (projectResponse.id === undefined) {
-            throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.id.' }));
-        }
-
-        const parameters = {
-            organization,
-            securityNamespaceId: securityNamespace.namespaceId!,
-            token: AzureDevOpsSecurityTokens.GitRepositories_Project(projectResponse.id),
-            includeExtendedInfo: true
-        };
-        const accessControlLists = await azureDevOpsHelper.accessControlLists(parameters);
-        if (accessControlLists.length === 0) { throw new Error(JSON.stringify({ parameters, accessControlLists })) }
-
-        const identityDescriptors = AzureDevOpsAccessControlListHelper.getIdentityDescriptors(accessControlLists);
-
-        const identities = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptors);
-
-        const subjectDescriptors = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
-        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookupArray(organization, subjectDescriptors);
-
-        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, graphSubjects);
-
-        const markdown = this.toMarkDownProject(
-            organization,
-            projectResponse.name ?? projectResponse.id,
+        const markdown = this.toMarkDown(
             securityNamespace,
+            titleMarkDown,
             accessControlListMapped
         );
 
         const title = `${organization}`
-                    + `-${projectResponse.name ?? projectResponse.id}`
+                    + `-${project}`
+                    + `-${securityNamespace.name}`
+                    + `-${securityToken.id.replaceAll('\\','_')}`
+                    // + `-${token.replaceAll('$','_')
+                    //            .replaceAll('\\','_')
+                    //            .replaceAll('/','_')
+                    //            .replaceAll(':','_')
+                    //            .replaceAll('vstfs____Classification_Node_', 'Node_')
+                    //            .replaceAll('Classification', 'CSS')}`
                     + `-permissions`;
 
         await Promise.all([
@@ -140,7 +65,8 @@ export class devops_permissions_git_show {
             parameters: {
                 tenantId,
                 organization,
-                project,
+                securityNamespace,
+                token,
                 path
             },
             durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
@@ -150,57 +76,15 @@ export class devops_permissions_git_show {
         });
     }
 
-    static toMarkDownRepo(
-        organization     : string,
-        project          : string,
-        repository       : string,
-        repositoryId     : string,
+    static toMarkDown(
         securityNamespace: AzureDevOpsSecurityNamespace,
+        title            : string,
         collection       : Array<Mapping>
     ) {
         const allActions = securityNamespace.actions.map(p => p.displayName);
 
         const lines = new Array<string>();
-        lines.push(`[${organization} / ${project} / ${repository} Security Settings](${AzureDevOpsPortalLinks.repositorySettingsSecurity(organization, project, repositoryId)})`)
-        lines.push(`|  |${allActions.map(p => `${p}|`).join('')}`);
-        lines.push(`|:-|${allActions.map(p => ':-: |').join('')}`);
- 
-        for (const acl of collection) {
-            const line = Array<string | undefined>();
-            line.push(`|${acl.graphSubject?.displayName ?? acl.identity?.descriptor ?? acl.identifier}`);
-
-            for (const action of securityNamespace.actions) {
-                const isAllow          = acl.allow         .mapping.find(p => p.bit === action.bit) !== undefined;
-                const isDeny           = acl.deny          .mapping.find(p => p.bit === action.bit) !== undefined;
-                const isAllowEffective = acl.allowEffective.mapping.find(p => p.bit === action.bit) !== undefined;
-                const isDenyEffective  = acl.denyEffective .mapping.find(p => p.bit === action.bit) !== undefined;
-                const isAllowInherited = acl.allowInherited.mapping.find(p => p.bit === action.bit) !== undefined;
-                const isDenyInherited  = acl.denyInherited .mapping.find(p => p.bit === action.bit) !== undefined;
-
-                     if (isAllowInherited) { line.push(`|Allow`); }
-                else if (isAllowEffective) { line.push(`|Allow`); }
-                else if (isAllow         ) { line.push(`|Allow`); }
-                else if (isDenyInherited ) { line.push(`|Deny` ); }
-                else if (isDenyEffective ) { line.push(`|Deny` ); }
-                else if (isDeny          ) { line.push(`|Deny` ); }
-                else                       { line.push(`|`     ); }
-            }
-            lines.push(line.join(''));
-        }
-
-        return lines.join('\n');
-    }
-
-    static toMarkDownProject(
-        organization     : string,
-        project          : string,
-        securityNamespace: AzureDevOpsSecurityNamespace,
-        collection       : Array<Mapping>
-    ) {
-        const allActions = securityNamespace.actions.map(p => p.displayName);
-
-        const lines = new Array<string>();
-        lines.push(`[${organization} / ${project} Security Settings](${AzureDevOpsPortalLinks.projectRepositorySettings(organization, project)})`)
+        lines.push(`${title}`)
         lines.push(`|  |${allActions.map(p => `${p}|`).join('')}`);
         lines.push(`|:-|${allActions.map(p => ':-: |').join('')}`);
  

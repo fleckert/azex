@@ -28,7 +28,7 @@ test('AzureDevOpsHelper - gitRepositories-accessControlList', async () => {
     const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
     await writeFile(file, JSON.stringify({ organization, securityNamespaceName, securityNamespace }, null, 2));
     
-    if (securityNamespace?.namespaceId === undefined) { throw new Error(`securityNamespaceByName(${organization}, ${securityNamespaceName}).value.namespaceId === undefined`); }
+    if (securityNamespace.namespaceId === undefined) { throw new Error(`securityNamespaceByName(${organization}, ${securityNamespaceName}).value.namespaceId === undefined`); }
     
     securityNamespace.actions.sort((a: AzureDevOpsSecurityNamespaceAction, b: AzureDevOpsSecurityNamespaceAction) => {
         // show these actions first

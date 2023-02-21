@@ -1,7 +1,7 @@
 import path from "path";
-import { devops_permissions_git_show } from "../../../../src/CommandHandler/devops_permissions_git_show";
-import { AzureDevOpsWrapper          } from "../../../../src/AzureDevOpsWrapper";
-import { TestConfigurationProvider   } from "../../../_Configuration/TestConfiguration";
+import { devops_permissions_git_show } from "../../../../../src/CommandHandler/devops_permissions_git_show";
+import { AzureDevOpsWrapper          } from "../../../../../src/AzureDevOpsWrapper";
+import { TestConfigurationProvider   } from "../../../../_Configuration/TestConfiguration";
 
 test('devops_permissions_git_showRepo', async () => {
     const config          = await TestConfigurationProvider.get();

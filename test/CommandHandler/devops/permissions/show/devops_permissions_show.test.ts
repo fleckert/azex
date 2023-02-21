@@ -1,7 +1,7 @@
 import path from "path";
-import { devops_permissions_show   } from "../../../../src/CommandHandler/devops_permissions_show";
-import { AzureDevOpsHelper         } from "../../../../src/AzureDevOpsHelper";
-import { TestConfigurationProvider } from "../../../_Configuration/TestConfiguration";
+import { devops_permissions_show   } from "../../../../../src/CommandHandler/devops_permissions_show";
+import { AzureDevOpsHelper         } from "../../../../../src/AzureDevOpsHelper";
+import { TestConfigurationProvider } from "../../../../_Configuration/TestConfiguration";
 
 test('devops_permissions_show-user-project', async () => {
     const config            = await TestConfigurationProvider.get();

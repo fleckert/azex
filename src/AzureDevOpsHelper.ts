@@ -151,10 +151,42 @@ export class AzureDevOpsHelper {
         return collection;
     }
 
-    identitiesBySubjectDescriptors(organization: string, subjectDescriptors: Array<string>): Promise<Identity[]> {
+    async identitiesBySubjectDescriptors(organization: string, subjectDescriptors: Array<string>): Promise<Identity[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/ims/identities/read-identities?view=azure-devops-rest-7.1&tabs=HTTP
-        const url = `https://vssps.dev.azure.com/${organization}/_apis/identities?subjectDescriptors=${subjectDescriptors.join(',')}&api-version=7.1-preview.1`;
-        return this.getValue(url);
+
+        const batchsize = 20;
+
+        if (subjectDescriptors.length <= batchsize) {
+            const url = `https://vssps.dev.azure.com/${organization}/_apis/identities?subjectDescriptors=${subjectDescriptors.join(',')}&api-version=7.1-preview.1`;
+            return await this.getValue(url);
+        }
+        else {
+            const batches = this.getBatches(subjectDescriptors, batchsize);
+
+            const collection = new Array<Identity>()
+            for (const batch of batches) {
+                const tmp = await this.identitiesBySubjectDescriptors(organization, batch);
+
+                collection.push(...tmp);
+            }
+
+            return collection;
+        }
+    }
+
+    private getBatches<T>(values: T[], batchSize: number): Array<Array<T>> {
+        const batches = new Array<Array<T>>();
+        batches.push(new Array<T>());
+
+        for (let index = 0; index < values.length; index++) {
+            if (batches[batches.length - 1].length == batchSize) {
+                batches.push(new Array<T>());
+            }
+
+            batches[batches.length - 1].push(values[index]);
+        }
+
+        return batches;
     }
 
     async userFromIdentity(organization: string, identityDescriptor: string): Promise<GraphUser | undefined> {
@@ -230,10 +262,16 @@ export class AzureDevOpsHelper {
         return actions;
     }
 
-    async securityNamespaceByName(organization: string, name: string): Promise<AzureDevOpsSecurityNamespace | undefined> {
-        const response = await this.securityNamespaces(organization);
+    async securityNamespaceByName(organization: string, name: string): Promise<AzureDevOpsSecurityNamespace> {
+        const securityNamespaces = await this.securityNamespaces(organization);
 
-        return response.find(p => p.name?.toLowerCase() === name.toLowerCase());
+        const securityNamespace = securityNamespaces.find(p => p.name?.toLowerCase() === name.toLowerCase());
+
+        if (securityNamespace === undefined) {
+            throw new Error(JSON.stringify({ organization, name, securityNamespaces, error: `Failed to resolve securityNamespace with name '${name}'.` }));
+        }
+
+        return securityNamespace;
     }
 
     async securityNamespace(organization: string, securityNamespaceId: string): Promise<AzureDevOpsSecurityNamespace | undefined> {
@@ -354,8 +392,14 @@ export class AzureDevOpsHelper {
             const response = await axios.post(url, data, { headers: this.getHeaders() });
 
             if (response.status === 200) {
-                if (response.data.count !== 1) { return undefined; }
-                return response.data.value[0] == null ? undefined : response.data.value[0];
+                if (response.data.count === 1) {
+                    return response.data.value[0] == null ? undefined : response.data.value[0];
+                }
+                else{
+                    const item = response.data.value.find((p : {principalName:string|undefined})=> p.principalName?.toLowerCase() === principalName.toLocaleLowerCase());
+
+                    return item;
+                }
             }
 
             throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));

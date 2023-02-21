@@ -17,7 +17,7 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
 
     const securityNamespaceName = 'Git Repositories';
     const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-    if (securityNamespace?.namespaceId === undefined) { throw new Error(`securityNamespaceByName(${organization}, ${securityNamespaceName}).value.namespaceId === undefined`); }
+    if (securityNamespace.namespaceId === undefined) { throw new Error(`securityNamespaceByName(${organization}, ${securityNamespaceName}).value.namespaceId === undefined`); }
 
     const maxNumerOfTests = 5;
 
