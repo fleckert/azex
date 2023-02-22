@@ -6,6 +6,7 @@ test('AzureDevOpsHelper - securityNamespaces', async () => {
     const config            = await TestConfigurationProvider.get();
     const tenantId          = config.azureDevOps.tenantId;
     const organization      = config.azureDevOps.organization;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
     const testName          = 'securityNamespaces';
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
@@ -18,9 +19,7 @@ test('AzureDevOpsHelper - securityNamespaces', async () => {
 
     console.log(file);
 
-    const maxNumerOfTests = 5;
-
-    for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+    for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumberOfTests)) {
         const securityNamespaceId = securityNamespace.namespaceId!;
 
         const securityNamespaceForId = await azureDevOpsHelper.securityNamespace(organization, securityNamespaceId);

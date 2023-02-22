@@ -13,14 +13,14 @@ test('AzureDevOpsHelper - users-in-project', async () => {
     const projectName       = config.azureDevOps.projectName;
     const tenantId          = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const maxNumerOfTests   = 5000;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-in-project-${organization}-${projectName}.md`);
     await writeFile(file, 'test started');
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
-    const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumerOfTests);
+    const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumberOfTests);
 
     const groupsUsers = new Array<{ group: GraphGroup, user: GraphUser }>
 

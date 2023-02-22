@@ -8,15 +8,14 @@ test('AzureDevOpsHelper - identityBySubjectDescriptor-userFromIdentity', async (
     const tenantId = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const organization = config.azureDevOps.organization;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `test-graphUsersList-${organization}.json`);
     await writeFile(file, JSON.stringify({ message: 'test started' }, null, 2));
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
-    const maxNumerOfTests = 10;
-
-    for (const user of users.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
+    for (const user of users.filter(p => p.descriptor !== undefined).slice(0, maxNumberOfTests)) {
         const subjectDescriptor = user.descriptor!;
         const identity = await azureDevOpsHelper.identityBySubjectDescriptor(organization, subjectDescriptor)
         if (identity?.descriptor === undefined) { throw new Error(JSON.stringify({ organization, subjectDescriptor, identity }, null, 2)); }

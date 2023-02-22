@@ -8,11 +8,12 @@ import { TestConfigurationProvider      } from "../_Configuration/TestConfigurat
 import { writeFile                      } from "fs/promises";
 
 test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
-    const config       = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const projectName  = config.azureDevOps.projectName;
-    const tenantId     = config.azureDevOps.tenantId;
-    const pathOut      = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const projectName      = config.azureDevOps.projectName;
+    const tenantId         = config.azureDevOps.tenantId;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
+    const pathOut          = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
 
     const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
@@ -21,9 +22,7 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);
     await writeFile(`${pathOut}-users.json`, JSON.stringify(users, null, 2));
 
-    const maxNumerOfTests = 5;
-
-    for (const graphSubject of users.slice(0, maxNumerOfTests)) {
+    for (const graphSubject of users.slice(0, maxNumberOfTests)) {
         if (graphSubject.descriptor === undefined) { throw new Error("graphSubject.descriptor === undefined"); }
 
         const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, projectName, graphSubject.descriptor);

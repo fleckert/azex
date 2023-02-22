@@ -2,16 +2,15 @@ import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-user', async () => {
-    const config = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const tenantId = config.azureDevOps.tenantId;
+    const config            = await TestConfigurationProvider.get();
+    const organization      = config.azureDevOps.organization;
+    const tenantId          = config.azureDevOps.tenantId;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
-    const maxNumerOfTests = 5;
-
-    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumberOfTests)) {
         const principalName = graphUser.principalName!;
         const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['User'], principalName);
         if (graphSubject === undefined) { throw new Error(JSON.stringify({organization, principalName})); }
@@ -33,10 +32,10 @@ test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-groups', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
     const tenantId          = config.azureDevOps.tenantId;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const maxNumerOfTests   = 5;
 
-    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumerOfTests);
+    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
 
     for (const group of groups) {
         if (group.principalName === undefined) {

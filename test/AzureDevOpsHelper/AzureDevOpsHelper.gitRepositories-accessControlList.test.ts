@@ -11,12 +11,13 @@ import { AzureDevOpsPortalLinks             } from "../../src/AzureDevOpsPortalL
 import { Helper                             } from "../../src/Helper";
 
 test('AzureDevOpsHelper - gitRepositories-accessControlList', async () => {
-    const config       = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const projectName  = config.azureDevOps.projectName;
-    const baseUrl      = config.azureDevOps.baseUrl;
-    const tenantId     = config.azureDevOps.tenantId;
-    const testName     = 'gitRepositories-accessControlList';
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const projectName      = config.azureDevOps.projectName;
+    const baseUrl          = config.azureDevOps.baseUrl;
+    const tenantId         = config.azureDevOps.tenantId;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
+    const testName         = 'gitRepositories-accessControlList';
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
@@ -43,9 +44,7 @@ test('AzureDevOpsHelper - gitRepositories-accessControlList', async () => {
         return map(a.displayName).localeCompare(map(b.displayName));
     });
 
-    const maxNumerOfTests = 5;
-
-    for (const gitRepository of gitRepositories.slice(0, maxNumerOfTests)) {
+    for (const gitRepository of gitRepositories.slice(0, maxNumberOfTests)) {
         const projectId    = gitRepository.project?.id; if (projectId    === undefined) { throw new Error("projectId === undefined"   ); }
         const repositoryId = gitRepository         .id; if (repositoryId === undefined) { throw new Error("repositoryId === undefined"); }
         const securityNamespaceId = securityNamespace.namespaceId;

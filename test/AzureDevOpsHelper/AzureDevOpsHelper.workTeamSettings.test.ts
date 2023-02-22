@@ -7,21 +7,20 @@ import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - workTeamSettings', async () => {
     const config = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const baseUrl      = config.azureDevOps.baseUrl;
-    const tenantId     = config.azureDevOps.tenantId;
+    const organization       = config.azureDevOps.organization;
+    const baseUrl            = config.azureDevOps.baseUrl;
+    const tenantId           = config.azureDevOps.tenantId;
+    const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const testDir = 'out';
-    const testName ='workTeamSettings';
+    const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
+    const testDir            = 'out';
+    const testName           = 'workTeamSettings';
 
     await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-teams.json`), JSON.stringify({ message: 'test started' }, null, 2));
     const teams = await azureDevOpsHelper.teams(organization);
     await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-teams.json`), JSON.stringify(teams, null, 2));
 
-    const maxNumerOfTests = 10;
-
-    for (const team of teams.filter(p => p.id !== undefined && p.projectId !== undefined).slice(0, maxNumerOfTests)) {
+    for (const team of teams.filter(p => p.id !== undefined && p.projectId !== undefined).slice(0, maxNumberOfTests)) {
         const teamId    = team.id!;
         const projectId = team.projectId!;
 

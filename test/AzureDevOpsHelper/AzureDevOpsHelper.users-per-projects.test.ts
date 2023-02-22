@@ -14,14 +14,14 @@ test('AzureDevOpsHelper - users-per-projects', async () => {
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
-    const maxNumerOfTests    = 5000;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-per-projects-${organization}.md`);
     await writeFile(file, 'test started');
 
     const projectsList = await azureDevOpsWrapper.projects();
 
-    const users = await azureDevOpsHelper.graphUsersList(organization, maxNumerOfTests);
+    const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
 
     users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 

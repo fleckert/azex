@@ -8,12 +8,11 @@ test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
     const tenantId = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const organization = config.azureDevOps.organization;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
 
-    const maxNumerOfTests = 5;
-
-    for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumerOfTests)) {
+    for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined).slice(0, maxNumberOfTests)) {
         const securityNamespaceId = securityNamespace.namespaceId!;
 
         const accessControlLists = await azureDevOpsHelper.accessControlLists({ organization, securityNamespaceId });
@@ -31,19 +30,18 @@ test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
 }, 100000);
 
 test('AzureDevOpsHelper - identityBySubjectDescriptor', async () => {
-    const config = await TestConfigurationProvider.get();
-    const tenantId = config.azureDevOps.tenantId;
+    const config            = await TestConfigurationProvider.get();
+    const tenantId          = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const organization = config.azureDevOps.organization;
+    const organization      = config.azureDevOps.organization;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `identityBySubjectDescriptor-${organization}.md`);
     await writeFile(file, 'test started');
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
-    const maxNumerOfTests = 5;
-
-    for (const user of users.filter(p => p.descriptor !== undefined).slice(0, maxNumerOfTests)) {
+    for (const user of users.filter(p => p.descriptor !== undefined).slice(0, maxNumberOfTests)) {
         const subjectDescriptor = user.descriptor!;
 
         await appendFile(file, '\n-----------------------\n');

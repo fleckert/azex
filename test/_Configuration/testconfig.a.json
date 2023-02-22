@@ -40,7 +40,8 @@
         "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
         "organization": "lseg",
         "projectName": "foundation",
-        "principalName": "flo.eckert@live.com"
+        "principalName": "flo.eckert@live.com",
+        "maxNumberOfTests" : 5
     },
     "azureResources": {
         "location": "westeurope",

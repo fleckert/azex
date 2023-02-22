@@ -14,4 +14,6 @@
 | `AZURE_USERNAME`                    | a username (usually an email address)                                         |
 | `AZURE_SUBSCRIPTION_ID`             | Azure Subscription id                                                         |
 | `AZURE_DEVOPS_EXT_PAT`              | Azure DevOps scopes [Graph (read), Project and team (Read), Identity (Read), Code(Read), Work(Read)] <br/> see https://learn.microsoft.com/en-us/azure/devops/cli/log-in-via-pat  |
-
+| `AZURE_DEVOPS_EXT_TENANTID`         | Azure DevOps tenantId                                                         |
+| `AZURE_DEVOPS_EXT_ORGANIZATION`     | Azure DevOps organization name                                                |
+| `AZURE_DEVOPS_EXT_PROJECT`          | Azure DevOps project name                                                     |

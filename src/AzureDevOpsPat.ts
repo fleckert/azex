@@ -17,6 +17,6 @@ export class AzureDevOpsPat {
             return stdout;
         }
 
-        throw new Error('Failed to resolve accessToken');
+        throw new Error(`Failed to resolve accessToken [${command}].`);
     }
 }

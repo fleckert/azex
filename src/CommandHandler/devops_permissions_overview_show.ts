@@ -7,6 +7,7 @@ import { Identity                                                               
 import { writeFile                                                                    } from "fs/promises";
 import { AzureDevOpsSecurityTokens } from "../AzureDevOpsSecurityTokens";
 import { Helper } from "../Helper";
+import { Markdown } from "../Converters/Markdown";
 
 export class devops_permissions_overview_show {
     static async handle(tenantId: string, organization: string, project:string, securityNamespaceName: string, token: string, path: string): Promise<void> {
@@ -38,7 +39,16 @@ export class devops_permissions_overview_show {
 
         const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, Helper.toArray(graphSubjects));
 
-        const titleMarkDown = `${organization} / ${project} / ${securityNamespace.name} ${securityNamespace.namespaceId} / ${securityToken.id} / ${token} Security Settings`;
+        const titleMarkDown = Markdown.tableKeyValue('key', 'value', [
+            { key: 'organization'     , value: organization                  },
+            { key: 'project'          , value: project                       },
+            { key: 'securityNamespace', value: securityNamespace.name        },
+            { key: 'securityNamespace', value: securityNamespace.namespaceId },
+            { key: 'token id'         , value: securityToken.id              },
+            { key: 'token value'      , value: token                         }
+        ]);
+
+         //`${organization} / ${project} / ${securityNamespace.name} ${securityNamespace.namespaceId} / ${securityToken.id} / ${token} Security Settings`;
 
         const markdown = this.toMarkDown(
             securityNamespace,
@@ -50,12 +60,6 @@ export class devops_permissions_overview_show {
                     + `-${project}`
                     + `-${securityNamespace.name}`
                     + `-${securityToken.id.replaceAll('\\','_')}`
-                    // + `-${token.replaceAll('$','_')
-                    //            .replaceAll('\\','_')
-                    //            .replaceAll('/','_')
-                    //            .replaceAll(':','_')
-                    //            .replaceAll('vstfs____Classification_Node_', 'Node_')
-                    //            .replaceAll('Classification', 'CSS')}`
                     + `-permissions`;
 
         await Promise.all([
@@ -86,6 +90,9 @@ export class devops_permissions_overview_show {
 
         const lines = new Array<string>();
         lines.push(`${title}`)
+        lines.push(``)
+        lines.push(`<hr/>`)
+        lines.push(``)
         lines.push(`|  |${allActions.map(p => `${p}|`).join('')}`);
         lines.push(`|:-|${allActions.map(p => ':-: |').join('')}`);
  

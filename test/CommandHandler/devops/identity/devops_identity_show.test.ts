@@ -5,18 +5,17 @@ import { TestConfigurationProvider } from "../../../_Configuration/TestConfigura
 import { writeFile                 } from "fs/promises";
 
 test('devops_identity_show-user', async () => {
-    const pathOut      = path.join(__dirname, 'out', 'devops_identity_show-user');
-    const config       = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const tenantId     = config.azureDevOps.tenantId;
+    const pathOut          = path.join(__dirname, 'out', 'devops_identity_show-user');
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const tenantId         = config.azureDevOps.tenantId;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);
     await writeFile(`${pathOut}-users.json`, JSON.stringify(users, null, 2));
 
-    const maxNumerOfTests = 5;
-
-    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
+    for (const graphUser of users.filter(p => p.principalName !== undefined).slice(0, maxNumberOfTests)) {
         const principalName = graphUser.principalName!;
 
         await devops_identity_show.resolve(tenantId, organization, principalName, ['User']);
@@ -24,14 +23,14 @@ test('devops_identity_show-user', async () => {
 }, 100000);
 
 test('devops_identity_show-group', async () => {
-    const pathOut         = path.join(__dirname, 'out', 'devops_identity_show-group');
-    const config          = await TestConfigurationProvider.get();
-    const organization    = config.azureDevOps.organization;
-    const tenantId        = config.azureDevOps.tenantId;
-    const maxNumerOfTests = 5;
+    const pathOut          = path.join(__dirname, 'out', 'devops_identity_show-group');
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const tenantId         = config.azureDevOps.tenantId;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumerOfTests);
+    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
     await writeFile(`${pathOut}-groups.json`, JSON.stringify(groups, null, 2));
 
 

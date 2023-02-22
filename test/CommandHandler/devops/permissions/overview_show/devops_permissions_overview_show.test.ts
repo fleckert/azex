@@ -5,19 +5,19 @@ import { devops_permissions_overview_show } from "../../../../../src/CommandHand
 import { TestConfigurationProvider        } from "../../../../_Configuration/TestConfiguration";
 
 test('devops_permissions_overview_show', async () => {
-    const config          = await TestConfigurationProvider.get();
-    const pathOut         = path.join(__dirname, 'out', 'devops_permissions_overview_show');
-    const organization    = config.azureDevOps.organization;
-    const projectName     = config.azureDevOps.projectName;
-    const tenantId        = config.azureDevOps.tenantId;
-    const maxNumerOfTests = 5;
+    const config            = await TestConfigurationProvider.get();
+    const pathOut           = path.join(__dirname, 'out', 'devops_permissions_overview_show');
+    const organization      = config.azureDevOps.organization;
+    const projectName       = config.azureDevOps.projectName;
+    const tenantId          = config.azureDevOps.tenantId;
+    const maxNumberOfTests  = 50000??config.azureDevOps.maxNumberOfTests;
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const tokens = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, projectName);
 
-    for (const item of tokens.slice(0, maxNumerOfTests)) {
+    for (const item of tokens.slice(0, maxNumberOfTests)) {
 
-        const securityNamespaceName = item.securityNamespace?.name; if (securityNamespaceName === undefined) { continue; }
+        const securityNamespaceName = item.securityNamespace.name; if (securityNamespaceName === undefined) { continue; }
         const token = item.token;
 
         await devops_permissions_overview_show.handle(tenantId, organization, projectName, securityNamespaceName, token, pathOut);
