@@ -24,19 +24,23 @@ test('devops_identity_show-user', async () => {
 }, 100000);
 
 test('devops_identity_show-group', async () => {
-    const pathOut      = path.join(__dirname, 'out', 'devops_identity_show-group');
-    const config       = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const tenantId     = config.azureDevOps.tenantId;
-
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const groups = await azureDevOpsHelper.graphGroupsList(config.azureDevOps.organization);
-    await writeFile(`${pathOut}-groups.json`, JSON.stringify(groups, null, 2));
-
+    const pathOut         = path.join(__dirname, 'out', 'devops_identity_show-group');
+    const config          = await TestConfigurationProvider.get();
+    const organization    = config.azureDevOps.organization;
+    const tenantId        = config.azureDevOps.tenantId;
     const maxNumerOfTests = 5;
 
-    for (const graphGroup of groups.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
-        const principalName = graphGroup.principalName!;
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumerOfTests);
+    await writeFile(`${pathOut}-groups.json`, JSON.stringify(groups, null, 2));
+
+
+    for (const group of groups) {
+        if (group.principalName === undefined) {
+            continue;
+        }
+
+        const principalName = group.principalName;
 
         await devops_identity_show.resolve(tenantId, organization, principalName, ['Group']);
     }

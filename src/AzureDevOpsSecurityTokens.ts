@@ -64,7 +64,7 @@ export class AzureDevOpsSecurityTokens {
     static async project(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
         // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#project-level-namespaces-and-permissions
 
-        const prjct = await azureDevOpsHelper.projectByNameOrId(organization, project);
+        const prjct = await azureDevOpsHelper.project(organization, project);
         if (prjct === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
@@ -84,7 +84,7 @@ export class AzureDevOpsSecurityTokens {
     static async tagging(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{  securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
         // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#project-level-namespaces-and-permissions
 
-        const prjct = await azureDevOpsHelper.projectByNameOrId(organization, project);
+        const prjct = await azureDevOpsHelper.project(organization, project);
         if (prjct === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
@@ -119,7 +119,7 @@ export class AzureDevOpsSecurityTokens {
     }
 
     static async releaseDefinitions(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{  securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
-        const prjct = await azureDevOpsHelper.projectByNameOrId(organization, project)
+        const prjct = await azureDevOpsHelper.project(organization, project)
 
         if (prjct === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));

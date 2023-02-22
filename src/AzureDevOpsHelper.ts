@@ -13,6 +13,8 @@ import { ReleaseDefinition                                             } from "a
 import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 import { AzureDevOpsPat } from "./AzureDevOpsPat";
 import { AzureDevOpsSecurityNamespaceAction } from "./models/AzureDevOpsSecurityNamespaceAction";
+import { Guid } from "./Guid";
+import { Helper } from "./Helper";
 
 export class AzureDevOpsHelper {
 
@@ -27,40 +29,34 @@ export class AzureDevOpsHelper {
 
     private readonly continuationTokenHeader = "x-ms-continuationtoken";
 
-    projectsList(organization: string): Promise<TeamProjectReference[]> {
-        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/projects/list?view=azure-devops-rest-7.1&tabs=HTTP
-        const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`;
-        return this.getItemsWithContinuation(url);
-    }
-
-    buildDefinitions(organization: string, project: string): Promise<BuildDefinitionReference[]> {
+    buildDefinitions(organization: string, project: string, count?: number): Promise<BuildDefinitionReference[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/list?view=azure-devops-rest-7.1
         const url = `https://dev.azure.com/${organization}/${project}/_apis/build/definitions?api-version=7.1-preview.7`;
-        return this.getItemsWithContinuation(url);
+        return this.getItemsWithContinuation(url, count);
     }
 
-    releaseDefinitions(organization: string, project: string): Promise<ReleaseDefinition[]> {
+    releaseDefinitions(organization: string, project: string, count?: number): Promise<ReleaseDefinition[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/release/definitions/list?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vsrm.dev.azure.com/${organization}/${project}/_apis/release/definitions?api-version=7.1-preview.4&$expand=environments`;
-        return this.getItemsWithContinuation(url);
+        return this.getItemsWithContinuation(url, count);
     }
 
-    graphGroupsList(organization: string): Promise<GraphGroup[]> {
+    graphGroupsList(organization: string, count?: number): Promise<GraphGroup[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/groups/list?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/groups?api-version=7.1-preview.1`;
-        return this.getItemsWithContinuation(url);
+        return this.getItemsWithContinuation(url, count);
     }
 
-    graphUsersList(organization: string): Promise<GraphUser[]> {
+    graphUsersList(organization: string, count?: number): Promise<GraphUser[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/list?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/users?api-version=7.1-preview.1`;
-        return this.getItemsWithContinuation(url);
+        return this.getItemsWithContinuation(url, count);
     }
 
-    graphGroupsListForScopeDescriptor(organization: string, scopeDescriptor: string): Promise<GraphGroup[]> {
+    graphGroupsListForScopeDescriptor(organization: string, scopeDescriptor: string, count?: number): Promise<GraphGroup[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/groups/list?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/groups?scopeDescriptor=${scopeDescriptor}&api-version=7.1-preview.1`;
-        return this.getItemsWithContinuation(url);
+        return this.getItemsWithContinuation(url, count);
     }
 
     graphDescriptorForProjectId(organization: string, projectId: string): Promise<string> {
@@ -272,10 +268,6 @@ export class AzureDevOpsHelper {
         return response[0] === null ? undefined : response[0];
     }
 
-    userByPrincipalName(organization: string, principalName: string): Promise<GraphSubject | undefined> {
-        return this.graphSubjectQueryByPrincipalName(organization, ['User'], principalName);
-    }
-
     userBySubjectDescriptor(organization: string, subjectDescriptor: string): Promise<GraphUser | undefined> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/get?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/users/${subjectDescriptor}?api-version=7.1-preview.1`;
@@ -292,41 +284,25 @@ export class AzureDevOpsHelper {
         return this.graphSubjectQueryByPrincipalName(organization, ['Group'], principalName);
     }
 
-    async projectByName(organization: string, projectName: string): Promise<TeamProjectReference | undefined> {
-        const projects = await this.projectsList(organization);
+    project(organization: string, projectNameOrId: string): Promise<TeamProjectReference | undefined> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/projects/list?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`;
+        const predicate = (p: TeamProjectReference) => p.name?.toLowerCase() === projectNameOrId.toLowerCase()
+                                                    || p.id?.  toLowerCase() === projectNameOrId.toLowerCase();
 
-        const item = projects.find(p => p.name?.toLowerCase() === projectName.toLowerCase());
-
-        return item;
+        return this.getItemsWithContinuationAndBreak(url, predicate);
     }
 
-    async projectByNameOrId(organization: string, projectNameOrId: string): Promise<TeamProjectReference | undefined> {
-        const projects = await this.projectsList(organization);
-
-        const item = projects.find(
-            p => p.name?.toLowerCase() === projectNameOrId.toLowerCase()
-                || p.id?.toLowerCase() === projectNameOrId.toLowerCase()
-        );
-
-        return item;
-    }
-
-    async graphGroupsListForProjectName(organization: string, projectName: string): Promise<GraphGroup[]> {
-        const project = await this.projectByName(organization, projectName);
+    async graphGroupsListForProjectName(organization: string, projectName: string, count?: number): Promise<GraphGroup[]> {
+        const project = await this.project(organization, projectName);
 
         if (project?.id === undefined) {
-            throw new Error(`${JSON.stringify({ organization, projectName, project, projectId: project?.id })}`);
+            throw new Error(`${JSON.stringify({ organization, projectName, project, error:'Failed to resolve project.id.' })}`);
         }
 
         const scopeDescriptor = await this.graphDescriptorForProjectId(organization, project.id);
 
-        return await this.graphGroupsListForScopeDescriptor(organization, scopeDescriptor);
-    }
-
-    async graphGroupsListForProject(organization: string, projectId: string): Promise<GraphGroup[]> {
-        const scopeDescriptor = await this.graphDescriptorForProjectId(organization, projectId);
-
-        return await this.graphGroupsListForScopeDescriptor(organization, scopeDescriptor);
+        return await this.graphGroupsListForScopeDescriptor(organization, scopeDescriptor, count);
     }
 
     async graphSubjectsLookup(organization: string, descriptors: string[]): Promise<{ [id: string]: GraphSubject; }> {
@@ -350,18 +326,6 @@ export class AzureDevOpsHelper {
         catch (error: any) {
             throw new Error(JSON.stringify({ url, data, status: error.response.status, statusText: error.response.statusText }));
         }
-    }
-
-    async graphSubjectsLookupArray(organization: string, descriptors: string[]): Promise<Array<GraphSubject>> {
-        const response = await this.graphSubjectsLookup(organization, descriptors);
-
-        const collection = new Array<GraphSubject>();
-
-        for (const key in response) {
-            collection.push(response[key]);
-        }
-
-        return collection;
     }
 
     async graphSubjectLookup(organization: string, descriptor: string): Promise<GraphSubject | undefined> {
@@ -441,28 +405,76 @@ export class AzureDevOpsHelper {
         }
     }
 
-    private async getItemsWithContinuation<T>(url: string, continuationToken?: string | undefined): Promise<T[]> {
-        const urlWithContinuation = continuationToken === undefined ? url : `${url}&continuationToken=${continuationToken}`;
+    private async getItemsWithContinuation<T>(url: string, count?: number): Promise<T[]> {
+        const collection = new Array<T>();
 
-        try {
-            const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
+        let continuationToken: string | undefined = undefined;
 
-            if (response.status === 200) {
-                const collection = new Array<T>(...response.data.value);
+        while (true) {
+            const urlWithContinuation: string = continuationToken === undefined ? url : `${url}&continuationToken=${continuationToken}`;
 
-                if (response.headers[this.continuationTokenHeader] !== undefined) {
-                    const itemsContinuation = await this.getItemsWithContinuation<T>(url, response.headers[this.continuationTokenHeader]);
+            try {
+                const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
 
-                    collection.push(...itemsContinuation);
+                if (response.status === 200) {
+                    collection.push(...response.data.value);
+
+                    if (response.headers[this.continuationTokenHeader] === undefined) {
+                        break;
+                    }
+                    else {
+                        continuationToken = response.headers[this.continuationTokenHeader];
+                    }
+                    
+                    if(count !== undefined && collection.length >= count){
+                        break;
+                    }
                 }
-
-                return collection;
+                else {
+                    throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+                }
             }
-
-            throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+            catch (error: any) {
+                throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+            }
         }
-        catch (error: any) {
-            throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+
+        return collection.slice(0, count);
+    }
+
+    private async getItemsWithContinuationAndBreak<T>(url: string, predicate: (value: T) => boolean): Promise<T | undefined> {
+        let continuationToken: string | undefined = undefined;
+
+        while (true) {
+            const urlWithContinuation: string = continuationToken === undefined ? url : `${url}&continuationToken=${continuationToken}`;
+
+            try {
+                const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
+
+                if (response.status === 200) {
+                    const collection = new Array<T>();
+
+                    collection.push(...response.data.value);
+                    
+                    const item = collection.find(predicate);
+
+                    if(item !== undefined){
+                        return item;
+                    }
+
+                    if (response.headers[this.continuationTokenHeader] === undefined) {
+                        return undefined;
+                    }
+
+                    continuationToken = response.headers[this.continuationTokenHeader];
+                }
+                else {
+                    throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+                }
+            }
+            catch (error: any) {
+                throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+            }
         }
     }
 }

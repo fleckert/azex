@@ -10,6 +10,7 @@ import { Identity                                                               
 import { AzureDevOpsPortalLinks                                                       } from "../AzureDevOpsPortalLinks";
 import { AzureDevOpsAccessControlList, AzureDevOpsAccessControlListHelper             } from "../models/AzureDevOpsAccessControlEntry";
 import { AzureDevOpsSecurityNamespace                                                 } from "../models/AzureDevOpsSecurityNamespace";
+import { Helper } from "../Helper";
 
 export class devops_permissions_git_show {
     static async handleRepo(tenantId: string, organization: string, project: string, repository: string, path: string): Promise<void> {
@@ -49,9 +50,8 @@ export class devops_permissions_git_show {
         const identities = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptors);
 
         const subjectDescriptors = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
-        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookupArray(organization, subjectDescriptors);
-
-        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, graphSubjects);
+        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
+        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, Helper.toArray(graphSubjects));
 
         const markdown = this.toMarkDownRepo(
             organization,
@@ -94,7 +94,7 @@ export class devops_permissions_git_show {
         const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
         securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
 
-        const projectResponse = await azureDevOpsHelper.projectByName(organization, project);
+        const projectResponse = await azureDevOpsHelper.project(organization, project);
         if (projectResponse === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
@@ -117,9 +117,8 @@ export class devops_permissions_git_show {
         const identities = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptors);
 
         const subjectDescriptors = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
-        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookupArray(organization, subjectDescriptors);
-
-        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, graphSubjects);
+        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
+        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, Helper.toArray(graphSubjects));
 
         const markdown = this.toMarkDownProject(
             organization,

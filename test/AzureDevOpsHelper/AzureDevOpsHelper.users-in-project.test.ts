@@ -8,24 +8,23 @@ import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - users-in-project', async () => {
 
-    const config       = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const projectName  = config.azureDevOps.projectName;
-    const tenantId     = config.azureDevOps.tenantId;
+    const config            = await TestConfigurationProvider.get();
+    const organization      = config.azureDevOps.organization;
+    const projectName       = config.azureDevOps.projectName;
+    const tenantId          = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-
-    const maxNumerOfTests = 5000;
+    const maxNumerOfTests   = 5000;
 
     const file = path.join(__dirname, 'out', `users-in-project-${organization}-${projectName}.md`);
     await writeFile(file, 'test started');
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
-    const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName);
+    const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumerOfTests);
 
     const groupsUsers = new Array<{ group: GraphGroup, user: GraphUser }>
 
-    for (const group of groups.slice(0, maxNumerOfTests)) {
+    for (const group of groups) {
         if (group.descriptor === undefined) {
             continue;
         }

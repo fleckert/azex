@@ -8,28 +8,27 @@ import { Guid                      } from "../../src/Guid";
 
 test('AzureDevOpsHelper - users-per-projects', async () => {
 
-    const config = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const baseUrl = config.azureDevOps.baseUrl;
-    const tenantId    = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const config             = await TestConfigurationProvider.get();
+    const organization       = config.azureDevOps.organization;
+    const baseUrl            = config.azureDevOps.baseUrl;
+    const tenantId           = config.azureDevOps.tenantId;
+    const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
-
-    const maxNumerOfTests = 5000;
+    const maxNumerOfTests    = 5000;
 
     const file = path.join(__dirname, 'out', `users-per-projects-${organization}.md`);
     await writeFile(file, 'test started');
 
     const projectsList = await azureDevOpsWrapper.projects();
 
-    const users = await azureDevOpsHelper.graphUsersList(organization);
+    const users = await azureDevOpsHelper.graphUsersList(organization, maxNumerOfTests);
 
     users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization);
 
     const usersGroups = new Array<{ user: GraphUser, groups: Array<GraphGroup> }>
-    for (const user of users.slice(0, maxNumerOfTests)) {
+    for (const user of users) {
         if (Guid.isGuid(user.principalName)) {
             // skip the build in accounts
             continue;

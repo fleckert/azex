@@ -6,6 +6,7 @@ import { GraphSubject                                                           
 import { Identity                                                                     } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { writeFile                                                                    } from "fs/promises";
 import { AzureDevOpsSecurityTokens } from "../AzureDevOpsSecurityTokens";
+import { Helper } from "../Helper";
 
 export class devops_permissions_overview_show {
     static async handle(tenantId: string, organization: string, project:string, securityNamespaceName: string, token: string, path: string): Promise<void> {
@@ -33,9 +34,9 @@ export class devops_permissions_overview_show {
         const identities = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptors);
 
         const subjectDescriptors = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
-        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookupArray(organization, subjectDescriptors);
+        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
 
-        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, graphSubjects);
+        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, Helper.toArray(graphSubjects));
 
         const titleMarkDown = `${organization} / ${project} / ${securityNamespace.name} ${securityNamespace.namespaceId} / ${securityToken.id} / ${token} Security Settings`;
 
@@ -65,7 +66,7 @@ export class devops_permissions_overview_show {
             parameters: {
                 tenantId,
                 organization,
-                securityNamespace,
+                securityNamespaceName,
                 token,
                 path
             },

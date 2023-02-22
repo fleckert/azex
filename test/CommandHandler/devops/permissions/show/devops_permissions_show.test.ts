@@ -48,10 +48,14 @@ test('devops_permissions_show-group-project', async () => {
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const maxNumerOfTests   = 5;
 
-    const collection = await azureDevOpsHelper.graphGroupsList(organization);
+    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumerOfTests);
 
-    for (const item of collection.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
-        const principalName = item.principalName!;
+    for (const group of groups) {
+        if (group.principalName === undefined) {
+            continue;
+        }
+
+        const principalName = group.principalName;
 
         await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
@@ -67,10 +71,14 @@ test('devops_permissions_show-group-collection', async () => {
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const maxNumerOfTests   = 5;
 
-    const collection = await azureDevOpsHelper.graphGroupsList(organization);
+    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumerOfTests);
 
-    for (const item of collection.filter(p => p.principalName !== undefined).slice(0, maxNumerOfTests)) {
-        const principalName = item.principalName!;
+    for (const group of groups) {
+        if (group.principalName === undefined) {
+            continue;
+        }
+
+        const principalName = group.principalName;
 
         await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }

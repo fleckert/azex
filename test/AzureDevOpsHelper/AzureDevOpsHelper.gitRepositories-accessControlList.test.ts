@@ -8,6 +8,7 @@ import { GraphSubject                       } from "azure-devops-node-api/interf
 import { Identity                           } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { AzureDevOpsSecurityNamespaceAction } from "../models/AzureDevOpsSecurityNamespaceAction";
 import { AzureDevOpsPortalLinks             } from "../../src/AzureDevOpsPortalLinks";
+import { Helper                             } from "../../src/Helper";
 
 test('AzureDevOpsHelper - gitRepositories-accessControlList', async () => {
     const config       = await TestConfigurationProvider.get();
@@ -76,7 +77,8 @@ test('AzureDevOpsHelper - gitRepositories-accessControlList', async () => {
         const identities = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptorsArray);
 
         const subjectDescriptors = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
-        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookupArray(organization, subjectDescriptors);
+        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
+        const graphSubjectsArray = Helper.toArray(graphSubjects);
 
         const accessControlListMapped = new Array<{
             identifier    : string,
@@ -100,7 +102,7 @@ test('AzureDevOpsHelper - gitRepositories-accessControlList', async () => {
 
                 const graphSubject = identity?.subjectDescriptor === undefined 
                                    ? undefined
-                                   : graphSubjects.find(p => p.descriptor === identity.subjectDescriptor);
+                                   : graphSubjectsArray.find(p => p.descriptor === identity.subjectDescriptor);
 
 
                 accessControlListMapped.push({

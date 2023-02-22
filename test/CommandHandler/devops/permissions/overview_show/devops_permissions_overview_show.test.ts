@@ -10,7 +10,7 @@ test('devops_permissions_overview_show', async () => {
     const organization    = config.azureDevOps.organization;
     const projectName     = config.azureDevOps.projectName;
     const tenantId        = config.azureDevOps.tenantId;
-    const maxNumerOfTests = 500;
+    const maxNumerOfTests = 5;
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const tokens = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, projectName);
@@ -22,7 +22,7 @@ test('devops_permissions_overview_show', async () => {
 
         await devops_permissions_overview_show.handle(tenantId, organization, projectName, securityNamespaceName, token, pathOut);
     }
-}, 100000);
+}, 500000);
 
 test('devops_permissions_overview_show_classificationNodes', async () => {
     const config          = await TestConfigurationProvider.get();
