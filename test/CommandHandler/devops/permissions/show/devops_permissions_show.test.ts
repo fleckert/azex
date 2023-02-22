@@ -105,7 +105,8 @@ test('devops_permissions_show-specific', async () => {
     const organization  = config.azureDevOps.organization;
     const tenantId      = config.azureDevOps.tenantId;
     const projectName   = config.azureDevOps.projectName;
-    const principalName = '';
+    const principalName = config.azureDevOps.principalName;
+
     if (principalName !== '') {
         await devops_permissions_show.handle(tenantId, organization, projectName, principalName, pathOut);
     }
