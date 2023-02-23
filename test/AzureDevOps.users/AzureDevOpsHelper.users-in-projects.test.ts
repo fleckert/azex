@@ -98,7 +98,8 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
     lines.push(`|  |${countsOfUsers                              .map(p => `${p}|`).join('')}`);
     for (const userGroups of usersGroups) {
         const line = Array<string | undefined>();
-        line.push(`${userGroups.user.displayName}<br/>[${userGroups.user.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, userGroups.user.descriptor)} "open permissions")`);
+        const linkUserPermissions = AzureDevOpsPortalLinks.Permissions(organization, undefined, userGroups.user.descriptor);
+        line.push(`${userGroups.user.displayName}<br/>[${userGroups.user.principalName}](${linkUserPermissions} "open permissions")`);
         for (const project of distinctProjectsSortedWithorganizationFirst) {
             if (userGroups.groups.find(p => p.principalName?.toLowerCase().startsWith(`[${project.toLowerCase()}]`)) === undefined) {
                 line.push(undefined);
@@ -108,11 +109,11 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
 
                 const groupsInProject = userGroups.groups.filter(p => p.principalName?.toLowerCase().startsWith(`[${project?.toLowerCase()}]`)).map(p => p.principalName?.split('\\')[1]);
                 groupsInProject.sort();
-                const link = project?.toLowerCase() === organization.toLowerCase()
-                           ? baseUrl
-                           : AzureDevOpsPortalLinks.Permissions(organization, projectItem?.id, userGroups.user.descriptor);
+                const linkUserInProjectPermissions = project?.toLowerCase() === organization.toLowerCase()
+                                                   ? baseUrl
+                                                   : AzureDevOpsPortalLinks.Permissions(organization, projectItem?.id, userGroups.user.descriptor);
 
-                line.push(`[•](${link} "${groupsInProject.map(p => `${p?.trim()}`).join(lineBreak)}")`);
+                line.push(`[•](${linkUserInProjectPermissions} "${groupsInProject.map(p => `${p?.trim()}`).join(lineBreak)}")`);
             }
         }
         lines.push(`|${line.join('|')}|`);

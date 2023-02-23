@@ -5,7 +5,7 @@ import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/Grap
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { writeFile                 } from "fs/promises";
+import { rm, writeFile             } from "fs/promises";
 
 test('AzureDevOpsHelper - users-in-project-groups', async () => {
 
@@ -17,7 +17,9 @@ test('AzureDevOpsHelper - users-in-project-groups', async () => {
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-in-project-groups-${organization}-${projectName}.md`);
-    await writeFile(file, 'test started');
+    await rm(file, {force: true});
+
+    const projectPromise = azureDevOpsHelper.project(organization, projectName);;
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
@@ -58,6 +60,8 @@ test('AzureDevOpsHelper - users-in-project-groups', async () => {
          b: { group: GraphGroup, user: GraphUser }
         ) => `${a.group.displayName}-${a.user.displayName}`.toLowerCase().localeCompare(`${b.group.displayName}-${b.user.displayName}`.toLowerCase()));
 
+    const project = await projectPromise;
+
     const lineBreak = "<br/>"
     const markdown = Markdown.table(
         `${organization} / ${projectName}`,
@@ -65,8 +69,11 @@ test('AzureDevOpsHelper - users-in-project-groups', async () => {
         groupsUsers.map(p => [
             p.group.descriptor === undefined
             ? `${p.group.displayName}`
-            : `[${p.group.displayName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.group.descriptor)})`, 
-            `${p.user.displayName}${lineBreak}${p.user.principalName}`])
+            : `[${p.group.displayName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.group.descriptor)} "open permissions")`,
+            project === undefined
+            ? `${p.user.displayName}${lineBreak}${p.user.principalName}`
+            : `${p.user.displayName}${lineBreak}[${p.user.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.user.descriptor)} "open permissions")`
+        ])
     );
  
     await writeFile(file, markdown);

@@ -1,10 +1,11 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { writeFile                 } from "fs/promises";
+import { rm, writeFile             } from "fs/promises";
 
 test('AzureDevOpsHelper - users-in-collection-groups', async () => {
 
@@ -15,7 +16,7 @@ test('AzureDevOpsHelper - users-in-collection-groups', async () => {
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-in-collection-groups-${organization}.md`);
-    await writeFile(file, 'test started');
+    await rm(file, { force: true });
 
     const usersPromise = azureDevOpsHelper.graphUsersList(organization);
 
@@ -64,8 +65,8 @@ test('AzureDevOpsHelper - users-in-collection-groups', async () => {
         organization,
         ['Group', 'User'],
         groupsUsers.map(p => [
-            `${p.group.principalName}`, 
-            `${p.user.displayName}${lineBreak}${p.user.principalName}`
+            `[${p.group.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.group.descriptor)} "open permissions")`, 
+            `${p.user.displayName}${lineBreak}[${p.user.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.user.descriptor)} "open permissions")`
         ])
     );
  

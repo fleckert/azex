@@ -1,7 +1,8 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { writeFile                 } from "fs/promises";
+import { rm, writeFile             } from "fs/promises";
 import { GraphUser                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Markdown                  } from "../../src/Converters/Markdown";
 
@@ -13,6 +14,7 @@ test('AzureDevOpsHelper - users-without-groups', async () => {
     const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-without-groups-${organization}.md`);
+    await rm(file, {force: true});
 
     const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
 
@@ -41,7 +43,10 @@ test('AzureDevOpsHelper - users-without-groups', async () => {
     const markdown = Markdown.table(
         `${organization} - Users without group memberships`,
         ['DisplayName', 'PrincipalName'],
-        usersIsNotInGroups.map(p => [p.displayName ?? '', p.principalName ?? ''])
+        usersIsNotInGroups.map(p => [
+            p.displayName ?? '', 
+            `[${p.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor)} "open permissions")`
+        ])
     );
     
     await writeFile(file, markdown);
