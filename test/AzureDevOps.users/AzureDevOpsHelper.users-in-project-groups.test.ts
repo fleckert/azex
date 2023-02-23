@@ -1,12 +1,13 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { writeFile                 } from "fs/promises";
 
-test('AzureDevOpsHelper - users-in-project', async () => {
+test('AzureDevOpsHelper - users-in-project-groups', async () => {
 
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
@@ -15,7 +16,7 @@ test('AzureDevOpsHelper - users-in-project', async () => {
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
-    const file = path.join(__dirname, 'out', `users-in-project-${organization}-${projectName}.md`);
+    const file = path.join(__dirname, 'out', `users-in-project-groups-${organization}-${projectName}.md`);
     await writeFile(file, 'test started');
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
@@ -59,9 +60,13 @@ test('AzureDevOpsHelper - users-in-project', async () => {
 
     const lineBreak = "<br/>"
     const markdown = Markdown.table(
-        `Users in '${organization}' / '${projectName}'`,
+        `${organization} / ${projectName}`,
         ['Group', 'User'], 
-        groupsUsers.map(p => [`${p.group.displayName}`, `${p.user.displayName}${lineBreak}${p.user.principalName}`])
+        groupsUsers.map(p => [
+            p.group.descriptor === undefined
+            ? `${p.group.displayName}`
+            : `[${p.group.displayName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.group.descriptor)})`, 
+            `${p.user.displayName}${lineBreak}${p.user.principalName}`])
     );
  
     await writeFile(file, markdown);

@@ -6,27 +6,27 @@ import { GraphUser                 } from "azure-devops-node-api/interfaces/Grap
 import { Markdown                  } from "../../src/Converters/Markdown";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 
-test('AzureDevOpsHelper - users-in-organization', async () => {
+test('AzureDevOpsHelper - users-in-collection', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
     const tenantId          = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
-    const file = path.join(__dirname, 'out', `users-in-organization-${organization}.md`);
+    const file = path.join(__dirname, 'out', `users-in-collection-${organization}.md`);
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
     users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
     const markdown = Markdown.table(
-        `Users in '${organization}'`,
+        organization,
         ['DisplayName', 'PrincipalName', 'Permissions'],
         users
         .filter(p => p.domain !== 'Build')
         .map(p => { return [
-            p.displayName   === undefined ? '' : `[${p.displayName  }](${p.url                                                                    })`,
-            p.principalName === undefined ? '' : `${p.principalName                                                                               } `,
-            p.descriptor    === undefined ? '' : `[link](${AzureDevOpsPortalLinks.PermissionsOrganizationSubject(organization, p.descriptor ?? '')})`
+            p.displayName   === undefined ? '' : `[${p.displayName  }](${p.url                                                      })`,
+            p.principalName === undefined ? '' : `${p.principalName                                                                 } `,
+            p.descriptor    === undefined ? '' : `[link](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor)})`
         ] })
     );
 

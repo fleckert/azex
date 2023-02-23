@@ -1,69 +1,124 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
+import { AzureDevOpsWrapper        } from "../../src/AzureDevOpsWrapper";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
-import { Markdown                  } from "../../src/Converters/Markdown";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { writeFile                 } from "fs/promises";
+import { rm, writeFile             } from "fs/promises";
 
 test('AzureDevOpsHelper - users-in-projects', async () => {
 
-    const config            = await TestConfigurationProvider.get();
-    const organization      = config.azureDevOps.organization;
-    const projectName       = config.azureDevOps.projectName;
-    const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
+    const config             = await TestConfigurationProvider.get();
+    const organization       = config.azureDevOps.organization;
+    const baseUrl            = config.azureDevOps.baseUrl;
+    const tenantId           = config.azureDevOps.tenantId;
+    const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
+    const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-in-projects-${organization}.md`);
-    await writeFile(file, 'test started');
+    await rm(file, {force: true});
 
-    const usersPromise = azureDevOpsHelper.graphUsersList(organization);
+    const projectsListPromise = azureDevOpsWrapper.projects();
+    const groupsPromise       = azureDevOpsHelper.graphGroupsList(organization);
 
-    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
+    const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
+
+    users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
     const membershipsAll = await azureDevOpsHelper.graphMembershipsLists(
-        groups
-        .filter(group => group.descriptor !== undefined)
-        .map(group => { return { organization, subjectDescriptor: group.descriptor!, direction: 'down' } })
+        users
+        .filter(user => user.descriptor !== undefined)
+        .map(user => { return { organization, subjectDescriptor: user.descriptor!, direction: 'up' } })
     );
 
-    const users = await usersPromise;
+    const groups = await groupsPromise;
 
-    const groupsUsers = new Array<{ group: GraphGroup, user: GraphUser }>
-
-    for (const group of groups) {
-        if (group.descriptor === undefined) {
+    const usersGroups = new Array<{ user: GraphUser, groups: Array<GraphGroup> }>
+    for (const user of users) {
+        if (Guid.isGuid(user.principalName)) {
+            // skip the build in accounts
             continue;
         }
-        const subjectDescriptor = group.descriptor;
+        if (user.descriptor === undefined) {
+            continue;
+        }
+        const subjectDescriptor = user.descriptor;
+
         const memberships = membershipsAll.find(p => p.parameters.subjectDescriptor === subjectDescriptor);
         if (memberships === undefined) {
-            throw new Error(JSON.stringify({ error: 'Failed to resolve graphMemberships', organization, projectName, subjectDescriptor }));
+            throw new Error(JSON.stringify({ error: 'Failed to resolve graphMemberships', organization, subjectDescriptor }));
         }
 
+        const userGroups = { user, groups: new Array<GraphGroup>() };
         for (const membership of memberships.result) {
-            const user = users.find(p => p.descriptor === membership.memberDescriptor);
-            if (user !== undefined) {
-                if (Guid.isGuid(user.principalName)) {
-                    // skip the build in accounts
-                    continue;
-                }
-                
-                groupsUsers.push({group, user});
+            const group = groups.find(p => p.descriptor === membership.containerDescriptor);
+            if (group !== undefined) {
+                userGroups.groups.push(group);
             }
         }
+        usersGroups.push(userGroups);
     }
 
-    groupsUsers.sort(
-        (a: { group: GraphGroup, user: GraphUser }, 
-         b: { group: GraphGroup, user: GraphUser }
-        ) => `${a.group.principalName}-${a.user.displayName}`.toLowerCase().localeCompare(`${b.group.principalName}-${b.user.displayName}`.toLowerCase()));
+    // usersGroups.sort((a: { user: GraphUser }, b: { user: GraphUser }) => `${a.user.displayName?.toLowerCase()}`.localeCompare(`${b.user.displayName?.toLowerCase()}`));
+    const getProjectNameFromGroup = (grp: GraphGroup): string => { return `${grp.principalName}`.split('\\')[0]?.replaceAll('[', '').replaceAll(']', '') }
 
-    const lineBreak = "<br/>"
-    const markdown = Markdown.tableKeyValue('Group', 'User', groupsUsers.map(p => { return { key: p.group.principalName, value: `${p.user.displayName}${lineBreak}${p.user.principalName}` } }));
- 
-    await writeFile(file, markdown);
+    const distinctProjects = new Set<string>();
+    for (const userGroupsFlat of usersGroups) {
+        for (const project of userGroupsFlat.groups.map(getProjectNameFromGroup)) {
+            distinctProjects.add(project);
+        }
+    }
+    const distinctProjectsSorted = [...distinctProjects];
+    distinctProjectsSorted.sort();
+    const organizationFromProjects    = distinctProjectsSorted.find  (p => p.toLowerCase() === config.azureDevOps.organization.toLowerCase());
+    const projectsWithoutOrganization = distinctProjectsSorted.filter(p => p.toLowerCase() !== config.azureDevOps.organization.toLowerCase());
+    const distinctProjectsSortedWithorganizationFirst = [organizationFromProjects ?? organization, ...projectsWithoutOrganization];
+
+    const countsOfUsers = new Array<number>();
+    for (const item of distinctProjectsSortedWithorganizationFirst) {
+        let count  = 0;
+        for(const userGroups of usersGroups){
+            if(userGroups.groups.find(p => p.principalName?.toLowerCase().startsWith(`[${item?.toLowerCase()}]`)) !== undefined){
+                count++;
+            }
+        }
+        countsOfUsers.push(count);
+    }
+
+    const projectsList = await projectsListPromise;
+
+    const lineBreak = "&#013;"
+    const lines = new Array<string>();
+    lines.push(`# ${organization}`);
+    lines.push(``);
+    lines.push(`|  |${distinctProjectsSortedWithorganizationFirst.map(p => `${p}|`).join('')}`);
+    lines.push(`|:-|${distinctProjectsSortedWithorganizationFirst.map(p => ':-: |').join('')}`);
+    lines.push(`|  |${countsOfUsers                              .map(p => `${p}|`).join('')}`);
+    for (const userGroups of usersGroups) {
+        const line = Array<string | undefined>();
+        line.push(`${userGroups.user.displayName}<br/>[${userGroups.user.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, userGroups.user.descriptor)} "open permissions")`);
+        for (const project of distinctProjectsSortedWithorganizationFirst) {
+            if (userGroups.groups.find(p => p.principalName?.toLowerCase().startsWith(`[${project.toLowerCase()}]`)) === undefined) {
+                line.push(undefined);
+            }
+            else {
+                const projectItem = projectsList.find(p => p.name?.toLowerCase() === project?.toLowerCase());
+
+                const groupsInProject = userGroups.groups.filter(p => p.principalName?.toLowerCase().startsWith(`[${project?.toLowerCase()}]`)).map(p => p.principalName?.split('\\')[1]);
+                groupsInProject.sort();
+                const link = project?.toLowerCase() === organization.toLowerCase()
+                           ? baseUrl
+                           : AzureDevOpsPortalLinks.Permissions(organization, projectItem?.id, userGroups.user.descriptor);
+
+                line.push(`[•](${link} "${groupsInProject.map(p => `${p?.trim()}`).join(lineBreak)}")`);
+            }
+        }
+        lines.push(`|${line.join('|')}|`);
+    }
+
+    await writeFile(file, lines.join('\n'));
 
     console.log({ file });
 }, 100000);
