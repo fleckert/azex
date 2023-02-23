@@ -10,7 +10,7 @@ test('AzureDevOpsHelper - users-without-projects-sequential', async () => {
     const organization       = config.azureDevOps.organization;
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
-    const maxNumberOfTests   = 50000 ?? config.azureDevOps.maxNumberOfTests;
+    const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-without-projects-${organization}-sequential.md`);
 
@@ -54,7 +54,7 @@ test('AzureDevOpsHelper - users-without-projects-batched', async () => {
     const organization       = config.azureDevOps.organization;
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
-    const maxNumberOfTests   = 50000 ?? config.azureDevOps.maxNumberOfTests;
+    const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-without-projects-${organization}-batched.md`);
 

@@ -10,7 +10,7 @@ test('devops_permissions_overview_show', async () => {
     const organization      = config.azureDevOps.organization;
     const projectName       = config.azureDevOps.projectName;
     const tenantId          = config.azureDevOps.tenantId;
-    const maxNumberOfTests  = 50000??config.azureDevOps.maxNumberOfTests;
+    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const tokens = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, projectName);

@@ -79,25 +79,6 @@ export class AzureDevOpsHelper {
         );
     }
 
-    private async batchCalls<TParameters, TResult>(parametersCollection: TParameters[], func: (parameters: TParameters) => Promise<TResult>, batchsize? : number): Promise<Array<{ parameters: TParameters, result: TResult }>> {
-        const batches = this.getBatches(parametersCollection, batchsize ?? 10);
-
-        const collection = new Array<{ parameters: TParameters, result: TResult }>();
-
-        for (const batch of batches) {
-            const promises = batch.map(p => { return { parameters: p, promise: func(p) } });
-
-            for (const promise of promises) {
-                collection.push({
-                    parameters: promise.parameters,
-                    result    : await promise.promise
-                });
-            }
-        }
-
-        return collection;
-    }
-
     userEntitlements(organization: string, descriptor: string): Promise<any | undefined> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/get?view=azure-devops-rest-7.1&tabs=HTTP
         // npm package has no definitions for this...?!?
@@ -199,21 +180,6 @@ export class AzureDevOpsHelper {
 
             return collection;
         }
-    }
-
-    private getBatches<T>(values: T[], batchSize: number): Array<Array<T>> {
-        const batches = new Array<Array<T>>();
-        batches.push(new Array<T>());
-
-        for (let index = 0; index < values.length; index++) {
-            if (batches[batches.length - 1].length == batchSize) {
-                batches.push(new Array<T>());
-            }
-
-            batches[batches.length - 1].push(values[index]);
-        }
-
-        return batches;
     }
 
     async userFromIdentity(organization: string, identityDescriptor: string): Promise<GraphUser | undefined> {
@@ -503,5 +469,39 @@ export class AzureDevOpsHelper {
                 throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
             }
         }
+    }
+
+    private getBatches<T>(values: T[], batchSize: number): Array<Array<T>> {
+        const batches = new Array<Array<T>>();
+        batches.push(new Array<T>());
+
+        for (let index = 0; index < values.length; index++) {
+            if (batches[batches.length - 1].length == batchSize) {
+                batches.push(new Array<T>());
+            }
+
+            batches[batches.length - 1].push(values[index]);
+        }
+
+        return batches;
+    }
+
+    private async batchCalls<TParameters, TResult>(parametersCollection: TParameters[], func: (parameters: TParameters) => Promise<TResult>, batchsize? : number): Promise<Array<{ parameters: TParameters, result: TResult }>> {
+        const batches = this.getBatches(parametersCollection, batchsize ?? 10);
+
+        const collection = new Array<{ parameters: TParameters, result: TResult }>();
+
+        for (const batch of batches) {
+            const promises = batch.map(p => { return { parameters: p, promise: func(p) } });
+
+            for (const promise of promises) {
+                collection.push({
+                    parameters: promise.parameters,
+                    result    : await promise.promise
+                });
+            }
+        }
+
+        return collection;
     }
 }
