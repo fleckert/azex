@@ -82,7 +82,12 @@ test('AzureDevOpsHelper - users-without-projects-batched', async () => {
         }
     }
 
-    const markdown = 'Users without group memberships\n\n'+Markdown.tableKeyValue('DisplayName', 'PrincipalName', usersIsNotInGroups.map(p => { return { key: p.displayName, value: p.principalName } }));
+    const markdown = Markdown.table(
+        `Users without group memberships in '${organization}'`,
+        ['DisplayName', 'PrincipalName'],
+        usersIsNotInGroups.map(p => [p.displayName ?? '', p.principalName ?? ''])
+    );
+    
     await writeFile(file, markdown);
 
     console.log({ file });
