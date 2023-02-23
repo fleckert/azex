@@ -58,7 +58,11 @@ test('AzureDevOpsHelper - users-in-project', async () => {
         ) => `${a.group.displayName}-${a.user.displayName}`.toLowerCase().localeCompare(`${b.group.displayName}-${b.user.displayName}`.toLowerCase()));
 
     const lineBreak = "<br/>"
-    const markdown = Markdown.tableKeyValue('Group', 'User', groupsUsers.map(p => { return { key: p.group.displayName, value: `${p.user.displayName}${lineBreak}${p.user.principalName}` } }));
+    const markdown = Markdown.table(
+        `Users in '${organization}' / '${projectName}'`,
+        ['Group', 'User'], 
+        groupsUsers.map(p => [`${p.group.displayName}`, `${p.user.displayName}${lineBreak}${p.user.principalName}`])
+    );
  
     await writeFile(file, markdown);
 
