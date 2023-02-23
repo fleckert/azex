@@ -68,8 +68,8 @@ test('AzureDevOpsHelper - users-in-project-groups', async () => {
         ['Group', 'User'], 
         groupsUsers.map(p => [
             p.group.descriptor === undefined
-            ? `${p.group.displayName}`
-            : `[${p.group.displayName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.group.descriptor)} "open permissions")`,
+            ? `${p.group.principalName}`
+            : `[${p.group.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.group.descriptor)} "open permissions")`,
             project === undefined
             ? `${p.user.displayName}${lineBreak}${p.user.principalName}`
             : `${p.user.displayName}${lineBreak}[${p.user.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.user.descriptor)} "open permissions")`
