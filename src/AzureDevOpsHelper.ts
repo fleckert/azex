@@ -71,6 +71,26 @@ export class AzureDevOpsHelper {
         return this.getValue(url);
     }
 
+    async graphMembershipsLists(organization: string, subjectDescriptors: Array<string>, direction: 'up' | 'down'): Promise<Array<{ subjectDescriptor: string, graphMemberShips: GraphMembership[] }>> {
+        const batchsize = 10;
+        const batches = this.getBatches(subjectDescriptors, batchsize);
+
+        const collection = new Array<{ subjectDescriptor: string, graphMemberShips: GraphMembership[] }>();
+
+        for (const batch of batches) {
+            const promises = batch.map(p => { return { subjectDescriptor: p, promise: this.graphMembershipsList(organization, p, direction) } });
+
+            for (const promise of promises) {
+                collection.push({
+                    subjectDescriptor: promise.subjectDescriptor,
+                    graphMemberShips: await promise.promise
+                });
+            }
+        }
+
+        return collection;
+    }
+
     userEntitlements(organization: string, descriptor: string): Promise<any | undefined> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/get?view=azure-devops-rest-7.1&tabs=HTTP
         // npm package has no definitions for this...?!?

@@ -14,7 +14,7 @@ test('AzureDevOpsHelper - users-per-projects', async () => {
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
-    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
+    const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-per-projects-${organization}.md`);
     await writeFile(file, 'test started');
