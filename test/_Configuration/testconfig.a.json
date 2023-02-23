@@ -41,7 +41,7 @@
         "organization": "lseg",
         "projectName": "foundation",
         "principalName": "flo.eckert@live.com",
-        "maxNumberOfTests" : 5
+        "maxNumberOfTests" : 999999
     },
     "azureResources": {
         "location": "westeurope",

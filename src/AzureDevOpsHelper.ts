@@ -4,17 +4,14 @@ import { AzureDevOpsAccessControlList                                  } from ".
 import { AzureDevOpsSecurityNamespace                                  } from "./models/AzureDevOpsSecurityNamespace";
 import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration } from "azure-devops-node-api/interfaces/WorkInterfaces";
 import { BuildDefinitionReference                                      } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import { CommandRunner                                                 } from "./CommandRunner";
 import { GitRepository                                                 } from "azure-devops-node-api/interfaces/GitInterfaces";
-import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { TeamProjectReference, WebApiTeam                              } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { ReleaseDefinition                                             } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 import { AzureDevOpsPat } from "./AzureDevOpsPat";
 import { AzureDevOpsSecurityNamespaceAction } from "./models/AzureDevOpsSecurityNamespaceAction";
-import { Guid } from "./Guid";
-import { Helper } from "./Helper";
 
 export class AzureDevOpsHelper {
 

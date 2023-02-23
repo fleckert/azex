@@ -18,15 +18,17 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
     const file = path.join(__dirname, 'out', `users-in-projects-${organization}.md`);
     await writeFile(file, 'test started');
 
-    const users = await azureDevOpsHelper.graphUsersList(organization);
+    const usersPromise = azureDevOpsHelper.graphUsersList(organization);
 
-    const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumberOfTests);
+    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
 
     const membershipsAll = await azureDevOpsHelper.graphMembershipsLists(
         groups
         .filter(group => group.descriptor !== undefined)
         .map(group => { return { organization, subjectDescriptor: group.descriptor!, direction: 'down' } })
     );
+
+    const users = await usersPromise;
 
     const groupsUsers = new Array<{ group: GraphGroup, user: GraphUser }>
 
