@@ -65,25 +65,32 @@ export class AzureDevOpsHelper {
         return this.getValue(url);
     }
 
-    graphMembershipsList(organization: string, subjectDescriptor: string, direction: 'up' | 'down'): Promise<GraphMembership[]> {
+    private graphMembershipsListArgs(parameters: { organization: string, subjectDescriptor: string, direction: 'up' | 'down' }) : Promise<GraphMembership[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/list?view=azure-devops-rest-7.1&tabs=HTTP
-        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/Memberships/${subjectDescriptor}?direction=${direction}&api-version=7.1-preview.1`;
+        const url = `https://vssps.dev.azure.com/${parameters.organization}/_apis/graph/Memberships/${parameters.subjectDescriptor}?direction=${parameters.direction}&api-version=7.1-preview.1`;
         return this.getValue(url);
     }
 
-    async graphMembershipsLists(organization: string, subjectDescriptors: Array<string>, direction: 'up' | 'down'): Promise<Array<{ subjectDescriptor: string, graphMemberShips: GraphMembership[] }>> {
-        const batchsize = 10;
-        const batches = this.getBatches(subjectDescriptors, batchsize);
+    async graphMembershipsLists(parameters : Array<{ organization: string, subjectDescriptor: string, direction: 'up' | 'down'}>)
+    {
+        return this.batchCalls(
+            parameters,
+            p => this.graphMembershipsListArgs(p)
+        );
+    }
 
-        const collection = new Array<{ subjectDescriptor: string, graphMemberShips: GraphMembership[] }>();
+    private async batchCalls<TParameters, TResult>(parametersCollection: TParameters[], func: (parameters: TParameters) => Promise<TResult>, batchsize? : number): Promise<Array<{ parameters: TParameters, result: TResult }>> {
+        const batches = this.getBatches(parametersCollection, batchsize ?? 10);
+
+        const collection = new Array<{ parameters: TParameters, result: TResult }>();
 
         for (const batch of batches) {
-            const promises = batch.map(p => { return { subjectDescriptor: p, promise: this.graphMembershipsList(organization, p, direction) } });
+            const promises = batch.map(p => { return { parameters: p, promise: func(p) } });
 
             for (const promise of promises) {
                 collection.push({
-                    subjectDescriptor: promise.subjectDescriptor,
-                    graphMemberShips: await promise.promise
+                    parameters: promise.parameters,
+                    result    : await promise.promise
                 });
             }
         }

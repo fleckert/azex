@@ -18,7 +18,13 @@ test('AzureDevOpsHelper - users-without-projects-sequential', async () => {
 
     users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
-    const usersIsInGroups = new Array<GraphUser>();
+    const usersIsNotInGroups = new Array<GraphUser>();
+
+    const membershipsAll = await azureDevOpsHelper.graphMembershipsLists(
+        users
+        .filter(user => user.descriptor !== undefined)
+        .map(user => { return { organization, subjectDescriptor: user.descriptor!, direction: 'up' } })
+    );
 
     for (const user of users) {
         if (user.descriptor === undefined) {
@@ -26,53 +32,57 @@ test('AzureDevOpsHelper - users-without-projects-sequential', async () => {
         }
         const subjectDescriptor = user.descriptor;
         const direction = 'up';
-        const memberships = await azureDevOpsHelper.graphMembershipsList(organization, subjectDescriptor, direction);
-        if (memberships.length === 0) {
-            usersIsInGroups.push(user);
+        const memberships = membershipsAll.find(p => p.parameters.subjectDescriptor === subjectDescriptor);
+        if (memberships === undefined) {
+            throw new Error(JSON.stringify({ error: 'Failed to resolve graphMemberships', organization, subjectDescriptor }));
+        }
+
+        if (memberships.result.length === 0) {
+            usersIsNotInGroups.push(user);
         }
     }
 
-    const markdown = 'Users without group memberships\n\n'+Markdown.tableKeyValue('DisplayName', 'PrincipalName', usersIsInGroups.map(p => { return { key: p.displayName, value: p.principalName } }));
+    const markdown = 'Users without group memberships\n\n'+Markdown.tableKeyValue('DisplayName', 'PrincipalName', usersIsNotInGroups.map(p => { return { key: p.displayName, value: p.principalName } }));
     await writeFile(file, markdown);
 
     console.log({ file });
 }, 100000);
 
 
-test('AzureDevOpsHelper - users-without-projects-parallel', async () => {
+test('AzureDevOpsHelper - users-without-projects-batched', async () => {
     const config             = await TestConfigurationProvider.get();
     const organization       = config.azureDevOps.organization;
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const maxNumberOfTests   = 50000 ?? config.azureDevOps.maxNumberOfTests;
 
-    const file = path.join(__dirname, 'out', `users-without-projects-${organization}-parallel.md`);
+    const file = path.join(__dirname, 'out', `users-without-projects-${organization}-batched.md`);
 
     const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
 
     users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
-    const usersIsInGroups = new Array<GraphUser>();
+    const usersIsNotInGroups = new Array<GraphUser>();
 
     const subjectDescriptors = users.filter(p => p.descriptor !== undefined).map(p => p.descriptor!);
     const direction = 'up';
-    const graphMembershipsLists = await azureDevOpsHelper.graphMembershipsLists(organization, subjectDescriptors, direction);
+    const graphMembershipsLists = await azureDevOpsHelper.graphMembershipsLists(subjectDescriptors.map(subjectDescriptor => { return { organization, subjectDescriptor, direction } }));
 
     for (const user of users) {
         if (user.descriptor === undefined) {
             continue;
         }
 
-        const graphMembershipsList = graphMembershipsLists.find(p => p.subjectDescriptor === user.descriptor);
+        const graphMembershipsList = graphMembershipsLists.find(p => p.parameters.subjectDescriptor === user.descriptor);
         if (graphMembershipsList === undefined) {
-            usersIsInGroups.push(user);
+            usersIsNotInGroups.push(user);
         }
-        else if (graphMembershipsList.graphMemberShips.length === 0) {
-            usersIsInGroups.push(user);
+        else if (graphMembershipsList.result.length === 0) {
+            usersIsNotInGroups.push(user);
         }
     }
 
-    const markdown = 'Users without group memberships\n\n'+Markdown.tableKeyValue('DisplayName', 'PrincipalName', usersIsInGroups.map(p => { return { key: p.displayName, value: p.principalName } }));
+    const markdown = 'Users without group memberships\n\n'+Markdown.tableKeyValue('DisplayName', 'PrincipalName', usersIsNotInGroups.map(p => { return { key: p.displayName, value: p.principalName } }));
     await writeFile(file, markdown);
 
     console.log({ file });

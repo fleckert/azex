@@ -22,6 +22,12 @@ test('AzureDevOpsHelper - users-in-project', async () => {
 
     const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumberOfTests);
 
+    const membershipsAll = await azureDevOpsHelper.graphMembershipsLists(
+        groups
+        .filter(group => group.descriptor !== undefined)
+        .map(group => { return { organization, subjectDescriptor: group.descriptor!, direction: 'down' } })
+    );
+
     const groupsUsers = new Array<{ group: GraphGroup, user: GraphUser }>
 
     for (const group of groups) {
@@ -29,9 +35,12 @@ test('AzureDevOpsHelper - users-in-project', async () => {
             continue;
         }
         const subjectDescriptor = group.descriptor;
-        const direction = 'down';
-        const memberships = await azureDevOpsHelper.graphMembershipsList(organization, subjectDescriptor, direction);
-        for (const membership of memberships) {
+        const memberships = membershipsAll.find(p => p.parameters.subjectDescriptor === subjectDescriptor);
+        if (memberships === undefined) {
+            throw new Error(JSON.stringify({ error: 'Failed to resolve graphMemberships', organization, projectName, subjectDescriptor }));
+        }
+
+        for (const membership of memberships.result) {
             const user = users.find(p => p.descriptor === membership.memberDescriptor);
             if (user !== undefined) {
                 if (Guid.isGuid(user.principalName)) {

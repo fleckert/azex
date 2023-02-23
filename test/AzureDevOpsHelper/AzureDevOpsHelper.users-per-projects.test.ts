@@ -14,18 +14,25 @@ test('AzureDevOpsHelper - users-per-projects', async () => {
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
-    const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
+    const maxNumberOfTests   = 50000 ?? config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-per-projects-${organization}.md`);
     await writeFile(file, 'test started');
 
-    const projectsList = await azureDevOpsWrapper.projects();
+    const projectsListPromise = azureDevOpsWrapper.projects();
+    const groupsPromise       = azureDevOpsHelper.graphGroupsList(organization);
 
     const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
 
     users.sort((a: GraphUser, b: GraphUser) => `${a.displayName}`.localeCompare(`${b.displayName}`));
 
-    const groups = await azureDevOpsHelper.graphGroupsList(organization);
+    const membershipsAll = await azureDevOpsHelper.graphMembershipsLists(
+        users
+        .filter(user => user.descriptor !== undefined)
+        .map(user => { return { organization, subjectDescriptor: user.descriptor!, direction: 'up' } })
+    );
+
+    const groups = await groupsPromise;
 
     const usersGroups = new Array<{ user: GraphUser, groups: Array<GraphGroup> }>
     for (const user of users) {
@@ -36,12 +43,15 @@ test('AzureDevOpsHelper - users-per-projects', async () => {
         if (user.descriptor === undefined) {
             continue;
         }
-        const subjectDescriptor = user.descriptor;;
-        const direction = 'up';
-        const memberships = await azureDevOpsHelper.graphMembershipsList(organization, subjectDescriptor, direction);
+        const subjectDescriptor = user.descriptor;
+
+        const memberships = membershipsAll.find(p => p.parameters.subjectDescriptor === subjectDescriptor);
+        if (memberships === undefined) {
+            throw new Error(JSON.stringify({ error: 'Failed to resolve graphMemberships', organization, subjectDescriptor }));
+        }
 
         const userGroups = { user, groups: new Array<GraphGroup>() };
-        for (const membership of memberships) {
+        for (const membership of memberships.result) {
             const group = groups.find(p => p.descriptor === membership.containerDescriptor);
             if (group !== undefined) {
                 userGroups.groups.push(group);
@@ -75,6 +85,8 @@ test('AzureDevOpsHelper - users-per-projects', async () => {
         }
         countsOfUsers.push(count);
     }
+
+    const projectsList = await projectsListPromise;
 
     const lineBreak = "&#013;"
     const lines = new Array<string>();

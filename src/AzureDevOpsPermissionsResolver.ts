@@ -107,16 +107,22 @@ export class AzureDevOpsPermissionsResolver {
     private async getGroupsWithMemberships(azureDevOpsHelper: AzureDevOpsHelper, organization: string, groups: Array<GraphGroup>): Promise<Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }>> {
         const groupsWithGraphMemberShips = new Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }>();
 
+        const membershipsAll = await azureDevOpsHelper.graphMembershipsLists(
+            groups
+            .filter(group => group.descriptor !== undefined)
+            .map(group => { return { organization, subjectDescriptor: group.descriptor!, direction: 'down' } })
+        );
+
         for (const group of groups) {
             if (group.descriptor === undefined) {
                 throw new Error('group.descriptor === undefined');
             }
 
-            const memberships = await azureDevOpsHelper.graphMembershipsList(organization, group.descriptor, 'down');
+            const memberships = membershipsAll.find(p=>p.parameters.subjectDescriptor === group.descriptor) ;
 
             groupsWithGraphMemberShips.push({
                 group,
-                graphMemberships: memberships
+                graphMemberships: memberships?.result ?? new Array<GraphMembership>()
             });
         }
 
