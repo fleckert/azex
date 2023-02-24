@@ -1,10 +1,10 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
-import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { rm, writeFile             } from "fs/promises";
 import { GraphUser                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Markdown                  } from "../../src/Converters/Markdown";
+import { rm, writeFile             } from "fs/promises";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-without-groups', async () => {
     const config             = await TestConfigurationProvider.get();
@@ -44,8 +44,8 @@ test('AzureDevOpsHelper - users-without-groups', async () => {
         `${organization} - Users without group memberships`,
         ['DisplayName', 'PrincipalName'],
         usersIsNotInGroups.map(p => [
-            p.displayName ?? '', 
-            `[${p.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor)} "open permissions")`
+            Markdown.getLinkWithToolTip(p.displayName   ?? '', p.url ?? ''                                                              , "open details"    ),
+            Markdown.getLinkWithToolTip(p.principalName ?? '', AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor), "open permissions")
         ])
     );
     

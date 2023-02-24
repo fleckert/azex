@@ -4,8 +4,8 @@ import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { rm, writeFile             } from "fs/promises";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-in-collection-groups', async () => {
 
@@ -65,8 +65,8 @@ test('AzureDevOpsHelper - users-in-collection-groups', async () => {
         organization,
         ['Group', 'User'],
         groupsUsers.map(p => [
-            `[${p.group.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.group.descriptor)} "open permissions")`, 
-            `${p.user.displayName}${lineBreak}[${p.user.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.user.descriptor)} "open permissions")`
+            Markdown.getLinkWithToolTip(p.group.principalName ?? ''                               , AzureDevOpsPortalLinks.Permissions(organization, undefined, p.group.descriptor), "open permissions"),
+            Markdown.getLinkWithToolTip(`${p.user.displayName}${lineBreak}${p.user.principalName}`, AzureDevOpsPortalLinks.Permissions(organization, undefined, p.user.descriptor ), "open permissions")
         ])
     );
  

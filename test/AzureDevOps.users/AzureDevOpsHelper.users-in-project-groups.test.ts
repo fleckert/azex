@@ -4,8 +4,8 @@ import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { rm, writeFile             } from "fs/promises";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-in-project-groups', async () => {
 
@@ -18,8 +18,6 @@ test('AzureDevOpsHelper - users-in-project-groups', async () => {
 
     const file = path.join(__dirname, 'out', `users-in-project-groups-${organization}-${projectName}.md`);
     await rm(file, {force: true});
-
-    const projectPromise = azureDevOpsHelper.project(organization, projectName);;
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
@@ -60,19 +58,12 @@ test('AzureDevOpsHelper - users-in-project-groups', async () => {
          b: { group: GraphGroup, user: GraphUser }
         ) => `${a.group.displayName}-${a.user.displayName}`.toLowerCase().localeCompare(`${b.group.displayName}-${b.user.displayName}`.toLowerCase()));
 
-    const project = await projectPromise;
-
-    const lineBreak = "<br/>"
     const markdown = Markdown.table(
         `${organization} / ${projectName}`,
         ['Group', 'User'], 
         groupsUsers.map(p => [
-            p.group.descriptor === undefined
-            ? `${p.group.principalName}`
-            : `[${p.group.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.group.descriptor)} "open permissions")`,
-            project === undefined
-            ? `${p.user.displayName}${lineBreak}${p.user.principalName}`
-            : `${p.user.displayName}${lineBreak}[${p.user.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, projectName, p.user.descriptor)} "open permissions")`
+            Markdown.getLinkWithToolTip(p.group.principalName ?? '', AzureDevOpsPortalLinks.Permissions(organization, projectName, p.group.descriptor), "open permissions"),
+            Markdown.getLinkWithToolTip(p.user .principalName ?? '', AzureDevOpsPortalLinks.Permissions(organization, projectName, p.user .descriptor), "open permissions")
         ])
     );
  

@@ -4,8 +4,9 @@ import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { AzureDevOpsWrapper        } from "../../src/AzureDevOpsWrapper";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
-import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { Markdown                  } from "../../src/Converters/Markdown";
 import { rm, writeFile             } from "fs/promises";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-in-projects', async () => {
 
@@ -14,14 +15,12 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
     const baseUrl            = config.azureDevOps.baseUrl;
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
     const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
     const file = path.join(__dirname, 'out', `users-in-projects-${organization}.md`);
     await rm(file, {force: true});
 
-    const projectsListPromise = azureDevOpsWrapper.projects();
-    const groupsPromise       = azureDevOpsHelper.graphGroupsList(organization);
+    const groupsPromise = azureDevOpsHelper.graphGroupsList(organization);
 
     const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
 
@@ -87,8 +86,6 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
         countsOfUsers.push(count);
     }
 
-    const projectsList = await projectsListPromise;
-
     const lineBreak = "&#013;"
     const lines = new Array<string>();
     lines.push(`# ${organization}`);
@@ -99,21 +96,20 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
     for (const userGroups of usersGroups) {
         const line = Array<string | undefined>();
         const linkUserPermissions = AzureDevOpsPortalLinks.Permissions(organization, undefined, userGroups.user.descriptor);
-        line.push(`${userGroups.user.displayName}<br/>[${userGroups.user.principalName}](${linkUserPermissions} "open permissions")`);
+        line.push(`${userGroups.user.displayName}<br/>${Markdown.getLinkWithToolTip(userGroups.user.principalName ?? '', linkUserPermissions, "open permissions")}`);
         for (const project of distinctProjectsSortedWithorganizationFirst) {
             if (userGroups.groups.find(p => p.principalName?.toLowerCase().startsWith(`[${project.toLowerCase()}]`)) === undefined) {
                 line.push(undefined);
             }
             else {
-                const projectItem = projectsList.find(p => p.name?.toLowerCase() === project?.toLowerCase());
-
-                const groupsInProject = userGroups.groups.filter(p => p.principalName?.toLowerCase().startsWith(`[${project?.toLowerCase()}]`)).map(p => p.principalName?.split('\\')[1]);
+                 const groupsInProject = userGroups.groups.filter(p => p.principalName?.toLowerCase().startsWith(`[${project?.toLowerCase()}]`)).map(p => p.principalName?.split('\\')[1]);
                 groupsInProject.sort();
                 const linkUserInProjectPermissions = project?.toLowerCase() === organization.toLowerCase()
-                                                   ? baseUrl
-                                                   : AzureDevOpsPortalLinks.Permissions(organization, projectItem?.id, userGroups.user.descriptor);
-
-                line.push(`[•](${linkUserInProjectPermissions} "${groupsInProject.map(p => `${p?.trim()}`).join(lineBreak)}")`);
+                                                   ? AzureDevOpsPortalLinks.Permissions(organization, undefined, userGroups.user.descriptor)
+                                                   : AzureDevOpsPortalLinks.Permissions(organization, project  , userGroups.user.descriptor);
+                const tooltip = groupsInProject.map(p => `${p?.trim()}`).join(lineBreak);
+                const markdown = Markdown.getLinkWithToolTip('•', linkUserInProjectPermissions, tooltip);
+                line.push(markdown);
             }
         }
         lines.push(`|${line.join('|')}|`);

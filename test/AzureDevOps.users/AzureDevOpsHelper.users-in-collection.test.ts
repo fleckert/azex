@@ -1,10 +1,10 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
-import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { rm, writeFile             } from "fs/promises";
+import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphUser                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
+import { rm, writeFile             } from "fs/promises";
+import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-in-collection', async () => {
     const config            = await TestConfigurationProvider.get();
@@ -25,8 +25,8 @@ test('AzureDevOpsHelper - users-in-collection', async () => {
         users
         .filter(p => p.domain !== 'Build')
         .map(p => { return [
-            p.displayName   === undefined ? '' : `[${p.displayName  }](${p.url} "open details")`,
-            p.principalName === undefined ? '' : `[${p.principalName}](${AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor)} "open permissions")`
+            Markdown.getLinkWithToolTip(p.displayName   ?? '', p.url ?? ''                                                              , "open details"    ),
+            Markdown.getLinkWithToolTip(p.principalName ?? '', AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor), "open permissions")
         ] })
     );
 
