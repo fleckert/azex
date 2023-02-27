@@ -1,6 +1,6 @@
 {
-    "domain": "floeckertlive.onmicrosoft.com",
-    "subscription": "a4e4dec3-7c4e-487a-b0e2-a4c32fad8e17",
+    "domain": "yourdomain.onmicrosoft.com",
+    "subscription": "susbcriptionId",
     "userNames": [
         "zzz-test-user-0",
         "zzz-test-user-1",
@@ -36,12 +36,12 @@
         "zzz-test-app--'--chars"
     ],
     "azureDevOps": {
-        "baseUrl": "https://dev.azure.com/lseg",
-        "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
-        "organization": "lseg",
-        "projectName": "foundation",
-        "principalName": "flo.eckert@live.com",
-        "maxNumberOfTests" : 999999
+        "baseUrl": "https://dev.azure.com/your-org",
+        "tenantId": "",
+        "organization": "",
+        "projectName": "",
+        "principalName": "",
+        "maxNumberOfTests" : 5
     },
     "azureResources": {
         "location": "westeurope",
