@@ -5,94 +5,51 @@ export type GraphSubjectMemberOf = { graphSubject: GraphSubject, memberOf: Array
 
 export class AzureDevOpsPermissionsResolver {
     async resolveGroupMembers(
+        tenantId    : string,
         organization: string,
         projectName : string
-    ): Promise<{ items: Array<{ group: GraphGroup, members: GraphSubject[] }> | undefined, error: Error | undefined }> {
+    ): Promise<Array<{ group: GraphGroup, members: GraphSubject[] }>> {
 
-        const azureDevOpsHelper =  new AzureDevOpsHelper();
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
         const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName);
 
-        if (groups.error !== undefined) {
-            return { items: undefined, error: groups.error };
-        }
-        else if (groups.value === undefined) {
-            return { items: undefined, error: new Error(`Failed to resolve groups for organization[${organization}] projectName[${projectName}].`) };
-        }
-        else {
-            const groupsWithGraphMemberShips = await this.getGroupsWithMemberships(azureDevOpsHelper, organization, groups.value);
+        const groupsWithGraphMemberShips = await this.getGroupsWithMemberships(azureDevOpsHelper, organization, groups);
 
-            if (groupsWithGraphMemberShips.error !== undefined) {
-                return { items: undefined, error: groupsWithGraphMemberShips.error };
-            }
-            else if (groupsWithGraphMemberShips.value === undefined) {
-                return { items: undefined, error: new Error('Failed to resolve groupsWithGraphMemberShips.') };
-            }
-            else {
-                const subjectDescriptors = this.getSubjectDescriptors(groupsWithGraphMemberShips.value);
+        const subjectDescriptors = this.getSubjectDescriptors(groupsWithGraphMemberShips);
 
-                const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
+        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
 
-                if (graphSubjects.error !== undefined) {
-                    return { items: undefined, error: new Error(`Failed to resolve graphSubjects. [${graphSubjects.error}]`) };
-                }
-                else if (graphSubjects.value === undefined) {
-                    return { items: undefined, error: new Error('graphSubjects.items === undefined') };
-                }
-                else {
-                    const groupsWithMembers = this.getGroupsWithMembers(groupsWithGraphMemberShips.value, graphSubjects.value);
+        const groupsWithMembers = this.getGroupsWithMembers(groupsWithGraphMemberShips, graphSubjects);
 
-                    return { items: groupsWithMembers, error: undefined };
-                }
-            }
-        }
+        return groupsWithMembers;
     }
 
 
     async resolveGraphSubjectMemberOf(
+        tenantId         : string,
         organization     : string,
         projectName      : string | undefined,
         subjectDescriptor: string
-    ): Promise<{ value: GraphSubjectMemberOf | undefined, error: Error | undefined }> {
+    ): Promise<GraphSubjectMemberOf> {
 
-        const azureDevOpsHelper = new AzureDevOpsHelper();
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
         const graphSubject = await azureDevOpsHelper.graphSubjectLookup(organization, subjectDescriptor);
 
-        if (graphSubject.error !== undefined) {
-            return { value: undefined, error: graphSubject.error };
-        }
-        if (graphSubject.value === undefined) {
-            return { value: undefined, error: new Error(`Failed to resolve graphSubject for organization[${organization}] projectName[${projectName}] subjectDescriptor[${subjectDescriptor}].`) };
-        }
-        else {
-            const groups = projectName !== undefined
-                         ? await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName)
-                         : await azureDevOpsHelper.graphGroupsList              (organization             );
-
-                         if (groups.error !== undefined) {
-                return { value: undefined, error: groups.error };
-            }
-            else if (groups.value === undefined) {
-                return { value: undefined, error: new Error(`Failed to resolve groups for organization[${organization}] projectName[${projectName}].`) };
-            }
-            else {
-                const groupsWithMemberships = await this.getGroupsWithMemberships(azureDevOpsHelper, organization, groups.value);
-
-                if (groupsWithMemberships.error !== undefined) {
-                    return { value: undefined, error: groups.error };
-                }
-                else if (groupsWithMemberships.value === undefined) {
-                    return { value: undefined, error: new Error(`Failed to resolve groupsWithMemberships for organization[${organization}].`) };
-                }
-                else {
-                    const graphSubjectMemberOf = this.getGraphSubjectMemberOf(graphSubject.value, groupsWithMemberships.value);
-
-                    return { value: graphSubjectMemberOf, error: groups.error };
-                }
-            }
+        if (graphSubject === undefined) {
+            throw new Error(`Failed to resolve graphSubject ${JSON.stringify({ organization, subjectDescriptor })}.`);
         }
 
+        const groups = projectName !== undefined
+                     ? await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName)
+                     : await azureDevOpsHelper.graphGroupsList              (organization             );
+
+        const groupsWithMemberships = await this.getGroupsWithMemberships(azureDevOpsHelper, organization, groups);
+
+        const graphSubjectMemberOf = this.getGraphSubjectMemberOf(graphSubject, groupsWithMemberships);
+
+        return graphSubjectMemberOf;
     }
 
     toGraphSubjectMemberOf(items: Array<{ group: GraphGroup, members: Array<GraphSubject> }>): Array<GraphSubjectMemberOf> {
@@ -147,32 +104,29 @@ export class AzureDevOpsPermissionsResolver {
         return { graphSubject, memberOf: collection.map(p => this.getGraphSubjectMemberOf(p, groupsWithMemberships)) };
     }
 
-    private async getGroupsWithMemberships(azureDevOpsHelper: AzureDevOpsHelper, organization: string, groups: Array<GraphGroup>): Promise<{ value: Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }> | undefined, error: Error | undefined }> {
+    private async getGroupsWithMemberships(azureDevOpsHelper: AzureDevOpsHelper, organization: string, groups: Array<GraphGroup>): Promise<Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }>> {
         const groupsWithGraphMemberShips = new Array<{ group: GraphGroup, graphMemberships: Array<GraphMembership> }>();
+
+        const membershipsAll = await azureDevOpsHelper.graphMembershipsLists(
+            groups
+            .filter(group => group.descriptor !== undefined)
+            .map(group => { return { organization, subjectDescriptor: group.descriptor!, direction: 'down' } })
+        );
 
         for (const group of groups) {
             if (group.descriptor === undefined) {
-                return { value: undefined, error: new Error('group.descriptor === undefined') };
+                throw new Error('group.descriptor === undefined');
             }
-            else {
-                const memberships = await azureDevOpsHelper.graphMembershipsList(organization, group.descriptor, 'down');
 
-                if (memberships.error !== undefined) {
-                    return { value: undefined, error: memberships.error };
-                }
-                else if (memberships.value === undefined) {
-                    return { value: undefined, error: new Error('Failed to resolve memberShips.') };
-                }
-                else {
-                    groupsWithGraphMemberShips.push({
-                        group,
-                        graphMemberships: memberships.value
-                    });
-                }
-            }
+            const memberships = membershipsAll.find(p=>p.parameters.subjectDescriptor === group.descriptor) ;
+
+            groupsWithGraphMemberShips.push({
+                group,
+                graphMemberships: memberships?.result ?? new Array<GraphMembership>()
+            });
         }
 
-        return { value: groupsWithGraphMemberShips, error: undefined };
+        return groupsWithGraphMemberShips;
     }
 
     private getGraphSubjectMemberOfFlat(items: Array<GraphSubjectMemberOf>): Array<{ member: GraphMember, container: GraphMember }> {

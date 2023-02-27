@@ -8,38 +8,35 @@ import { TestConfigurationProvider      } from "../_Configuration/TestConfigurat
 import { writeFile                      } from "fs/promises";
 
 test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const projectName      = config.azureDevOps.projectName;
+    const tenantId         = config.azureDevOps.tenantId;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
+    const pathOut          = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
 
     const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
-    const azureDevOpsHelper              = new AzureDevOpsHelper             ();
-    const pathOut = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf`);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
-    const config = await TestConfigurationProvider.get();
 
     const users = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization);
-    if (users.error !== undefined) { throw users.error; }
-    if (users.value === undefined) { throw new Error("users.value === undefined"); }
-    await writeFile(`${pathOut}-users.json`, JSON.stringify(users.value, null, 2));
+    await writeFile(`${pathOut}-users.json`, JSON.stringify(users, null, 2));
 
-    const maxNumerOfTests = 5;
-
-    for (const graphSubject of users.value.slice(0, maxNumerOfTests)) {
+    for (const graphSubject of users.slice(0, maxNumberOfTests)) {
         if (graphSubject.descriptor === undefined) { throw new Error("graphSubject.descriptor === undefined"); }
 
-        const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(config.azureDevOps.organization, config.azureDevOps.projectName, graphSubject.descriptor);
+        const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, projectName, graphSubject.descriptor);
 
-        if (graphSubjectMemberOf.error !== undefined) { throw graphSubjectMemberOf.error; }
-        if (graphSubjectMemberOf.value === undefined) { throw new Error("graphSubjectMemberOf.value === undefined"); }
-
-        const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf.value);
+        const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf);
 
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
         
-        const title = `${config.azureDevOps.organization                    }-`
-                    + `${config.azureDevOps.projectName                     }-`
-                    + `${graphSubjectMemberOf.value.graphSubject.subjectKind}-`
-                    + `${graphSubjectMemberOf.value.graphSubject.displayName}-`
-                    + `${graphSubjectMemberOf.value.graphSubject.originId   }`;
+        const title = `${organization                                 }-`
+                    + `${projectName                                  }-`
+                    + `${graphSubjectMemberOf.graphSubject.subjectKind}-`
+                    + `${graphSubjectMemberOf.graphSubject.displayName}-`
+                    + `${graphSubjectMemberOf.graphSubject.originId   }`;
 
         await Promise.all([
             writeFile(`${pathOut}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)      )),

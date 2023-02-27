@@ -10,3 +10,5 @@ export class AzurePortalLinks {
     static user(principalId: string): string { return `https://portal.azure.com/#view/Microsoft_AAD_IAM/UserDetailsMenuBlade/~/Profile/userId/${principalId}`; }
     static group(principalId: string): string { return `https://portal.azure.com/#view/Microsoft_AAD_IAM/GroupDetailsMenuBlade/~/Overview/groupId/${principalId}`; }
 }
+
+

@@ -8,13 +8,14 @@ import { TestConfigurationProvider      } from "../_Configuration/TestConfigurat
 
 test('AzureDevOpsPermissionsResolver-toGraphSubjectMemberOf', async () => {
     const config = await TestConfigurationProvider.get();
-
+    const organization = config.azureDevOps.organization;
+    const projectName  = config.azureDevOps.projectName;
+    const tenantId     = config.azureDevOps.tenantId;
     const azureDevOpsPermissionsResolver = new AzureDevOpsPermissionsResolver();
 
-    const { items, error } = await azureDevOpsPermissionsResolver.resolveGroupMembers(config.azureDevOps.organization, config.azureDevOps.projectName);
+    const items = await azureDevOpsPermissionsResolver.resolveGroupMembers(tenantId, organization, projectName);
 
-    if (error !== undefined) { throw error; }
-    if (items === undefined) { throw new Error("items === undefined"); }
+    if (items.length === 0) { throw new Error(JSON.stringify({ organization, projectName })); }
 
     const collection = azureDevOpsPermissionsResolver.toGraphSubjectMemberOf(items);
 
@@ -24,7 +25,7 @@ test('AzureDevOpsPermissionsResolver-toGraphSubjectMemberOf', async () => {
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
         const pathOut = path.join(__dirname, 'out', `azex-test-AzureDevOpsPermissionsResolver-toGraphSubjectMemberOf`);
-        const title   = `${config.azureDevOps.organization}-${config.azureDevOps.projectName}-${graphSubjectMemberOf.graphSubject.subjectKind}-${graphSubjectMemberOf.graphSubject.displayName}-${graphSubjectMemberOf.graphSubject.originId}`;
+        const title   = `${organization}-${projectName}-${graphSubjectMemberOf.graphSubject.subjectKind}-${graphSubjectMemberOf.graphSubject.displayName}-${graphSubjectMemberOf.graphSubject.originId}`;
 
         await Promise.all([
             writeFile(`${pathOut}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)       )),

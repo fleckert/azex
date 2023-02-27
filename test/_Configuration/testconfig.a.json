@@ -1,6 +1,6 @@
 {
-    "domain": "",
-    "subscription": "",
+    "domain": "yourdomain.onmicrosoft.com",
+    "subscription": "susbcriptionId",
     "userNames": [
         "zzz-test-user-0",
         "zzz-test-user-1",
@@ -36,9 +36,12 @@
         "zzz-test-app--'--chars"
     ],
     "azureDevOps": {
-        "baseUrl": "https://dev.azure.com/xxx",
-        "organization": "xxx",
-        "projectName": "xxx"
+        "baseUrl": "https://dev.azure.com/your-org",
+        "tenantId": "",
+        "organization": "",
+        "projectName": "",
+        "principalName": "",
+        "maxNumberOfTests" : 5
     },
     "azureResources": {
         "location": "westeurope",

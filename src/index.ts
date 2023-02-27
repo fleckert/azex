@@ -14,9 +14,33 @@ import { TokenCredentialProvider   } from "./TokenCredentialProvider";
 const args = process.argv.slice(2);
 const commandName = 'azex';
 
+const getArgv = (index: number): any => require('minimist')(process.argv.slice(index));
+
+const checkSubscriptionId      = (value: string | undefined): string => checkParameter('subscription' , value, undefined                      );
+const checkDevOpsTenantId      = (value: string | undefined): string => checkParameter('tenantId'     , value, 'AZURE_DEVOPS_EXT_TENANTID'    );
+const checkDevOpsOrganization  = (value: string | undefined): string => checkParameter('organization' , value, 'AZURE_DEVOPS_EXT_ORGANIZATION');
+const checkDevOpsProject       = (value: string | undefined): string => checkParameter('project'      , value, 'AZURE_DEVOPS_EXT_PROJECT'     );
+const checkDevOpsPrincipalName = (value: string | undefined): string => checkParameter('principalName', value, undefined                      );
+
+const checkParameter = (parameterName: string, parameterValue: string | undefined, environmentVariableName: string | undefined) :string => {
+    if (`${parameterValue}`.trim() !== '') {
+        return `${parameterValue}`.trim();
+    }
+   
+    if (environmentVariableName === undefined) {
+        throw new Error(`Parameter --${parameterName} is missing.`);
+    }
+
+    if (`${process.env[environmentVariableName]}`.trim() !== '') {
+        return `${process.env[environmentVariableName]}`.trim();
+    }
+     
+     throw new Error(`Parameter --${parameterName} is missing and environmentVariable '${environmentVariableName}' is missing.`);
+}
+
 if (args[0]?.toLowerCase() === "rbac") {
     if (args[1]?.toLowerCase() === "export") {
-        var argv = require('minimist')(process.argv.slice(2));
+        var argv = getArgv(2);
   
         new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
         .then(async subscriptionId => {
@@ -24,45 +48,38 @@ if (args[0]?.toLowerCase() === "rbac") {
             await rbac_export.handle(TokenCredentialProvider.get(), subscriptionId!, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
         });
     }
-    else if (args[1]?.toLowerCase() === "verify")
-    {
-        var argv = require('minimist')(process.argv.slice(2));
+    else if (args[1]?.toLowerCase() === "verify") {
+        var argv = getArgv(2);
 
-        if (argv.path === undefined) { console.error("Parameter --path is missing."); }
-        else {
-            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
-            .then(async subscriptionId => {
-                checkSubscriptionId(subscriptionId);
-                await rbac_verify.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
-            });
-        }
+        const path = checkParameter('path', argv.path, undefined);
+
+        new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+        .then(async subscriptionId => {
+            checkSubscriptionId(subscriptionId);
+            await rbac_verify.handle(TokenCredentialProvider.get(), subscriptionId!, path, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
+        });
     }
-    else if (args[1]?.toLowerCase() === "extend")
-    {
-        var argv = require('minimist')(process.argv.slice(2));
+    else if (args[1]?.toLowerCase() === "extend") {
+        var argv = getArgv(2);
 
-        if (argv.path === undefined) { console.error("Parameter --path is missing."); }
-        else {
-            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
-            .then(async subscriptionId => {
-                checkSubscriptionId(subscriptionId);
-                await rbac_extend.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
-            });
-        }
+        const path = checkParameter('path', argv.path, undefined);
+
+        new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+        .then(async subscriptionId => {
+            checkSubscriptionId(subscriptionId);
+            await rbac_extend.handle(TokenCredentialProvider.get(), subscriptionId!, path, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
+        });
     }
-    else if (args[1]?.toLowerCase() === "apply")
-    {
-        var argv = require('minimist')(process.argv.slice(2));
+    else if (args[1]?.toLowerCase() === "apply") {
+        var argv = getArgv(2);
 
-        if (argv.path === undefined) { console.error("Parameter --path is missing."); }
-        else {
-            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
-            .then(async subscriptionId => {
-                checkSubscriptionId(subscriptionId);
-                await rbac_apply.handle(TokenCredentialProvider.get(), subscriptionId!, argv.path);
-            })
-            .catch(console.error);
-        }
+        const path = checkParameter('path', argv.path, undefined);
+
+        new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+        .then(async subscriptionId => {
+            checkSubscriptionId(subscriptionId);
+            await rbac_apply.handle(TokenCredentialProvider.get(), subscriptionId!, path);
+        });
     }
     else {
         console.error(`${args[0]?.toLowerCase()} ${args[1]?.toLowerCase()} - Unknown command`);
@@ -71,31 +88,31 @@ if (args[0]?.toLowerCase() === "rbac") {
 else if (args[0]?.toLowerCase() === "devops") {
     if (args[1]?.toLowerCase() === "permissions") {
         if (args[2]?.toLowerCase() === "export") {
-            var argv = require('minimist')(process.argv.slice(3));
+            var argv = getArgv(3);
 
-                 if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
-            else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
-            else {
-                devops_permissions_export.handle(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
-            }
+            const tenantId     = checkDevOpsTenantId    (argv.tenantId    );
+            const organization = checkDevOpsOrganization(argv.organization);
+            const project      = checkDevOpsProject     (argv.project     );
+
+            devops_permissions_export.handle(tenantId, organization, project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
         }
         else if (args[2]?.toLowerCase() === "show") {
-            var argv = require('minimist')(process.argv.slice(3));
+            var argv = getArgv(3);
 
-                 if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
-            else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
-            else {
-                devops_permissions_show.handle(argv.organization, argv.project, argv.principalName, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
-            }
+            const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
+            const organization  = checkDevOpsOrganization (argv.organization );
+            const principalName = checkDevOpsPrincipalName(argv.principalName);
+            
+            devops_permissions_show.handle(tenantId, organization, argv.project, principalName, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
         }
         else if (args[2]?.toLowerCase() === "tokens") {
-            var argv = require('minimist')(process.argv.slice(3));
+            var argv = getArgv(3);
 
-                 if (argv.organization === undefined) { console.error("Parameter --organization is missing."); }
-            else if (argv.project      === undefined) { console.error("Parameter --project is missing."     ); }
-            else {
-                devops_permissions_token.classificationNodes(argv.organization, argv.project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
-            }
+            const tenantId     = checkDevOpsTenantId    (argv.tenantId    );
+            const organization = checkDevOpsOrganization(argv.organization);
+            const project      = checkDevOpsProject     (argv.project     );
+
+            devops_permissions_token.all(tenantId, organization, project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
         }
         else {
             console.error(`${args[0]} ${args[1]} ${args[2]} - unknown command`.toLowerCase());
@@ -104,31 +121,31 @@ else if (args[0]?.toLowerCase() === "devops") {
     else if (args[1]?.toLowerCase() === "identity") {
         if (args[2]?.toLowerCase() === "show") {
             if (args[3]?.toLowerCase() === "user") {
-                var argv = require('minimist')(process.argv.slice(4));
+                var argv = getArgv(4);
 
-                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
-                else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
-                else {
-                    devops_identity_show.resolve(argv.organization, argv.principalName, ['User']);
-                }
+                const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
+                const organization  = checkDevOpsOrganization (argv.organization );
+                const principalName = checkDevOpsPrincipalName(argv.principalName);
+
+                devops_identity_show.resolve(tenantId, organization, principalName, ['User']);
             }
             else if (args[3]?.toLowerCase() === "group") {
-                var argv = require('minimist')(process.argv.slice(4));
+                var argv = getArgv(4);
 
-                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
-                else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
-                else {
-                    devops_identity_show.resolve(argv.organization, argv.principalName, ['Group']);
-                }
+                const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
+                const organization  = checkDevOpsOrganization (argv.organization );
+                const principalName = checkDevOpsPrincipalName(argv.principalName);
+
+                devops_identity_show.resolve(tenantId, organization, principalName, ['Group']);
             }
             else{
-                var argv = require('minimist')(process.argv.slice(3));
+                var argv = getArgv(3);
 
-                     if (argv.organization  === undefined) { console.error("Parameter --organization is missing." ); }
-                else if (argv.principalName === undefined) { console.error("Parameter --principalName is missing."); }
-                else {
-                    devops_identity_show.resolve(argv.organization, argv.principalName, ['User', 'Group']);
-                }
+                const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
+                const organization  = checkDevOpsOrganization (argv.organization );
+                const principalName = checkDevOpsPrincipalName(argv.principalName);
+
+                devops_identity_show.resolve(tenantId, organization, principalName, ['User', 'Group']);
             }
         }
         else {
@@ -141,8 +158,4 @@ else if (args[0]?.toLowerCase() === "devops") {
 }
 else {
     console.error("unknown command");
-}
-
-const checkSubscriptionId = (subscriptionId : string | undefined) => {
-    if (subscriptionId === undefined || subscriptionId === '') { throw new Error("Parameter --subscription is missing."); }
 }
