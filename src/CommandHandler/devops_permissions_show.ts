@@ -22,18 +22,23 @@ export class devops_permissions_show {
 
         const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, project, subjectDescriptor);
 
-        const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf);
+        const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf)
+                                 .filter(p => `${p.container.principalName}`.indexOf('Project Valid Users') < 0);
 
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
-        const title = `${organization                                       }-`
-                    + `${project ===undefined ? '': `${project}-`           }`
+        const title = `${organization                                 }-`
+                    + `${project ===undefined ? '': `${project}-`     }`
                     + `${graphSubjectMemberOf.graphSubject.subjectKind}-`
-                    + `${principalName.replaceAll('\\','_')                 }`;
+                    + `${principalName.replaceAll('\\','_')
+                                      .replaceAll('[' ,'_')
+                                      .replaceAll(']' ,'_')
+                                      .replaceAll(' ' ,'_')
+                                      .replaceAll('__','_') }`;
 
         await Promise.all([
-            writeFile(`${path}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)      )),
-            writeFile(`${path}-${title}.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper),title)),
+            writeFile(`${path}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)       )),
+            writeFile(`${path}-${title}.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper), title)),
         ]);
 
         console.log({

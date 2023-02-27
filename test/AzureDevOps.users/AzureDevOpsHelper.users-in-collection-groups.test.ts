@@ -66,7 +66,8 @@ test('AzureDevOpsHelper - users-in-collection-groups', async () => {
         ['Group', 'User'],
         groupsUsers.map(p => [
             Markdown.getLinkWithToolTip(p.group.principalName ?? ''                               , AzureDevOpsPortalLinks.Permissions(organization, undefined, p.group.descriptor), "open permissions"),
-            Markdown.getLinkWithToolTip(`${p.user.displayName}${lineBreak}${p.user.principalName}`, AzureDevOpsPortalLinks.Permissions(organization, undefined, p.user.descriptor ), "open permissions")
+            p.user.displayName + '<br/>' +
+            Markdown.getLinkWithToolTip(`${p.user.principalName}`, AzureDevOpsPortalLinks.Permissions(organization, undefined, p.user.descriptor ), "open permissions")
         ])
     );
  

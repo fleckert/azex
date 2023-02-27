@@ -48,7 +48,7 @@ test('devops_permissions_show-group-project', async () => {
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
-    const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
+    const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumberOfTests);
 
     for (const group of groups) {
         if (group.principalName === undefined) {
