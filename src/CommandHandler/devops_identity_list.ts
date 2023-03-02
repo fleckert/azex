@@ -6,13 +6,13 @@ import { Markdown          } from "../Converters/Markdown";
 import { writeFile         } from "fs/promises";
 
 export class devops_identity_list {
-    static async resolve(tenantId: string, organization: string, path: string): Promise<void> {
+    static async resolve(tenantId: string, organization: string, project: string | undefined, path: string): Promise<void> {
         const startDate = new Date();
 
         const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
-        const groupsPromise =  azureDevOpsHelper.graphGroupsList(organization);
-        const usersPromise  =  azureDevOpsHelper.graphUsersList (organization);
+        const groupsPromise = project === undefined ? azureDevOpsHelper.graphGroupsList(organization) : azureDevOpsHelper.graphGroupsListForProjectName(organization, project);
+        const usersPromise  = project === undefined ? azureDevOpsHelper.graphUsersList (organization) : azureDevOpsHelper.graphUsersListForProjectName (organization, project);
 
         const graphMembers = [...await groupsPromise, ...await usersPromise];
 
@@ -43,7 +43,7 @@ export class devops_identity_list {
             }
         });
 
-        const title = `${organization}-identities`;
+        const title = `${organization}${project === undefined ? '' : `-${project}`}-identities`.replaceAll(' ', '_');
         const valuesMapped = collectionMapped.map(p => [p.graphMemberPrincipalName, p.identityDescriptor]);
 
         await Promise.all([
@@ -56,6 +56,7 @@ export class devops_identity_list {
             parameters: {
                 tenantId,
                 organization,
+                project,
                 path
             },
             files: {

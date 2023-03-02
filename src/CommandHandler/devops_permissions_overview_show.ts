@@ -10,7 +10,7 @@ import { Helper } from "../Helper";
 import { Markdown } from "../Converters/Markdown";
 
 export class devops_permissions_overview_show {
-    static async handle(tenantId: string, organization: string, project:string, securityNamespaceName: string, token: string, path: string): Promise<void> {
+    static async handle(tenantId: string, organization: string, project: string, securityNamespaceName: string, token: string, path: string): Promise<void> {
         const startDate = new Date();
         const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
@@ -31,36 +31,32 @@ export class devops_permissions_overview_show {
         const accessControlLists = await azureDevOpsHelper.accessControlLists(parameters);
         
         const identityDescriptors = AzureDevOpsAccessControlListHelper.getIdentityDescriptors(accessControlLists);
-
-        const identities = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptors);
-
-        const subjectDescriptors = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
-        const graphSubjects = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
+        const identities          = await azureDevOpsHelper.identitiesByDescriptorExplicit(organization, identityDescriptors);
+        const subjectDescriptors  = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
+        const graphSubjects       = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
 
         const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, Helper.toArray(graphSubjects));
 
-        const titleMarkDown = Markdown.tableKeyValue('key', 'value', [
-            { key: 'organization'     , value: organization                  },
-            { key: 'project'          , value: project                       },
-            { key: 'securityNamespace', value: securityNamespace.name        },
-            { key: 'securityNamespace', value: securityNamespace.namespaceId },
-            { key: 'token id'         , value: securityToken.id              },
-            { key: 'token value'      , value: token                         }
+        const titleMarkDown = Markdown.tableKeyValue('scope', `${organization} / ${project}`, [
+            { key: 'namespace', value: `${securityNamespace.name} [${securityNamespace.namespaceId}]`},
+            { key: 'token'    , value: token},
         ]);
-
-         //`${organization} / ${project} / ${securityNamespace.name} ${securityNamespace.namespaceId} / ${securityToken.id} / ${token} Security Settings`;
 
         const markdown = this.toMarkDown(
             securityNamespace,
             titleMarkDown,
+            securityToken.id,
             accessControlListMapped
         );
 
-        const title = `${organization}`
+        const title = (`${organization}`
                     + `-${project}`
                     + `-${securityNamespace.name}`
-                    + `-${securityToken.id.replaceAll('\\','_')}`
-                    + `-permissions`;
+                    + `-${securityToken.id}`
+                    + `-permissions`)
+                    .replaceAll('\\','_')
+                    .replaceAll(' ' ,'_')
+                    .replaceAll('__','_');
 
         await Promise.all([
             writeFile(`${path}-${title}.md`, markdown)
@@ -84,6 +80,7 @@ export class devops_permissions_overview_show {
     private static toMarkDown(
         securityNamespace: AzureDevOpsSecurityNamespace,
         title            : string,
+        tableHeader      : string,
         collection       : Array<Mapping>
     ) {
         const allActions = securityNamespace.actions.map(p => p.displayName);
@@ -93,8 +90,8 @@ export class devops_permissions_overview_show {
         lines.push(``)
         lines.push(`<hr/>`)
         lines.push(``)
-        lines.push(`|  |${allActions.map(p => `${p}|`).join('')}`);
-        lines.push(`|:-|${allActions.map(p => ':-: |').join('')}`);
+        lines.push(`|${tableHeader}|${allActions.map(p => `${p}|`).join('')}`);
+        lines.push(`|:-            |${allActions.map(p => ':-: |').join('')}`);
  
         for (const acl of collection) {
             const line = Array<string | undefined>();

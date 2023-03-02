@@ -27,19 +27,13 @@ export class AzureDevOpsPermissionsResolver {
 
 
     async resolveGraphSubjectMemberOf(
-        tenantId         : string,
-        organization     : string,
-        projectName      : string | undefined,
-        subjectDescriptor: string
+        tenantId    : string,
+        organization: string,
+        projectName : string | undefined,
+        graphSubject: GraphSubject
     ): Promise<GraphSubjectMemberOf> {
 
         const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-
-        const graphSubject = await azureDevOpsHelper.graphSubjectLookup(organization, subjectDescriptor);
-
-        if (graphSubject === undefined) {
-            throw new Error(`Failed to resolve graphSubject ${JSON.stringify({ organization, subjectDescriptor })}.`);
-        }
 
         const groups = projectName !== undefined
                      ? await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName)

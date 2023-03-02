@@ -23,24 +23,28 @@ test('AzureDevOpsPermissionsResolver-resolveGraphSubjectMemberOf', async () => {
     await writeFile(`${pathOut}-users.json`, JSON.stringify(users, null, 2));
 
     for (const graphSubject of users.slice(0, maxNumberOfTests)) {
-        if (graphSubject.descriptor === undefined) { throw new Error("graphSubject.descriptor === undefined"); }
-
-        const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, projectName, graphSubject.descriptor);
+         const graphSubjectMemberOf = await azureDevOpsPermissionsResolver.resolveGraphSubjectMemberOf(tenantId, organization, projectName, graphSubject);
 
         const groupMembersFlat = azureDevOpsPermissionsResolver.flattenGraphSubjectMemberOf(graphSubjectMemberOf);
 
         const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
         
-        const title = `${organization                                 }-`
-                    + `${projectName                                  }-`
-                    + `${graphSubjectMemberOf.graphSubject.subjectKind}-`
-                    + `${graphSubjectMemberOf.graphSubject.displayName}-`
-                    + `${graphSubjectMemberOf.graphSubject.originId   }`;
+        const title = (`${organization                                 }-`
+                     + `${projectName                                  }-`
+                     + `${graphSubjectMemberOf.graphSubject.subjectKind}-`
+                     + `${graphSubjectMemberOf.graphSubject.displayName}-`
+                     + `${graphSubjectMemberOf.graphSubject.originId   }`
+                      ).replaceAll(' ', '_');
 
         await Promise.all([
             writeFile(`${pathOut}-${title}.md`  , Markdown.getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper)      )),
             writeFile(`${pathOut}-${title}.html`, Html    .getMermaidDiagramForHierarchy(groupMembersFlat.map(mapper),title)),
         ]);
+
+        console.log({files:[
+            `${pathOut}-${title}.md`,
+            `${pathOut}-${title}.html`
+        ]})
     }
 }, 100000);

@@ -22,7 +22,7 @@ test('devops_permissions_overview_show', async () => {
 
         await devops_permissions_overview_show.handle(tenantId, organization, projectName, securityNamespaceName, token, pathOut);
     }
-}, 500000);
+}, 1000000);
 
 test('devops_permissions_overview_show_classificationNodes', async () => {
     const config          = await TestConfigurationProvider.get();
@@ -34,5 +34,11 @@ test('devops_permissions_overview_show_classificationNodes', async () => {
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const classificationNodes = await AzureDevOpsSecurityTokens.classificationNodes(azureDevOpsHelper, organization, projectName);
 
-    await devops_permissions_overview_show.handle(tenantId, organization, projectName, classificationNodes[0].securityNamespace!.name!, classificationNodes[0].token, pathOut);
-}, 100000);
+    for(const classificationNode of classificationNodes){
+        if( classificationNode.securityNamespace.name === undefined){
+            throw new Error(JSON.stringify({organization, projectName, classificationNode, error:'classificationNode.securityNamespace.name === undefined'}))
+        }
+
+        await devops_permissions_overview_show.handle(tenantId, organization, projectName, classificationNode.securityNamespace.name, classificationNode.token, pathOut);
+    }
+}, 1000000);

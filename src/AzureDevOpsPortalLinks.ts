@@ -14,4 +14,7 @@ export class AzureDevOpsPortalLinks {
             + `_settings/permissions`
             + (subjectDescriptor === undefined ? '' : `?subjectDescriptor=${subjectDescriptor}`);
     }
+
+    static ProjectConfigurationAreas     (organization: string, project: string) { return `https://dev.azure.com/${organization}/${project}/_settings/work?_a=areas`      }
+    static ProjectConfigurationIterations(organization: string, project: string) { return `https://dev.azure.com/${organization}/${project}/_settings/work?_a=iterations` }
 }
