@@ -180,15 +180,19 @@ export class Html {
         lines.push('</head>');
         lines.push('');
         lines.push('<body>');
-        lines.push('    <div class="mermaid">');
-        lines.push('        graph BT;');
-        lines.push('        ');
-        
-        for (const item of items) {
-            lines.push(`            ${itemToMarkdown(item.member)} --> |member of| ${itemToMarkdown(item.container)}`);
+        if (items.length === 0) {
+            lines.push("nothing to display");
+        } else {
+            lines.push('    <div class="mermaid">');
+            lines.push('        graph BT;');
+            lines.push('        ');
+
+            for (const item of items) {
+                lines.push(`            ${itemToMarkdown(item.member)} --> |member of| ${itemToMarkdown(item.container)}`);
+            }
+            lines.push('    </div>');
+            lines.push('</body>');
         }
-        lines.push('    </div>');
-        lines.push('</body>');
         lines.push('</html>');
 
         return lines.join('\n');

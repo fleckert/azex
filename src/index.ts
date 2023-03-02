@@ -1,9 +1,11 @@
 #! /usr/bin/env node
 
-import { devops_identity_show } from "./CommandHandler/devops_identity_show";
+import { devops_identity_list } from "./CommandHandler/devops_identity_list";
+import { devops_identity_show      } from "./CommandHandler/devops_identity_show";
+import { devops_permissions_copy   } from "./CommandHandler/devops_permissions_copy";
 import { devops_permissions_export } from "./CommandHandler/devops_permissions_export";
-import { devops_permissions_show } from "./CommandHandler/devops_permissions_show";
-import { devops_permissions_token } from "./CommandHandler/devops_permissions_token";
+import { devops_permissions_show   } from "./CommandHandler/devops_permissions_show";
+import { devops_permissions_token  } from "./CommandHandler/devops_permissions_token";
 import { rbac_apply                } from "./CommandHandler/rbac_apply";
 import { rbac_export               } from "./CommandHandler/rbac_export";
 import { rbac_extend               } from "./CommandHandler/rbac_extend";
@@ -22,20 +24,22 @@ const checkDevOpsOrganization  = (value: string | undefined): string => checkPar
 const checkDevOpsProject       = (value: string | undefined): string => checkParameter('project'      , value, 'AZURE_DEVOPS_EXT_PROJECT'     );
 const checkDevOpsPrincipalName = (value: string | undefined): string => checkParameter('principalName', value, undefined                      );
 
-const checkParameter = (parameterName: string, parameterValue: string | undefined, environmentVariableName: string | undefined) :string => {
-    if (`${parameterValue}`.trim() !== '') {
-        return `${parameterValue}`.trim();
+const checkParameter = (parameterName: string, parameterValue: string | undefined, environmentVariableName: string | undefined): string => {
+    if (parameterValue !== undefined && parameterValue.trim() !== '') {
+        return parameterValue.trim();
     }
-   
+
     if (environmentVariableName === undefined) {
         throw new Error(`Parameter --${parameterName} is missing.`);
     }
 
-    if (`${process.env[environmentVariableName]}`.trim() !== '') {
-        return `${process.env[environmentVariableName]}`.trim();
+    const environmentVariableValue = `${process.env[environmentVariableName]}`.trim();
+
+    if (environmentVariableValue !== '') {
+        return environmentVariableValue;
     }
-     
-     throw new Error(`Parameter --${parameterName} is missing and environmentVariable '${environmentVariableName}' is missing.`);
+
+    throw new Error(`Parameter --${parameterName} is missing and environmentVariable '${environmentVariableName}' is missing.`);
 }
 
 if (args[0]?.toLowerCase() === "rbac") {
@@ -87,7 +91,17 @@ if (args[0]?.toLowerCase() === "rbac") {
 }
 else if (args[0]?.toLowerCase() === "devops") {
     if (args[1]?.toLowerCase() === "permissions") {
-        if (args[2]?.toLowerCase() === "export") {
+        if (args[2]?.toLowerCase() === "copy") {
+            var argv = getArgv(3);
+
+            const tenantId            = checkDevOpsTenantId    (argv.tenantId                   );
+            const organization        = checkDevOpsOrganization(argv.organization               );
+            const principalNameSource = checkParameter         ('source', argv.source, undefined);
+            const principalNameTarget = checkParameter         ('target', argv.target, undefined);
+
+            devops_permissions_copy.handle(tenantId, organization, principalNameSource , principalNameTarget);
+        }
+        else if (args[2]?.toLowerCase() === "export") {
             var argv = getArgv(3);
 
             const tenantId     = checkDevOpsTenantId    (argv.tenantId    );
@@ -119,34 +133,23 @@ else if (args[0]?.toLowerCase() === "devops") {
         }
     }
     else if (args[1]?.toLowerCase() === "identity") {
-        if (args[2]?.toLowerCase() === "show") {
-            if (args[3]?.toLowerCase() === "user") {
-                var argv = getArgv(4);
+        if (args[2]?.toLowerCase() === "list") {
+            var argv = getArgv(3);
 
-                const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
-                const organization  = checkDevOpsOrganization (argv.organization );
-                const principalName = checkDevOpsPrincipalName(argv.principalName);
+            const tenantId     = checkDevOpsTenantId     (argv.tenantId   );
+            const organization = checkDevOpsOrganization(argv.organization);
+            const project      = argv.project ?? (process.env['AZURE_DEVOPS_EXT_PROJECT'] === undefined ? undefined : `${process.env['AZURE_DEVOPS_EXT_PROJECT']}`.trim());
 
-                devops_identity_show.resolve(tenantId, organization, principalName, ['User']);
-            }
-            else if (args[3]?.toLowerCase() === "group") {
-                var argv = getArgv(4);
+            devops_identity_list.resolve(tenantId, organization, project , argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+        }
+        else if (args[2]?.toLowerCase() === "show") {
+            var argv = getArgv(3);
 
-                const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
-                const organization  = checkDevOpsOrganization (argv.organization );
-                const principalName = checkDevOpsPrincipalName(argv.principalName);
+            const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
+            const organization  = checkDevOpsOrganization (argv.organization );
+            const principalName = checkDevOpsPrincipalName(argv.principalName);
 
-                devops_identity_show.resolve(tenantId, organization, principalName, ['Group']);
-            }
-            else{
-                var argv = getArgv(3);
-
-                const tenantId      = checkDevOpsTenantId     (argv.tenantId     );
-                const organization  = checkDevOpsOrganization (argv.organization );
-                const principalName = checkDevOpsPrincipalName(argv.principalName);
-
-                devops_identity_show.resolve(tenantId, organization, principalName, ['User', 'Group']);
-            }
+            devops_identity_show.resolve(tenantId, organization, principalName, ['User', 'Group']);
         }
         else {
             console.error(`${args[0]} ${args[1]} ${args[2]} - unknown command`.toLowerCase());

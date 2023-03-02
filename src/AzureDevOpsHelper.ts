@@ -50,6 +50,12 @@ export class AzureDevOpsHelper {
         return this.getItemsWithContinuation(url, count);
     }
 
+    graphUsersListForScopeDescriptor(organization: string, scopeDescriptor: string, count?: number): Promise<GraphUser[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/list?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/users?&scopeDescriptor=${scopeDescriptor}&api-version=7.1-preview.1`;
+        return this.getItemsWithContinuation(url, count);
+    }
+
     graphGroupsListForScopeDescriptor(organization: string, scopeDescriptor: string, count?: number): Promise<GraphGroup[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/groups/list?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/groups?scopeDescriptor=${scopeDescriptor}&api-version=7.1-preview.1`;
@@ -62,18 +68,46 @@ export class AzureDevOpsHelper {
         return this.getValue(url);
     }
 
+    async graphDescriptorForProjectName(organization: string, projectName: string): Promise<string> {
+        const project = await this.project(organization, projectName);
+
+        if (project?.id === undefined) {
+            throw new Error(`${JSON.stringify({ organization, projectName, project, error:'Failed to resolve project.id.' })}`);
+        }
+
+        return await this.graphDescriptorForProjectId(organization, project.id);
+    }
+
     private graphMembershipsListArgs(parameters: { organization: string, subjectDescriptor: string, direction: 'up' | 'down' }) : Promise<GraphMembership[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/list?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${parameters.organization}/_apis/graph/Memberships/${parameters.subjectDescriptor}?direction=${parameters.direction}&api-version=7.1-preview.1`;
         return this.getValue(url);
     }
 
-    async graphMembershipsLists(parameters : Array<{ organization: string, subjectDescriptor: string, direction: 'up' | 'down'}>)
-    {
-        return this.batchCalls(
-            parameters,
-            p => this.graphMembershipsListArgs(p)
-        );
+    graphMembershipAdd(parameters: { organization: string, subjectDescriptor: string, containerDescriptor: string }): Promise<GraphMembership> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/add?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${parameters.organization}/_apis/graph/memberships/${parameters.subjectDescriptor}/${parameters.containerDescriptor}?api-version=7.1-preview.1`
+
+        return this.put(url);
+    }
+
+    graphMembershipsAdd(parameters: Array<{ organization: string, subjectDescriptor: string, containerDescriptor: string }>) {
+        return this.batchCalls(parameters, p => this.graphMembershipAdd(p));
+    }
+
+    graphMembershipRemove(parameters: { organization: string, subjectDescriptor: string, containerDescriptor: string }): Promise<void> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/remove-membership?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${parameters.organization}/_apis/graph/memberships/${parameters.subjectDescriptor}/${parameters.containerDescriptor}?api-version=7.1-preview.1`
+
+        return this.delete(url);
+    }
+
+    graphMembershipsRemove(parameters: Array<{ organization: string, subjectDescriptor: string, containerDescriptor: string }>) {
+        return this.batchCalls(parameters, p => this.graphMembershipRemove(p));
+    }
+
+    graphMembershipsLists(parameters: Array<{ organization: string, subjectDescriptor: string, direction: 'up' | 'down' }>) {
+        return this.batchCalls(parameters, p => this.graphMembershipsListArgs(p));
     }
 
     userEntitlements(organization: string, descriptor: string): Promise<any | undefined> {
@@ -283,6 +317,18 @@ export class AzureDevOpsHelper {
         return this.getItemsWithContinuationAndBreak(url, predicate);
     }
 
+    async graphUsersListForProjectName(organization: string, projectName: string, count?: number): Promise<GraphUser[]> {
+        const project = await this.project(organization, projectName);
+
+        if (project?.id === undefined) {
+            throw new Error(`${JSON.stringify({ organization, projectName, project, error:'Failed to resolve project.id.' })}`);
+        }
+
+        const scopeDescriptor = await this.graphDescriptorForProjectId(organization, project.id);
+
+        return await this.graphUsersListForScopeDescriptor(organization, scopeDescriptor, count);
+    }
+
     async graphGroupsListForProjectName(organization: string, projectName: string, count?: number): Promise<GraphGroup[]> {
         const project = await this.project(organization, projectName);
 
@@ -314,7 +360,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, data, status: error.response.status, statusText: error.response.statusText }));
+            throw new Error(JSON.stringify({ url, data, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
         }
     }
 
@@ -351,7 +397,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, data, status: error.response.status, statusText: error.response.statusText }));
+            throw new Error(JSON.stringify({ url, data, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
         }
     }
 
@@ -365,6 +411,34 @@ export class AzureDevOpsHelper {
         return headers;
     }
 
+    private async put<T>(url: string): Promise<T> {
+        try {
+            const response = await axios.put(url, null, { headers: this.getHeaders() });
+
+            if (response.status === 201) {
+                return response.data;
+            }
+
+            throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+        }
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+        }
+    }
+
+    private async delete(url: string): Promise<void> {
+        try {
+            const response = await axios.delete(url, { headers: this.getHeaders() });
+
+            if (response.status !== 200) {
+                throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+            }
+        }
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+        }
+    }
+
     private async get<T>(url: string): Promise<T> {
         try {
             const response = await axios.get(url, { headers: this.getHeaders() });
@@ -376,7 +450,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
         }
     }
 
@@ -391,7 +465,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-             throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
         }
     }
 
@@ -425,7 +499,7 @@ export class AzureDevOpsHelper {
                 }
             }
             catch (error: any) {
-                throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
             }
         }
 
@@ -463,7 +537,7 @@ export class AzureDevOpsHelper {
                 }
             }
             catch (error: any) {
-                throw new Error(JSON.stringify({ url, status: error.response.status, statusText: error.response.statusText }));
+                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
             }
         }
     }

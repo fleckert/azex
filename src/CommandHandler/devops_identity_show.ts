@@ -6,28 +6,24 @@ export class devops_identity_show {
 
         const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
-        const result = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, subjectKind, principalName);
-        if (result?.descriptor === undefined) {
-            throw new Error(JSON.stringify({ organization, principalName, error: 'Failed to resolve subject.' }));
+        const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, subjectKind, principalName);
+        if (graphSubject?.descriptor === undefined) {
+            throw new Error(JSON.stringify({ organization, principalName, graphSubject, error: 'Failed to resolve graphSubject.descriptor.' }));
         }
 
-        const subjectDescriptor = result.descriptor;
-
-        const identity = await azureDevOpsHelper.identityBySubjectDescriptor(organization, subjectDescriptor);
+        const identity = await azureDevOpsHelper.identityBySubjectDescriptor(organization, graphSubject.descriptor);
         if (identity?.descriptor === undefined) {
-            throw new Error(JSON.stringify({ organization, principalName, subjectDescriptor, error: 'Failed to resolve identity.' }));
+            throw new Error(JSON.stringify({ organization, principalName,  graphSubject, identity, error: 'Failed to resolve identity.descriptor.' }));
         }
 
         console.log({
             parameters: {
                 tenantId,
                 organization,
-                principalName,
-                subjectKind
+                principalName
             },
             identity: identity.descriptor,
             durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
         });
-
     }
 }
