@@ -1,17 +1,18 @@
 
 import axios from "axios";
-import { AzureDevOpsAccessControlList                                  } from "./models/AzureDevOpsAccessControlEntry";
-import { AzureDevOpsSecurityNamespace                                  } from "./models/AzureDevOpsSecurityNamespace";
-import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration } from "azure-devops-node-api/interfaces/WorkInterfaces";
-import { BuildDefinitionReference                                      } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import { GitRepository                                                 } from "azure-devops-node-api/interfaces/GitInterfaces";
-import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
-import { TeamProjectReference, WebApiTeam                              } from "azure-devops-node-api/interfaces/CoreInterfaces";
-import { ReleaseDefinition                                             } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
-import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
-import { AzureDevOpsPat } from "./AzureDevOpsPat";
-import { AzureDevOpsSecurityNamespaceAction } from "./models/AzureDevOpsSecurityNamespaceAction";
+import { AzureDevOpsAccessControlList                                      } from "./models/AzureDevOpsAccessControlEntry";
+import { AzureDevOpsPat                                                    } from "./AzureDevOpsPat";
+import { AzureDevOpsSecurityNamespace                                      } from "./models/AzureDevOpsSecurityNamespace";
+import { AzureDevOpsSecurityNamespaceAction                                } from "./models/AzureDevOpsSecurityNamespaceAction";
+import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration     } from "azure-devops-node-api/interfaces/WorkInterfaces";
+import { BuildDefinitionReference                                          } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { GitRepository                                                     } from "azure-devops-node-api/interfaces/GitInterfaces";
+import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Identity                                                          } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
+import { ReleaseDefinition                                                 } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
+import { TeamProjectReference, WebApiTeam                                  } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { WikiV2                                                            } from "azure-devops-node-api/interfaces/WikiInterfaces";
+import { WorkItemClassificationNode                                        } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 
 export class AzureDevOpsHelper {
 
@@ -25,6 +26,9 @@ export class AzureDevOpsHelper {
     ) { }
 
     private readonly continuationTokenHeader = "x-ms-continuationtoken";
+
+    static isGraphUser (graphMember: GraphMember) { return `${graphMember.subjectKind}`.toLowerCase() === 'user' ; }
+    static isGraphGroup(graphMember: GraphMember) { return `${graphMember.subjectKind}`.toLowerCase() === 'group'; }
 
     buildDefinitions(organization: string, project: string, count?: number): Promise<BuildDefinitionReference[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/list?view=azure-devops-rest-7.1
@@ -99,7 +103,7 @@ export class AzureDevOpsHelper {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/remove-membership?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${parameters.organization}/_apis/graph/memberships/${parameters.subjectDescriptor}/${parameters.containerDescriptor}?api-version=7.1-preview.1`
 
-        return this.delete(url);
+        return this.delete(url, 200);
     }
 
     graphMembershipsRemove(parameters: Array<{ organization: string, subjectDescriptor: string, containerDescriptor: string }>) {
@@ -127,6 +131,18 @@ export class AzureDevOpsHelper {
         const teams = await this.teams(organization);
 
         return teams.find(p => p.name?.toLowerCase() === teamName.toLowerCase() && p.projectName?.toLowerCase() === projectName.toLowerCase());
+    }
+
+    wikis(organization: string, project?: string): Promise<WikiV2[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/teams/get-all-teams?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project === undefined ? '' : `${project}/`}_apis/wiki/wikis?api-version=7.1-preview.2`;
+        return this.getValue(url);
+    }
+
+    wikiDelete(organization: string, project: string, wikiIdentifier: string): Promise<void> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/wiki/wikis/delete?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/wiki/wikis/${wikiIdentifier}?api-version=7.1-preview.2`;
+        return this.delete(url, 200);
     }
 
     classificationNodes(parameters: { organization: string, project: string, depth?: number, ids?: number[], errorPolicy?: 'omit' | 'fail' }): Promise<WorkItemClassificationNode[]> {
@@ -232,6 +248,12 @@ export class AzureDevOpsHelper {
         return this.getValue(`https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`)
     }
 
+    gitRepositoryDelete(organization: string, project: string, repositoryId: string): Promise<void> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/delete?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}?api-version=7.1-preview.1`;
+        return this.delete(url, 204);
+    }
+
     async identityByDescriptor(organization: string, identityDescriptor: string): Promise<Identity | undefined> {
         const identities = await this.identitiesByDescriptors(organization, [identityDescriptor]);
         if (identities.length !== 1) { return undefined; }
@@ -306,6 +328,13 @@ export class AzureDevOpsHelper {
 
     groupByPrincipalName(organization: string, principalName: string): Promise<GraphSubject | undefined> {
         return this.graphSubjectQueryByPrincipalName(organization, ['Group'], principalName);
+    }
+
+    projects(organization: string, count?: number): Promise<TeamProjectReference[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/projects/list?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`;
+
+        return this.getItemsWithContinuation(url, count);
     }
 
     project(organization: string, projectNameOrId: string): Promise<TeamProjectReference | undefined> {
@@ -401,6 +430,10 @@ export class AzureDevOpsHelper {
         }
     }
 
+    async graphMemberByPrincipalName(organization: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group'], principalName: string): Promise<GraphMember | undefined> {
+         return this.graphSubjectQueryByPrincipalName(organization, subjectKind, principalName);
+    }
+
     private getHeaders() {
         const headers = {
             'Authorization': `Basic ${Buffer.from(`:${this.token}`, 'ascii').toString('base64')}`,
@@ -426,11 +459,11 @@ export class AzureDevOpsHelper {
         }
     }
 
-    private async delete(url: string): Promise<void> {
+    private async delete(url: string, statusCodeExpected : number): Promise<void> {
         try {
             const response = await axios.delete(url, { headers: this.getHeaders() });
 
-            if (response.status !== 200) {
+            if (response.status !== statusCodeExpected) {
                 throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
             }
         }

@@ -14,7 +14,7 @@ export class rbac_extend {
 
         await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(rbacDefinitionsExtended.items, null, 2));
 
-        console.log({
+        console.log(JSON.stringify({
             parameters: {
                 subscriptionId,
                 pathIn,
@@ -25,6 +25,6 @@ export class rbac_extend {
                 json: `${pathOut}-${subscriptionId}.ext.json`
             },
             failedRequests: rbacDefinitionsExtended.failedRequests,
-        });
+        }, null, 2));
     }
 }

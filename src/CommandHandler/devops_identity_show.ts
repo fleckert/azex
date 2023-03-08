@@ -16,14 +16,13 @@ export class devops_identity_show {
             throw new Error(JSON.stringify({ organization, principalName,  graphSubject, identity, error: 'Failed to resolve identity.descriptor.' }));
         }
 
-        console.log({
-            parameters: {
-                tenantId,
-                organization,
-                principalName
-            },
-            identity: identity.descriptor,
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
-        });
+        console.log(JSON.stringify({
+            tenantId,
+            organization,
+            principalName,
+            subjectDescriptor : graphSubject.descriptor,
+            identityDescriptor: identity.descriptor,
+            durationInSeconds : (new Date().getTime() - startDate.getTime()) / 1000
+        }, null, 2));
     }
 }

@@ -34,7 +34,7 @@ export class devops_permissions_copy {
         await azureDevOpsHelper.graphMembershipsAdd   (containerDescriptorsAdd   .map(containerDescriptor => { return { organization, subjectDescriptor: graphSubjectTarget.descriptor!, containerDescriptor } }));
         await azureDevOpsHelper.graphMembershipsRemove(containerDescriptorsRemove.map(containerDescriptor => { return { organization, subjectDescriptor: graphSubjectTarget.descriptor!, containerDescriptor } }));
 
-        console.log({
+        console.log(JSON.stringify({
             parameters: {
                 organization,
                 principalNameSource,
@@ -47,6 +47,6 @@ export class devops_permissions_copy {
             },
             groupsAdded  : groupsAdded  .map(p => { return { group: p.principalName, permissions: AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor) } }),
             groupsRemoved: groupsRemoved.map(p => { return { group: p.principalName, permissions: AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor) } }),
-        });
+        }, null, 2));
     }
 }

@@ -20,7 +20,7 @@ export class devops_permissions_token {
             writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'id', 'token'], valuesMapped))
         ]);
 
-        console.log({
+        console.log(JSON.stringify({
             parameters: {
                 organization,
                 project,
@@ -32,7 +32,7 @@ export class devops_permissions_token {
                 html    : `${path}-${title}.html`
             },
             durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
-        });
+        }, null, 2));
     }
 
     static async classificationNodes(tenantId: string, organization: string, project: string, path: string): Promise<void> {

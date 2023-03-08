@@ -2,9 +2,20 @@
 
 # devops identity show
 
-`azex devops identity show --tenantId ... --organization ... --principalName ...`
-
 resolves the identity for a principalName
+
+```
+azex devops identity show --tenantId ... --organization ... --principalName ...
+```
+```JSON
+{
+  "tenantId"          : "...",
+  "organization"      : "...",
+  "principalName"     : "...",
+  "subjectDescriptor" : "...",
+  "identityDescriptor": "..."
+}
+```
 
 
 

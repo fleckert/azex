@@ -112,7 +112,7 @@ export class AzureDevOpsPermissionsResolver {
                 throw new Error('group.descriptor === undefined');
             }
 
-            const memberships = membershipsAll.find(p=>p.parameters.subjectDescriptor === group.descriptor) ;
+            const memberships = membershipsAll.find(p => p.parameters.subjectDescriptor === group.descriptor);
 
             groupsWithGraphMemberShips.push({
                 group,

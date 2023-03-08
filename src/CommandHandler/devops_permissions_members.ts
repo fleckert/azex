@@ -6,7 +6,7 @@ import { Markdown                       } from "../Converters/Markdown";
 import { writeFile                      } from "fs/promises";
 import { AzureDevOpsPortalLinks         } from "../AzureDevOpsPortalLinks";
 
-export class devops_permissions_show {
+export class devops_permissions_members {
     static async handle(tenantId: string, organization: string, project: string | undefined, principalName: string, path: string): Promise<void> {
         const startDate = new Date();
 
@@ -26,15 +26,7 @@ export class devops_permissions_show {
                                 .filter(p => `${p.container.principalName}`.indexOf('Project Collection Valid Users') < 0)
                                  ;
 
-        const mapper = (item: { container: GraphMember, member: GraphMember }) => {
-            const linebreak = '<br/>';
-            return {
-                container: item.container.principalName,
-                member   : AzureDevOpsHelper.isGraphUser(item.member)
-                         ? `${item.member.displayName}${linebreak}${item.member.principalName}`
-                         : item.member.principalName
-            }
-        };
+        const mapper = (item: { container: GraphMember, member: GraphMember }) => { return { container: item.container.principalName, member: item.member.principalName } };
 
         const title = (`${organization                                 }-`
                      + `${project ===undefined ? '': `${project}-`     }`

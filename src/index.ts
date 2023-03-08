@@ -2,6 +2,7 @@
 
 import { devops_identity_list } from "./CommandHandler/devops_identity_list";
 import { devops_identity_show      } from "./CommandHandler/devops_identity_show";
+import { devops_memberships_show } from "./CommandHandler/devops_memberships_show";
 import { devops_permissions_copy   } from "./CommandHandler/devops_permissions_copy";
 import { devops_permissions_export } from "./CommandHandler/devops_permissions_export";
 import { devops_permissions_show   } from "./CommandHandler/devops_permissions_show";
@@ -127,6 +128,20 @@ else if (args[0]?.toLowerCase() === "devops") {
             const project      = checkDevOpsProject     (argv.project     );
 
             devops_permissions_token.all(tenantId, organization, project, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+        }
+        else {
+            console.error(`${args[0]} ${args[1]} ${args[2]} - unknown command`.toLowerCase());
+        }
+    }
+    else if (args[1]?.toLowerCase() === "memberships") {
+        if (args[2]?.toLowerCase() === "show") {
+            var argv = getArgv(3);
+
+            const tenantId      = checkDevOpsTenantId     (argv.tenantId                         );
+            const organization  = checkDevOpsOrganization (argv.organization                     );
+            const principalName = checkDevOpsPrincipalName(argv.principalName                    );
+
+            devops_memberships_show.handle(tenantId, organization, argv.projectName, principalName, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
         }
         else {
             console.error(`${args[0]} ${args[1]} ${args[2]} - unknown command`.toLowerCase());

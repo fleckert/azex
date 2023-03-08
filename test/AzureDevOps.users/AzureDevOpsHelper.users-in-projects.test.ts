@@ -1,7 +1,6 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
-import { AzureDevOpsWrapper        } from "../../src/AzureDevOpsWrapper";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
@@ -12,7 +11,6 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
 
     const config             = await TestConfigurationProvider.get();
     const organization       = config.azureDevOps.organization;
-    const baseUrl            = config.azureDevOps.baseUrl;
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;

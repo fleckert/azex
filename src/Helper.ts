@@ -46,4 +46,19 @@ export class Helper {
 
         return items;
     }
+
+    static getBatches<T>(values: T[], batchSize: number): Array<Array<T>> {
+        const batches = new Array<Array<T>>();
+        batches.push(new Array<T>());
+
+        for (let index = 0; index < values.length; index++) {
+            if (batches[batches.length - 1].length == batchSize) {
+                batches.push(new Array<T>());
+            }
+
+            batches[batches.length - 1].push(values[index]);
+        }
+
+        return batches;
+    }
 }

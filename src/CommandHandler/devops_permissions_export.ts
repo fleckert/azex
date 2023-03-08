@@ -110,7 +110,7 @@ export class devops_permissions_export {
             );
         }
 
-        console.log({
+        console.log(JSON.stringify({
             parameters: {
                 organization,
                 project,
@@ -135,6 +135,6 @@ export class devops_permissions_export {
                     noUser : `${path}-${organization}-${project}-${suffixNoUsers}-mermaid.html`
                 }
             }
-        });
+        }, null, 2));
     }
 }
