@@ -1,8 +1,9 @@
 import { AzureDevOpsHelper         } from "../AzureDevOpsHelper";
 import { AzureDevOpsSecurityTokens } from "../AzureDevOpsSecurityTokens";
-import { writeFile                 } from "fs/promises";
-import { Markdown                  } from "../Converters/Markdown";
+import { Helper                    } from "../Helper";
 import { Html                      } from "../Converters/Html";
+import { Markdown                  } from "../Converters/Markdown";
+import { writeFile                 } from "fs/promises";
 
 export class devops_permissions_token {
     static async all(tenantId: string, organization: string, project: string, path: string): Promise<void> {
@@ -20,7 +21,7 @@ export class devops_permissions_token {
             writeFile(`${path}-${title}.html`, Html    .table(title, ['namespace', 'namespaceId', 'id', 'token'], valuesMapped))
         ]);
 
-        console.log({
+        console.log(JSON.stringify({
             parameters: {
                 organization,
                 project,
@@ -31,8 +32,8 @@ export class devops_permissions_token {
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
-        });
+            durationInSeconds: Helper.durationInSeconds(startDate)
+        }, null, 2));
     }
 
     static async classificationNodes(tenantId: string, organization: string, project: string, path: string): Promise<void> {
@@ -61,7 +62,7 @@ export class devops_permissions_token {
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
+            durationInSeconds: Helper.durationInSeconds(startDate)
         });
     }
 
@@ -91,7 +92,7 @@ export class devops_permissions_token {
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
+            durationInSeconds: Helper.durationInSeconds(startDate)
         });
     }
 
@@ -120,7 +121,7 @@ export class devops_permissions_token {
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
+            durationInSeconds: Helper.durationInSeconds(startDate)
         });
     }
 
@@ -149,7 +150,7 @@ export class devops_permissions_token {
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
+            durationInSeconds: Helper.durationInSeconds(startDate)
         });
     }
 
@@ -179,7 +180,7 @@ export class devops_permissions_token {
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
+            durationInSeconds: Helper.durationInSeconds(startDate)
         });
     }
 
@@ -209,7 +210,7 @@ export class devops_permissions_token {
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
+            durationInSeconds: Helper.durationInSeconds(startDate)
         });
     }
 }

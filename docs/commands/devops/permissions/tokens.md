@@ -1,4 +1,4 @@
-[home](/readme.md) / [commands](/docs/commands/readme.md) / [devops](/docs/commands/devops/readme.md) / [permissions](/docs/commands/devops/permissions/readme.md) / show
+[home](/readme.md) / [commands](../../../readme.md) / [devops](../../readme.md) / [permissions](../readme.md) / show
 
 # devops permissions tokens
 

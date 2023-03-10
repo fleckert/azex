@@ -5,16 +5,17 @@ import { AzureDevOpsSecurityNamespaceAction, AzureDevOpsSecurityNamespaceActionH
 import { GraphSubject                                                                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Identity                                                                     } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { writeFile                                                                    } from "fs/promises";
-import { AzureDevOpsSecurityTokens } from "../AzureDevOpsSecurityTokens";
-import { Helper } from "../Helper";
-import { Markdown } from "../Converters/Markdown";
+import { AzureDevOpsSecurityTokens                                                    } from "../AzureDevOpsSecurityTokens";
+import { Helper                                                                       } from "../Helper";
+import { Markdown                                                                     } from "../Converters/Markdown";
+import { az_devops_security_permission                                                } from "../AzureCli/devops/security/permission";
 
 export class devops_permissions_overview_show {
     static async handle(tenantId: string, organization: string, project: string, securityNamespaceName: string, token: string, path: string): Promise<void> {
         const startDate = new Date();
         const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
         const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
+        //securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
 
         const securityTokens = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, project);
         const securityToken = securityTokens.find(p => p.token === token);
@@ -43,6 +44,8 @@ export class devops_permissions_overview_show {
         ]);
 
         const markdown = this.toMarkDown(
+            organization,
+            token,
             securityNamespace,
             titleMarkDown,
             securityToken.id,
@@ -54,15 +57,14 @@ export class devops_permissions_overview_show {
                     + `-${securityNamespace.name}`
                     + `-${securityToken.id}`
                     + `-permissions`)
-                    .replaceAll('\\','_')
-                    .replaceAll(' ' ,'_')
+                    .replaceAll(new RegExp('[^a-zA-Z0-9_]', 'g'),'_')
                     .replaceAll('__','_');
 
         await Promise.all([
             writeFile(`${path}-${title}.md`, markdown)
         ]);
 
-        console.log({
+        console.log(JSON.stringify({
             parameters: {
                 tenantId,
                 organization,
@@ -70,33 +72,44 @@ export class devops_permissions_overview_show {
                 token,
                 path
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
+            durationInSeconds: Helper.durationInSeconds(startDate),
             files: {
                 markdown: `${path}-${title}.md`
             }
-        });
+        }, null, 2));
     }
 
     private static toMarkDown(
+        organization:string,
+        token:string,
         securityNamespace: AzureDevOpsSecurityNamespace,
         title            : string,
         tableHeader      : string,
         collection       : Array<Mapping>
     ) {
-        const allActions = securityNamespace.actions.map(p => p.displayName);
+
+        const principal = (graphSubject: GraphSubject | undefined) :string=> {
+            if (graphSubject?.url !== undefined && graphSubject.url.trim() !== '') {
+                return `${Markdown.getLinkWithToolTip(graphSubject?.displayName ?? '??', graphSubject.url, 'show details')}`;
+            }
+            else {
+                return `${graphSubject?.displayName ?? '??'}`;
+            }
+        }
 
         const lines = new Array<string>();
+        lines.push(`## Scope`)
+        lines.push(``)
         lines.push(`${title}`)
         lines.push(``)
-        lines.push(`<hr/>`)
+        lines.push(`## Permissions`)
         lines.push(``)
-        lines.push(`|${tableHeader}|${allActions.map(p => `${p}|`).join('')}`);
-        lines.push(`|:-            |${allActions.map(p => ':-: |').join('')}`);
+        lines.push(`|${tableHeader}|${securityNamespace.actions.map(p => `${p.displayName}<br/>[bit ${p.bit}]|`).join('')}`);
+        lines.push(`|:-            |${securityNamespace.actions.map(p => ':-: |'                               ).join('')}`);
  
         for (const acl of collection) {
             const line = Array<string | undefined>();
-            line.push(`|${acl.graphSubject?.displayName ?? acl.identity?.descriptor ?? acl.identifier}`);
-
+            line.push(`|${principal(acl.graphSubject)}`);
             for (const action of securityNamespace.actions) {
                 const isAllow          = acl.allow         .mapping.find(p => p.bit === action.bit) !== undefined;
                 const isDeny           = acl.deny          .mapping.find(p => p.bit === action.bit) !== undefined;
@@ -114,6 +127,26 @@ export class devops_permissions_overview_show {
                 else                       { line.push(`|`     ); }
             }
             lines.push(line.join(''));
+        }
+
+        lines.push(``)
+        lines.push(`## Samples`)
+        lines.push(``)
+
+        lines.push(`|sample |  |`);
+        lines.push(`|:-     |:-|`);
+        lines.push(`|[show  ](${az_devops_security_permission.showDocs  ()})|\`${az_devops_security_permission.show  (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token                                             )}\`|`);
+        lines.push(`|[reset ](${az_devops_security_permission.resetDocs ()})|\`${az_devops_security_permission.reset (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[permission-bit]'                         )}\`|`);
+        lines.push(`|[update](${az_devops_security_permission.updateDocs()})|\`${az_devops_security_permission.update(organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[allow-bit]', '[deny-bit]', '[true/false]')}\`|`);
+
+        lines.push(``)
+        lines.push(`## Subjects`)
+        lines.push(``)
+
+        lines.push(`|${tableHeader}|subject |`);
+        lines.push(`|:-            |:-      |`); 
+        for (const acl of collection) {
+            lines.push(`|${principal(acl.graphSubject)}|${acl.graphSubject?.descriptor ?? '??'}|`)
         }
 
         return lines.join('\n');

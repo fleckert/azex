@@ -2,13 +2,17 @@
 
 ## Commands
 
-|Command|Sample|
+| [Commands](./readme.md) | |
 |-|-|
-|[devops permissions](/docs/commands/devops/permissions/readme.md) [export      ](/docs/commands/devops/permissions/export.md)|`azex devops permissions export --organization ... --project ... [--out ...]`|
-|[devops permissions](/docs/commands/devops/permissions/readme.md) [show        ](/docs/commands/devops/permissions/show.md  )|`azex devops permissions show --organization ... --principalName ... [--project ...] [--out ...]`|
-|[devops permissions tokens  ](/docs/commands/devops/permissions/tokens.md  )|`azex devops permissions tokens --organization ... --project ... [--out ...]`|
-|                                                                              ||
-|[rbac](/docs/commands/rbac/readme.md) [export                    ](/docs/commands/rbac/export.md              )|`azex rbac export [--subscription ...] [--out ...]`|
-|[rbac](/docs/commands/rbac/readme.md) [extend                    ](/docs/commands/rbac/extend.md              )|`azex rbac extend --path path-to-rbac-definitions.json [--subscription ...]  [--out ...]`|
-|[rbac](/docs/commands/rbac/readme.md) [verify                    ](/docs/commands/rbac/verify.md              )|`azex rbac verify --path path-to-rbac-definitions.json [--subscription ...] [--out ...]`|
-|[rbac](/docs/commands/rbac/readme.md) [apply                     ](/docs/commands/rbac/apply.md               )|`azex rbac apply --path path-to-rbac-definitions.json [--subscription ...]`|
+|[devops](./devops/readme.md) [identity   ](./devops/identity/readme.md   ) [list  ](./devops/identity/list.md     )|`azex devops identity    list    --tenantId ... --organization ... [--project ...] [--out ...]`                    |
+|[devops](./devops/readme.md) [identity   ](./devops/identity/readme.md   ) [show  ](./devops/identity/show.md     )|`azex devops identity    show    --tenantId ... --organization ... --principalName ...`                            |
+|||
+|[devops](./devops/readme.md) [memberships](./devops/memberships/readme.md) [copy  ](./devops/memberships/copy.md  )|`azex devops memberships copy    --tenantId ... --organization ... --source ... --target ...`                      |
+|[devops](./devops/readme.md) [memberships](./devops/memberships/readme.md) [show  ](./devops/memberships/show.md  )|`azex devops memberships show    --tenantId ... --organization ... --principalName ... [--project ...] [--out ...]`|
+|||
+|[devops](./devops/readme.md) [permissions](./devops/permissions/readme.md) [tokens](./devops/permissions/tokens.md)|`azex devops permissions tokens  --tenantId ... --organization ... --project ... [--out ...]`                      |
+|||
+|[rbac  ](./rbac/readme.md  ) [export     ](./rbac/export.md)|`azex rbac export                                      [--subscription ...] [--out ...]`|
+|[rbac  ](./rbac/readme.md  ) [extend     ](./rbac/extend.md)|`azex rbac extend --path path-to-rbac-definitions.json [--subscription ...] [--out ...]`|
+|[rbac  ](./rbac/readme.md  ) [verify     ](./rbac/verify.md)|`azex rbac verify --path path-to-rbac-definitions.json [--subscription ...] [--out ...]`|
+|[rbac  ](./rbac/readme.md  ) [apply      ](./rbac/apply.md )|`azex rbac apply  --path path-to-rbac-definitions.json [--subscription ...]`            |

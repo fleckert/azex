@@ -1,6 +1,6 @@
-import path from "path";
-import { rbac_apply                  } from "../../../src/CommandHandler/rbac_apply";
-import { TestConfigurationProvider   } from "../../_Configuration/TestConfiguration";
+import   path                        from "path";
+import { rbac_apply                } from "../../../src/CommandHandler/rbac_apply";
+import { TestConfigurationProvider } from "../../_Configuration/TestConfiguration";
 
 test('rbac_apply-min', async () => {
     const credentials = TestConfigurationProvider.getCredentials();

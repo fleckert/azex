@@ -1,9 +1,10 @@
-[home](/readme.md) / [commands](/docs/commands/readme.md) / devops
+[home](/readme.md) / [commands](../readme.md) / devops
 
 ## Commands
 
 |Command|Sample|
 |-|-|
-|[devops permissions](/docs/commands/devops/permissions/readme.md) [export](/docs/commands/devops/permissions/export.md)|`azex devops permissions export --tenantId ... --organization ... --project ... [--out ...]`|
-|[devops permissions](/docs/commands/devops/permissions/readme.md) [show  ](/docs/commands/devops/permissions/show.md  )|`azex devops permissions show --tenantId ... --organization ... --principalName ... [--project ...] [--out ...]`|
-|[devops permissions tokens  ](/docs/commands/devops/permissions/tokens.md  )|`azex devops permissions tokens --tenantId ... --organization ... --project ... [--out ...]`|
+|[devops memberships](./memberships/readme.md) [copy](./memberships/copy.md)  |`azex devops memberships copy   --tenantId ... --organization ... --source ... --target ...`|
+|[devops memberships](./memberships/readme.md) [show](./memberships/show.md  )|`azex devops memberships show    --tenantId ... --organization ... --principalName ... [--project ...] [--out ...]`|
+|||
+|[devops permissions](./permissions/readme.md) [tokens  ](./permissions/tokens.md  )|`azex devops permissions tokens --tenantId ... --organization ... --project ... [--out ...]`|

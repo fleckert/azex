@@ -1,7 +1,8 @@
 import { AzureRoleAssignmentsExtender         } from "../AzureRoleAssignmentsExtender";
-import { TokenCredential                      } from "@azure/identity";
+import { Helper                               } from "../Helper";
 import { RbacDefinition, RbacDefinitionHelper } from "../models/RbacDefinition";
 import { readFile, writeFile                  } from "fs/promises";
+import { TokenCredential                      } from "@azure/identity";
 
 export class rbac_extend {
     static async handle(credentials: TokenCredential, subscriptionId: string, pathIn: string, pathOut: string): Promise<void> {
@@ -14,17 +15,17 @@ export class rbac_extend {
 
         await writeFile(`${pathOut}-${subscriptionId}.ext.json`, JSON.stringify(rbacDefinitionsExtended.items, null, 2));
 
-        console.log({
+        console.log(JSON.stringify({
             parameters: {
                 subscriptionId,
                 pathIn,
                 pathOut
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000,
+            durationInSeconds: Helper.durationInSeconds(startDate),
             files: {
                 json: `${pathOut}-${subscriptionId}.ext.json`
             },
             failedRequests: rbacDefinitionsExtended.failedRequests,
-        });
+        }, null, 2));
     }
 }

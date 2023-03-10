@@ -1,8 +1,9 @@
-import { AzurePortalLinks                           } from "../AzurePortalLinks";
 import { ActiveDirectoryGroup                       } from "../models/ActiveDirectoryGroup";
 import { ActiveDirectoryServicePrincipal            } from "../models/ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser                        } from "../models/ActiveDirectoryUser";
+import { AzurePortalLinks                           } from "../AzurePortalLinks";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
+import { Md5                                        } from 'ts-md5'
 import { RoleAssignmentHelper                       } from "../RoleAssignmentHelper";
 
 export class Markdown {
@@ -180,6 +181,135 @@ export class Markdown {
         }
         lines.push(':::');
 
+
+        return lines.join('\n');
+    }
+
+    static getMermaidDiagramForHierarchyWithFocus(focus: string[], items: Array<{ container: string | undefined, member: string | undefined }>): string {
+        if (items.length === 0) {
+            return "nothing to display";
+        }
+
+        const id = (value: string | undefined) => Buffer.from(value ?? '').toString('hex');
+
+        // https://rich-iannone.github.io/DiagrammeR/mermaid.html#node-shape-and-text
+        const itemToMarkdown = (focus: string[], value: string | undefined) => `${id(value)}${focus.find(p => p === value) === undefined ? '[' : '(('}"${value}"${focus.find(p => p === value) === undefined ? ']' : '))'}`;
+
+        const lines = new Array<string>();
+
+        lines.push('::: mermaid');
+        lines.push('graph BT;');
+        lines.push('');
+        for (const item of items) {
+            lines.push(`${itemToMarkdown(focus, item.member)} --> |member of| ${itemToMarkdown(focus, item.container)}`);
+        }
+
+        for (const item of focus) {
+            lines.push(`style ${id(item)} fill:#00758f`)
+        }
+
+        lines.push(':::');
+
+
+        return lines.join('\n');
+    }
+
+    static getMermaidDiagramForHierarchyWithFocusAndLinks(
+        focus: string[], 
+        items: Array<{ container: string | undefined, member: string | undefined }>,
+        links: Array<{ value: string, href: string, target: '_self' | '_blank' | '_parent' | '_top' }>
+    ): string {
+        if (items.length === 0) {
+            return "nothing to display";
+        }
+
+        const id = (value: string | undefined) => Buffer.from(value ?? '').toString('hex');
+
+        // https://rich-iannone.github.io/DiagrammeR/mermaid.html#node-shape-and-text
+        const itemToMarkdown = (focus: string[], value: string | undefined) => `${id(value)}${focus.find(p => p === value) === undefined ? '[' : '(('}"${value}"${focus.find(p => p === value) === undefined ? ']' : '))'}`;
+
+        const lines = new Array<string>();
+
+        lines.push('::: mermaid');
+        lines.push('graph BT;');
+        lines.push('');
+        for (const item of items) {
+            lines.push(`${itemToMarkdown(focus, item.member)} --> |member of| ${itemToMarkdown(focus, item.container)}`);
+        }
+
+        lines.push('');
+        lines.push('%% ----------------------------------------------------------------');
+        lines.push('%% https://mermaid.js.org/syntax/flowchart.html#styling-and-classes');
+        lines.push('%% ----------------------------------------------------------------');
+        for (const item of focus) {
+            lines.push(`style ${id(item)} fill:#00758f`)
+        }
+        
+        lines.push('');
+        lines.push('%% --------------------------------------------------------');
+        lines.push('%% https://mermaid.js.org/syntax/flowchart.html#interaction');
+        lines.push('%% --------------------------------------------------------');
+        for (const item of links) {
+            lines.push(`click ${id(item.value)} "${item.href}" ${item.target}`)
+        }
+
+        lines.push(':::');
+
+        return lines.join('\n');
+    }
+
+    static getMermaidDiagramForHierarchyWithStylesAndLinks(
+        items : Array<{ container: string | undefined, member: string | undefined }>,
+        focus : Array<{ value: string }>, 
+        styles: Array<{ value: string, style: string }>, 
+        links : Array<{ value: string, href: string, target: '_self' | '_blank' | '_parent' | '_top' }>
+    ): string {
+        if (items.length === 0) {
+            return "nothing to display";
+        }
+
+        const id = (value: string | undefined) => Md5.hashStr(value ?? '');
+
+        // https://rich-iannone.github.io/DiagrammeR/mermaid.html#node-shape-and-text
+        const itemToMarkdown = (focus: Array<{ value: string }>, value: string | undefined) => `${id(value)}${focus.find(p => p.value === value) === undefined ? '[' : '('}"${value}"${focus.find(p => p.value === value) === undefined ? ']' : ')'}`;
+
+        const lines = new Array<string>();
+
+        lines.push('::: mermaid');
+        lines.push('graph BT;');
+        lines.push('');
+        for (const item of items) {
+            lines.push(`${itemToMarkdown(focus, item.member)} --> |member of| ${itemToMarkdown(focus, item.container)}`);
+        }
+
+        lines.push('');
+        lines.push('%% ----------------------------------------------------------------');
+        lines.push('%% https://mermaid.js.org/syntax/flowchart.html#styling-and-classes');
+        lines.push('%% ----------------------------------------------------------------');
+        for (const item of styles) {
+            lines.push('');
+            if (item.value !== '') {
+                lines.push(`%% ${item.value}`);
+                lines.push(`style ${id(item.value)} ${item.style}`);
+            }
+
+            if (item.value === '') {
+                lines.push(`%% all`);
+                lines.push(`classDef default ${item.style}`);
+            }
+        }
+        
+        lines.push('');
+        lines.push('%% --------------------------------------------------------');
+        lines.push('%% https://mermaid.js.org/syntax/flowchart.html#interaction');
+        lines.push('%% --------------------------------------------------------');
+        for (const item of links) {
+            lines.push('');
+            lines.push(`%% ${item.value}`);
+            lines.push(`click ${id(item.value)} "${item.href}" ${item.target}`)
+        }
+
+        lines.push(':::');
 
         return lines.join('\n');
     }

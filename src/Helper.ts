@@ -1,4 +1,29 @@
 export class Helper {
+
+    static durationInSeconds(startDate: Date) {
+        return (new Date().getTime() - startDate.getTime()) / 1000;
+    }
+
+    static async batchCalls<TParameters, TResult>(parametersCollection: TParameters[], func: (parameters: TParameters) => Promise<TResult>, batchsize?: number)
+    : Promise<Array<{ parameters: TParameters, result: TResult }>> {
+        const batches = Helper.getBatches(parametersCollection, batchsize ?? 10);
+
+        const collection = new Array<{ parameters: TParameters, result: TResult }>();
+
+        for (const batch of batches) {
+            const promises = batch.map(p => { return { parameters: p, promise: func(p) } });
+
+            for (const promise of promises) {
+                collection.push({
+                    parameters: promise.parameters,
+                    result: await promise.promise
+                });
+            }
+        }
+
+        return collection;
+    }
+
     static toArray<T>(mapping: { [id: string]: T; }): Array<T> {
         const collection = new Array<T>();
 
@@ -45,5 +70,20 @@ export class Helper {
         }
 
         return items;
+    }
+
+    static getBatches<T>(values: T[], batchSize: number): Array<Array<T>> {
+        const batches = new Array<Array<T>>();
+        batches.push(new Array<T>());
+
+        for (let index = 0; index < values.length; index++) {
+            if (batches[batches.length - 1].length == batchSize) {
+                batches.push(new Array<T>());
+            }
+
+            batches[batches.length - 1].push(values[index]);
+        }
+
+        return batches;
     }
 }

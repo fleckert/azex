@@ -1,5 +1,4 @@
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
-import { AzureDevOpsWrapper        } from "../../src/AzureDevOpsWrapper";
 import { AzureDevOpsSecurityTokens } from "../../src/AzureDevOpsSecurityTokens";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
@@ -7,14 +6,11 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
     const projectName      = config.azureDevOps.projectName;
-    const baseUrl          = config.azureDevOps.baseUrl;
     const tenantId         = config.azureDevOps.tenantId;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
-
-    const gitRepositories = await azureDevOpsWrapper.gitRepositories(projectName);
+    const gitRepositories = await azureDevOpsHelper.gitRepositories(organization, projectName);
 
     const securityNamespaceName = 'Git Repositories';
     const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);

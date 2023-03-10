@@ -1,20 +1,21 @@
 
 import axios from "axios";
-import { AzureDevOpsAccessControlList                                  } from "./models/AzureDevOpsAccessControlEntry";
-import { AzureDevOpsSecurityNamespace                                  } from "./models/AzureDevOpsSecurityNamespace";
-import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration } from "azure-devops-node-api/interfaces/WorkInterfaces";
-import { BuildDefinitionReference                                      } from "azure-devops-node-api/interfaces/BuildInterfaces";
-import { GitRepository                                                 } from "azure-devops-node-api/interfaces/GitInterfaces";
-import { GraphGroup, GraphMembership, GraphSubject, GraphUser          } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { Identity                                                      } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
-import { TeamProjectReference, WebApiTeam                              } from "azure-devops-node-api/interfaces/CoreInterfaces";
-import { ReleaseDefinition                                             } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
-import { WorkItemClassificationNode                                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
-import { AzureDevOpsPat } from "./AzureDevOpsPat";
-import { AzureDevOpsSecurityNamespaceAction } from "./models/AzureDevOpsSecurityNamespaceAction";
+import { AzureDevOpsAccessControlList                                      } from "./models/AzureDevOpsAccessControlEntry";
+import { AzureDevOpsPat                                                    } from "./AzureDevOpsPat";
+import { AzureDevOpsSecurityNamespace                                      } from "./models/AzureDevOpsSecurityNamespace";
+import { AzureDevOpsSecurityNamespaceAction                                } from "./models/AzureDevOpsSecurityNamespaceAction";
+import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration     } from "azure-devops-node-api/interfaces/WorkInterfaces";
+import { BuildDefinitionReference                                          } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { GitRepository                                                     } from "azure-devops-node-api/interfaces/GitInterfaces";
+import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Helper                                                            } from "./Helper";
+import { Identity                                                          } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
+import { ReleaseDefinition                                                 } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
+import { TeamProjectReference, WebApiTeam                                  } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { WikiV2                                                            } from "azure-devops-node-api/interfaces/WikiInterfaces";
+import { WorkItemClassificationNode                                        } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 
 export class AzureDevOpsHelper {
-
     static async instance(tenantId: string | undefined): Promise<AzureDevOpsHelper> {
         const token = await AzureDevOpsPat.getPersonalAccessToken(tenantId);
         return new AzureDevOpsHelper(token);
@@ -25,6 +26,9 @@ export class AzureDevOpsHelper {
     ) { }
 
     private readonly continuationTokenHeader = "x-ms-continuationtoken";
+
+    static isGraphUser (graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'user' ; }
+    static isGraphGroup(graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'group'; }
 
     buildDefinitions(organization: string, project: string, count?: number): Promise<BuildDefinitionReference[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/list?view=azure-devops-rest-7.1
@@ -99,7 +103,7 @@ export class AzureDevOpsHelper {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/remove-membership?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${parameters.organization}/_apis/graph/memberships/${parameters.subjectDescriptor}/${parameters.containerDescriptor}?api-version=7.1-preview.1`
 
-        return this.delete(url);
+        return this.delete(url, 200);
     }
 
     graphMembershipsRemove(parameters: Array<{ organization: string, subjectDescriptor: string, containerDescriptor: string }>) {
@@ -108,6 +112,35 @@ export class AzureDevOpsHelper {
 
     graphMembershipsLists(parameters: Array<{ organization: string, subjectDescriptor: string, direction: 'up' | 'down' }>) {
         return this.batchCalls(parameters, p => this.graphMembershipsListArgs(p));
+    }
+
+    async inviteUser(organization: string, principalName: string, accessLevel: string) : Promise<any> {
+
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/add?view=azure-devops-rest-7.1&tabs=HTTP
+        // const url = `https://vsaex.dev.azure.com/${organization}/_apis/userentitlements?doNotSendInviteForNewUsers=false&api-version=7.1-preview.3`;
+        const url = `https://vsaex.dev.azure.com/${organization}/_apis/userentitlements?api-version=7.1-preview.3`;
+
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/add?view=azure-devops-rest-7.1&tabs=HTTP#accountlicensetype
+        // 'advanced' | 'earlyAdopter' | 'express' | 'none' | 'professional' | 'stakeholder'
+
+        const data = {
+            accessLevel: {
+                licensingSource: "account",
+                accountLicenseType: accessLevel
+            },
+            user: {
+                principalName: principalName,
+                subjectKind: "user"
+            }
+        };
+
+        const response = await this.post(url, data, 200);
+
+        if (response.data?.isSuccess !== true) {
+            throw new Error(JSON.stringify({ organization, principalName, accessLevel, status: response.status, statusText: response.statusText, data: response.data }));
+        }
+
+        return response.data;
     }
 
     userEntitlements(organization: string, descriptor: string): Promise<any | undefined> {
@@ -127,6 +160,18 @@ export class AzureDevOpsHelper {
         const teams = await this.teams(organization);
 
         return teams.find(p => p.name?.toLowerCase() === teamName.toLowerCase() && p.projectName?.toLowerCase() === projectName.toLowerCase());
+    }
+
+    wikis(organization: string, project?: string): Promise<WikiV2[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/teams/get-all-teams?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project === undefined ? '' : `${project}/`}_apis/wiki/wikis?api-version=7.1-preview.2`;
+        return this.getValue(url);
+    }
+
+    wikiDelete(organization: string, project: string, wikiIdentifier: string): Promise<void> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/wiki/wikis/delete?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/wiki/wikis/${wikiIdentifier}?api-version=7.1-preview.2`;
+        return this.delete(url, 200);
     }
 
     classificationNodes(parameters: { organization: string, project: string, depth?: number, ids?: number[], errorPolicy?: 'omit' | 'fail' }): Promise<WorkItemClassificationNode[]> {
@@ -162,10 +207,21 @@ export class AzureDevOpsHelper {
         return this.getValue(url);
     }
 
-    identitiesByDescriptors(organization: string, identityDescriptors: Array<string>): Promise<Identity[]> {
+    async identitiesByDescriptors(organization: string, identityDescriptors: Array<string>): Promise<Identity[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/ims/identities/read-identities?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/identities?descriptors=${identityDescriptors.join(',')}&api-version=7.1-preview.1`;
-        return this.getValue(url);
+
+        const values = await this.getValue<Identity[]>(url);
+
+        // possible response
+        // {
+        //     "count": 1,
+        //     "value": [
+        //       null
+        //     ]
+        // }
+
+        return values.filter(p => p !== undefined && p !== null);
     }
 
     async identitiesByDescriptorExplicit(organization: string, identityDescriptors: Array<string>): Promise<Array<{ identityDescriptor: string, identity: Identity | undefined }>> {
@@ -177,7 +233,7 @@ export class AzureDevOpsHelper {
 
         const batchsize = 20;
 
-        const batches = this.getBatches(identityDescriptors, batchsize);
+        const batches = Helper.getBatches(identityDescriptors, batchsize);
 
         for (const batch of batches) {
             const requests = batch.map(identityDescriptor => { return { identityDescriptor, promise: this.identityByDescriptor(organization, identityDescriptor) } });
@@ -200,7 +256,7 @@ export class AzureDevOpsHelper {
             return await this.getValue(url);
         }
         else {
-            const batches = this.getBatches(subjectDescriptors, batchsize);
+            const batches = Helper.getBatches(subjectDescriptors, batchsize);
 
             const collection = new Array<Identity>()
             for (const batch of batches) {
@@ -217,19 +273,25 @@ export class AzureDevOpsHelper {
         const identity = await this.identityByDescriptor(organization, identityDescriptor);
         if (identity?.subjectDescriptor === undefined) { return undefined; }
 
-        return await this.userBySubjectDescriptor(organization, identity.subjectDescriptor);
+        return await this.graphSubjectLookup(organization, identity.subjectDescriptor);
     }
 
     async groupFromIdentity(organization: string, identityDescriptor: string): Promise<GraphGroup | undefined> {
         const identity = await this.identityByDescriptor(organization, identityDescriptor);
         if (identity?.subjectDescriptor === undefined) { return undefined; }
 
-        return await this.groupBySubjectDescriptor(organization, identity.subjectDescriptor);
+        return await this.graphSubjectLookup(organization, identity.subjectDescriptor);
     }
 
     gitRepositories(organization: string, project: string): Promise<GitRepository[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/list?view=azure-devops-rest-7.1&tabs=HTTP
         return this.getValue(`https://dev.azure.com/${organization}/${project}/_apis/git/repositories?api-version=7.1-preview.1`)
+    }
+
+    gitRepositoryDelete(organization: string, project: string, repositoryId: string): Promise<void> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/git/repositories/delete?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/git/repositories/${repositoryId}?api-version=7.1-preview.1`;
+        return this.delete(url, 204);
     }
 
     async identityByDescriptor(organization: string, identityDescriptor: string): Promise<Identity | undefined> {
@@ -292,20 +354,15 @@ export class AzureDevOpsHelper {
         return response[0] === null ? undefined : response[0];
     }
 
-    userBySubjectDescriptor(organization: string, subjectDescriptor: string): Promise<GraphUser | undefined> {
-        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/get?view=azure-devops-rest-7.1&tabs=HTTP
-        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/users/${subjectDescriptor}?api-version=7.1-preview.1`;
-        return this.get(url);
-    }
-
-    groupBySubjectDescriptor(organization: string, groupDescriptor: string): Promise<GraphGroup | undefined> {
-        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/groups/get?view=azure-devops-rest-7.1&tabs=HTTP
-        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/groups/${groupDescriptor}?api-version=7.1-preview.1`;
-        return this.get(url);
-    }
-
     groupByPrincipalName(organization: string, principalName: string): Promise<GraphSubject | undefined> {
         return this.graphSubjectQueryByPrincipalName(organization, ['Group'], principalName);
+    }
+
+    projects(organization: string, count?: number): Promise<TeamProjectReference[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/projects/list?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.1-preview.4`;
+
+        return this.getItemsWithContinuation(url, count);
     }
 
     project(organization: string, projectNameOrId: string): Promise<TeamProjectReference | undefined> {
@@ -401,6 +458,10 @@ export class AzureDevOpsHelper {
         }
     }
 
+    async graphMemberByPrincipalName(organization: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group'], principalName: string): Promise<GraphMember | undefined> {
+         return this.graphSubjectQueryByPrincipalName(organization, subjectKind, principalName);
+    }
+
     private getHeaders() {
         const headers = {
             'Authorization': `Basic ${Buffer.from(`:${this.token}`, 'ascii').toString('base64')}`,
@@ -426,11 +487,26 @@ export class AzureDevOpsHelper {
         }
     }
 
-    private async delete(url: string): Promise<void> {
+    private async post(url: string, data: any, statusCodeExpected: number): Promise<{ data: any, status: number, statusText: string }> {
+        try {
+            const response = await axios.post(url, JSON.stringify(data), { headers: this.getHeaders() });
+
+            if (response.status !== statusCodeExpected) {
+                throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+            }
+
+            return { data: response.data, status: response.status, statusText: response.statusText };
+        }
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+        }
+    }
+
+    private async delete(url: string, statusCodeExpected : number): Promise<void> {
         try {
             const response = await axios.delete(url, { headers: this.getHeaders() });
 
-            if (response.status !== 200) {
+            if (response.status !== statusCodeExpected) {
                 throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
             }
         }
@@ -542,23 +618,8 @@ export class AzureDevOpsHelper {
         }
     }
 
-    private getBatches<T>(values: T[], batchSize: number): Array<Array<T>> {
-        const batches = new Array<Array<T>>();
-        batches.push(new Array<T>());
-
-        for (let index = 0; index < values.length; index++) {
-            if (batches[batches.length - 1].length == batchSize) {
-                batches.push(new Array<T>());
-            }
-
-            batches[batches.length - 1].push(values[index]);
-        }
-
-        return batches;
-    }
-
     private async batchCalls<TParameters, TResult>(parametersCollection: TParameters[], func: (parameters: TParameters) => Promise<TResult>, batchsize? : number): Promise<Array<{ parameters: TParameters, result: TResult }>> {
-        const batches = this.getBatches(parametersCollection, batchsize ?? 10);
+        const batches = Helper.getBatches(parametersCollection, batchsize ?? 10);
 
         const collection = new Array<{ parameters: TParameters, result: TResult }>();
 

@@ -1,23 +1,22 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
-import { AzureDevOpsWrapper        } from "../../src/AzureDevOpsWrapper";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { rm, writeFile             } from "fs/promises";
+import { rm, mkdir, writeFile      } from "fs/promises";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-in-projects', async () => {
 
     const config             = await TestConfigurationProvider.get();
     const organization       = config.azureDevOps.organization;
-    const baseUrl            = config.azureDevOps.baseUrl;
     const tenantId           = config.azureDevOps.tenantId;
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
-    const file = path.join(__dirname, 'out', `users-in-projects-${organization}.md`);
+    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
+    const file = path.join(__dirname, 'out', organization, `users-in-projects-${organization}.md`);
     await rm(file, {force: true});
 
     const groupsPromise = azureDevOpsHelper.graphGroupsList(organization);
