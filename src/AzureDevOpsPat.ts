@@ -8,6 +8,6 @@ export class AzureDevOpsPat {
             return token;
         }
 
-        return await BearerToken.devOps(tenantId);
+        return await BearerToken.azureDevOps(tenantId);
     }
 }
