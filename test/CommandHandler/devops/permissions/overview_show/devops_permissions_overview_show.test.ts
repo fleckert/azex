@@ -1,35 +1,45 @@
 import   path                               from "path";
-import { AzureDevOpsSecurityTokens        } from "../../../../../src/AzureDevOpsSecurityTokens";
 import { AzureDevOpsHelper                } from "../../../../../src/AzureDevOpsHelper";
+import { AzureDevOpsSecurityTokens        } from "../../../../../src/AzureDevOpsSecurityTokens";
 import { devops_permissions_overview_show } from "../../../../../src/CommandHandler/devops_permissions_overview_show";
+import { Helper                           } from "../../../../../src/Helper";
+import { mkdir                            } from "fs/promises";
 import { TestConfigurationProvider        } from "../../../../_Configuration/TestConfiguration";
 
 test('devops_permissions_overview_show', async () => {
-    const config            = await TestConfigurationProvider.get();
-    const pathOut           = path.join(__dirname, 'out', 'devops_permissions_overview_show');
-    const organization      = config.azureDevOps.organization;
-    const projectName       = config.azureDevOps.projectName;
-    const tenantId          = config.azureDevOps.tenantId;
-    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const projectName      = config.azureDevOps.projectName;
+    const tenantId         = config.azureDevOps.tenantId;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
+    
+    await mkdir(path.join(__dirname, 'out'), { recursive: true })
+    const pathOut = path.join(__dirname, 'out', 'devops_permissions_overview_show');
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const tokens = await AzureDevOpsSecurityTokens.all(azureDevOpsHelper, organization, projectName);
 
-    for (const item of tokens.slice(0, maxNumberOfTests)) {
+    const items = tokens.filter(p => p.securityNamespace.name !== undefined).map(p => { return { token: p.token, securityNamespaceName: p.securityNamespace.name! } });
 
-        const securityNamespaceName = item.securityNamespace.name; if (securityNamespaceName === undefined) { continue; }
-        const token = item.token;
+    const batches = Helper.getBatches(items.slice(0, maxNumberOfTests), 5);
 
-        await devops_permissions_overview_show.handle(tenantId, organization, projectName, securityNamespaceName, token, pathOut);
+    for (const batch of batches) {
+        await Promise.all(
+            batch.map(
+                p => devops_permissions_overview_show.handle(tenantId, organization, projectName, p.securityNamespaceName, p.token, pathOut)
+            )
+        )
     }
 }, 1000000);
 
 test('devops_permissions_overview_show_classificationNodes', async () => {
-    const config          = await TestConfigurationProvider.get();
-    const pathOut         = path.join(__dirname, 'out', 'devops_permissions_overview_show_classificationNodes');
-    const organization    = config.azureDevOps.organization;
-    const projectName     = config.azureDevOps.projectName;
-    const tenantId        = config.azureDevOps.tenantId;
+    const config       = await TestConfigurationProvider.get();
+    const organization = config.azureDevOps.organization;
+    const projectName  = config.azureDevOps.projectName;
+    const tenantId     = config.azureDevOps.tenantId;
+
+    await mkdir(path.join(__dirname, 'out'), { recursive: true })
+    const pathOut = path.join(__dirname, 'out', 'devops_permissions_overview_show_classificationNodes');
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
     const classificationNodes = await AzureDevOpsSecurityTokens.classificationNodes(azureDevOpsHelper, organization, projectName);

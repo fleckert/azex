@@ -3,7 +3,7 @@ import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphUser                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { rm, writeFile             } from "fs/promises";
+import { rm, mkdir, writeFile      } from "fs/promises";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-without-groups', async () => {
@@ -13,7 +13,8 @@ test('AzureDevOpsHelper - users-without-groups', async () => {
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
     const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
-    const file = path.join(__dirname, 'out', `users-without-groups-${organization}.md`);
+    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
+    const file = path.join(__dirname, 'out', organization, `users-without-groups-${organization}.md`);
     await rm(file, {force: true});
 
     const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);

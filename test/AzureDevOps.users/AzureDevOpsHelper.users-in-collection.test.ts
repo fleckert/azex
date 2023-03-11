@@ -3,7 +3,7 @@ import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphUser                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { rm, writeFile             } from "fs/promises";
+import { rm, mkdir, writeFile      } from "fs/promises";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 
 test('AzureDevOpsHelper - users-in-collection', async () => {
@@ -12,7 +12,8 @@ test('AzureDevOpsHelper - users-in-collection', async () => {
     const tenantId          = config.azureDevOps.tenantId;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
 
-    const file = path.join(__dirname, 'out', `users-in-collection-${organization}.md`);
+    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
+    const file = path.join(__dirname, 'out', organization, `users-in-collection-${organization}.md`);
     await rm(file, { force: true });
 
     const users = await azureDevOpsHelper.graphUsersList(organization);

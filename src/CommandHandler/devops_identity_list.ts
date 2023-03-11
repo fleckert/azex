@@ -1,5 +1,6 @@
 import { AzureDevOpsHelper } from "../AzureDevOpsHelper";
 import { GraphMember       } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Helper            } from "../Helper";
 import { Html              } from "../Converters/Html";
 import { Identity          } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { Markdown          } from "../Converters/Markdown";
@@ -30,21 +31,33 @@ export class devops_identity_list {
         }
 
         collection.sort((a:{ graphMember: GraphMember, identity: Identity | undefined },b:{ graphMember: GraphMember, identity: Identity | undefined })=>{
-            const map = (item: { graphMember: GraphMember }) => `${item.graphMember.principalName}`.toLowerCase();
+            const map = (item: { graphMember: GraphMember }) => {
+                if (AzureDevOpsHelper.isGraphGroup(item.graphMember)) {
+                    return `${item.graphMember.principalName}`.toLowerCase()
+                }
+
+                return `${item.graphMember.displayName}`.toLowerCase()
+            };
 
             return map(a).localeCompare(map(b));
         });
 
         const collectionMapped = collection.map(p => {
             return {
+                graphMemberDisplayName  : `${p.graphMember.displayName  }`,
                 graphMemberPrincipalName: `${p.graphMember.principalName}`,
+                graphMemberSubjectKind  : `${p.graphMember.subjectKind}`,
                 graphMemberDescriptor   : `${p.graphMember.descriptor   }`,
                 identityDescriptor      : `${p.identity?.descriptor     }`,
             }
         });
 
         const title = `${organization}${project === undefined ? '' : `-${project}`}-identities`.replaceAll(' ', '_');
-        const valuesMapped = collectionMapped.map(p => [p.graphMemberPrincipalName, p.identityDescriptor]);
+        const valuesMapped = collectionMapped.map(p => [
+            `${p.graphMemberSubjectKind}`.toLowerCase() === 'group' 
+            ? `${p.graphMemberPrincipalName}` 
+            : `${p.graphMemberDisplayName}`,
+            p.identityDescriptor]);
 
         await Promise.all([
             writeFile(`${path}-${title}.json`, JSON.stringify(collectionMapped, null, 2)),
@@ -52,19 +65,16 @@ export class devops_identity_list {
             writeFile(`${path}-${title}.html`, Html    .table(title, ['PrincipalName', 'Identity'], valuesMapped))
         ]);
 
-        console.log({
-            parameters: {
-                tenantId,
-                organization,
-                project,
-                path
-            },
+        console.log(JSON.stringify({
+            tenantId,
+            organization,
+            project,
             files: {
                 json    : `${path}-${title}.json`,
                 markdown: `${path}-${title}.md`,
                 html    : `${path}-${title}.html`
             },
-            durationInSeconds: (new Date().getTime() - startDate.getTime()) / 1000
-        });
+            durationInSeconds: Helper.durationInSeconds(startDate)
+        }, null, 2));
     }
 }

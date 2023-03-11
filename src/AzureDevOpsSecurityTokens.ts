@@ -8,7 +8,7 @@ export class AzureDevOpsSecurityTokens {
     static GitRepositories_Project                  (projectId: string                                          ) { return `repoV2/${projectId}/`                ; }
     static GitRepositories_Project_Repository       (projectId: string, repositoryId: string                    ) { return `repoV2/${projectId}/${repositoryId}/`; }
     static GitRepositories_Project_Repository_Branch(projectId: string, repositoryId: string, branchName: string) {
-        const parts=branchName.split('/');
+        const parts = branchName.split('/');
 
         const firstTwoSegments = parts.slice(0, 2);
         const otherSegments = parts.slice(2).map(p => this.encode(p));

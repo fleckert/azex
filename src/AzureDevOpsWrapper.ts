@@ -3,13 +3,13 @@ import { getPersonalAccessTokenHandler     } from "azure-devops-node-api";
 import { GitApi                            } from "azure-devops-node-api/GitApi";
 import { IRequestHandler                   } from "azure-devops-node-api/interfaces/common/VsoBaseInterfaces";
 import { TeamProject, TeamProjectReference } from "azure-devops-node-api/interfaces/CoreInterfaces";
-import { CommandRunner                     } from "./CommandRunner";
-import { WorkItemTrackingProcessApi } from "azure-devops-node-api/WorkItemTrackingProcessApi";
-import { ProcessWorkItemType, ProcessWorkItemTypeField } from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
-import { WorkApi } from "azure-devops-node-api/WorkApi";
-import { TeamSetting } from "azure-devops-node-api/interfaces/WorkInterfaces";
-import { AzureDevOpsPat } from "./AzureDevOpsPat";
-import { WikiApi } from "azure-devops-node-api/WikiApi";
+import { WorkItemTrackingProcessApi        } from "azure-devops-node-api/WorkItemTrackingProcessApi";
+import { ProcessWorkItemType               } from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import { WorkApi                           } from "azure-devops-node-api/WorkApi";
+import { TeamSetting                       } from "azure-devops-node-api/interfaces/WorkInterfaces";
+import { AzureDevOpsPat                    } from "./AzureDevOpsPat";
+import { WikiApi                           } from "azure-devops-node-api/WikiApi";
+import { Helper } from "./Helper";
 
 export class AzureDevOpsWrapper {
     readonly requestHandlers:  IRequestHandler[];
@@ -23,24 +23,6 @@ export class AzureDevOpsWrapper {
     static async instance(baseUrl: string, tenantId? : string): Promise<AzureDevOpsWrapper> {
         const token = await AzureDevOpsPat.getPersonalAccessToken(tenantId);
         return new AzureDevOpsWrapper(baseUrl, token);
-    }
-
-    gitRepositories(project: string) { return new GitApi(this.baseUrl, this.requestHandlers).getRepositories(project); }
-    gitRepository(project: string, repository: string) { return new GitApi(this.baseUrl, this.requestHandlers).getRepository(repository, project); }
-    
-    project(projectId: string) { return new CoreApi(this.baseUrl, this.requestHandlers).getProject(projectId, true); }
-
-    async projects(): Promise<TeamProject[]> {
-        const projects = await this.projectsInternal();
-        const batchSize = 10;
-        const collection = new Array<TeamProject>;
-        const batchesOfProjectsIds = this.getBatches(projects.filter(p => p.id !== undefined).map(p => p.id!), batchSize);
-        for (const batchOfProjectIds of batchesOfProjectsIds) {
-            const responses = await Promise.all(batchOfProjectIds.map(projectId => this.project(projectId)));
-            collection.push(...responses);
-        }
-
-        return collection;
     }
 
     processes() { return new CoreApi(this.baseUrl, this.requestHandlers).getProcesses(); }
@@ -91,19 +73,6 @@ export class AzureDevOpsWrapper {
         return new WorkApi(this.baseUrl, this.requestHandlers).getTeamSettings({ projectId, teamId });
     }
 
-    async wikiPaths(project?: string) {
-        const client = new WikiApi(this.baseUrl, this.requestHandlers);
-        const wikis = await client.getAllWikis(project);
-
-        for (const wikiId of wikis.filter(p => p.id !== undefined).map(p => p.id!)) {
-            const wiki = await client.getWiki(wikiId!);
-            console.log(wiki);
-        }
-
-        throw new Error('not implemented');
-        return wikis;
-    }
-
     private async projectsInternal(): Promise<Array<TeamProjectReference>> {
 
         const teamProjectReferences = new Array<TeamProjectReference>();
@@ -131,20 +100,5 @@ export class AzureDevOpsWrapper {
         }
 
         return teamProjectReferences;
-    }
-
-    private getBatches<T>(values: T[], batchSize: number): Array<Array<T>> {
-        const batches = new Array<Array<T>>();
-        batches.push(new Array<T>());
-
-        for (let index = 0; index < values.length; index++) {
-            if (batches[batches.length - 1].length == batchSize) {
-                batches.push(new Array<T>());
-            }
-
-            batches[batches.length - 1].push(values[index]);
-        }
-
-        return batches;
     }
 }
