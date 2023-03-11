@@ -84,6 +84,8 @@ test('devops_memberships_show-all', async () => {
     const projects = await azureDevOpsHelper.projects(organization, maxNumberOfTests)
     const projectNames = projects.filter(p => p.name !== undefined).map(p => p.name!).sort();
 
+    const parameters = [];
+
     for (const projectName of projectNames) {
         await mkdir(path.join(__dirname, 'out', organization, projectName.replaceAll(' ', '_'), 'groups', 'org'    ), { recursive: true });
         await mkdir(path.join(__dirname, 'out', organization, projectName.replaceAll(' ', '_'), 'groups', 'project'), { recursive: true });
@@ -98,14 +100,11 @@ test('devops_memberships_show-all', async () => {
         const principalNamesUsers  = (await azureDevOpsHelper.graphUsersListForProjectName (organization, projectName, maxNumberOfTests)).filter(p => p.principalName !== undefined).map(p => p.principalName!).sort();
         const principalNamesGroups = (await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumberOfTests)).filter(p => p.principalName !== undefined).map(p => p.principalName!).sort();
 
-        const parametersOrgUsers      = principalNamesUsers .map(principalName => { return { tenantId, organization, projectName: undefined, principalName, pathOut: pathOutUsersOrg      } });
-        const parametersProjectUsers  = principalNamesUsers .map(principalName => { return { tenantId, organization, projectName           , principalName, pathOut: pathOutUsersProject  } });
-        const parametersOrgGroups     = principalNamesGroups.map(principalName => { return { tenantId, organization, projectName: undefined, principalName, pathOut: pathOutGroupsOrg     } });
-        const parametersProjectGroups = principalNamesGroups.map(principalName => { return { tenantId, organization, projectName           , principalName, pathOut: pathOutGroupsProject } });
-
-        await Helper.batchCalls(parametersOrgUsers     , p => devops_memberships_show.handle(p.tenantId, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
-        await Helper.batchCalls(parametersProjectUsers , p => devops_memberships_show.handle(p.tenantId, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
-        await Helper.batchCalls(parametersOrgGroups    , p => devops_memberships_show.handle(p.tenantId, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
-        await Helper.batchCalls(parametersProjectGroups, p => devops_memberships_show.handle(p.tenantId, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
+        parameters.push(...principalNamesUsers .map(principalName => { return { tenantId, organization, projectName: undefined, principalName, pathOut: pathOutUsersOrg      } }));
+        parameters.push(...principalNamesUsers .map(principalName => { return { tenantId, organization, projectName           , principalName, pathOut: pathOutUsersProject  } }));
+        parameters.push(...principalNamesGroups.map(principalName => { return { tenantId, organization, projectName: undefined, principalName, pathOut: pathOutGroupsOrg     } }));
+        parameters.push(...principalNamesGroups.map(principalName => { return { tenantId, organization, projectName           , principalName, pathOut: pathOutGroupsProject } }));
     }
+
+    await Helper.batchCalls(parameters, p => devops_memberships_show.handle(p.tenantId, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
 }, 1000000);
