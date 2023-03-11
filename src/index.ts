@@ -12,6 +12,7 @@ import { rbac_extend               } from "./CommandHandler/rbac_extend";
 import { rbac_verify               } from "./CommandHandler/rbac_verify";
 import { SubscriptionIdResolver    } from "./SubscriptionIdResolver";
 import { TokenCredentialProvider   } from "./TokenCredentialProvider";
+import { devops_pat } from "./CommandHandler/devops_pat";
 
 const args = process.argv.slice(2);
 const commandName = 'azex';
@@ -33,7 +34,7 @@ const checkParameter = (parameterName: string, parameterValue: string | undefine
         throw new Error(`Parameter --${parameterName} is missing.`);
     }
 
-    const environmentVariableValue = `${process.env[environmentVariableName]}`.trim();
+    const environmentVariableValue = process.env[environmentVariableName] === undefined ? '' : `${process.env[environmentVariableName]}`;
 
     if (environmentVariableValue !== '') {
         return environmentVariableValue;
@@ -90,7 +91,14 @@ if (args[0]?.toLowerCase() === "rbac") {
     }
 }
 else if (args[0]?.toLowerCase() === "devops") {
-    if (args[1]?.toLowerCase() === "permissions") {
+    if (args[1]?.toLowerCase() === "pat") {
+        var argv = getArgv(2);
+
+        const tenantId = checkDevOpsTenantId(argv.tenantId);
+
+        devops_pat.handle(tenantId);
+    }
+    else if (args[1]?.toLowerCase() === "permissions") {
         if (args[2]?.toLowerCase() === "tokens") {
             var argv = getArgv(3);
 
