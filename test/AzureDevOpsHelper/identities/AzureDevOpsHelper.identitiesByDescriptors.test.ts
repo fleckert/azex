@@ -5,11 +5,11 @@ import { TestConfigurationProvider          } from "../../_Configuration/TestCon
 
 test('AzureDevOpsHelper - identitiesByDescriptors', async () => {
     const config           = await TestConfigurationProvider.get();
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const organization     = config.azureDevOps.organization;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
     
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const securityNamespaces = await azureDevOpsHelper.securityNamespaces(organization);
 
     for (const securityNamespace of securityNamespaces.filter(p => p.namespaceId !== undefined)) {

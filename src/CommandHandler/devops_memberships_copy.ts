@@ -4,10 +4,10 @@ import { GraphGroup             } from "azure-devops-node-api/interfaces/GraphIn
 import { Helper                 } from "../Helper";
 
 export class devops_memberships_copy {
-    static async handle(tenantId: string, organization: string, principalNameSource: string, principalNameTarget: string): Promise<void> {
+    static async handle(tenant: string, organization: string, principalNameSource: string, principalNameTarget: string, add: boolean, remove: boolean): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
         const graphSubjectSourcePromise = azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['User', 'Group'], principalNameSource);
         const graphSubjectTargetPromise = azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['User', 'Group'], principalNameTarget);
@@ -31,12 +31,12 @@ export class devops_memberships_copy {
         groupsAdded  .sort((a: GraphGroup, b: GraphGroup) => `${a.principalName}`.localeCompare(`${b.principalName}`));
         groupsRemoved.sort((a: GraphGroup, b: GraphGroup) => `${a.principalName}`.localeCompare(`${b.principalName}`));
 
-        await azureDevOpsHelper.graphMembershipsAdd   (containerDescriptorsAdd   .map(containerDescriptor => { return { organization, subjectDescriptor: graphSubjectTarget.descriptor!, containerDescriptor } }));
-        await azureDevOpsHelper.graphMembershipsRemove(containerDescriptorsRemove.map(containerDescriptor => { return { organization, subjectDescriptor: graphSubjectTarget.descriptor!, containerDescriptor } }));
+        if (add   ) { await azureDevOpsHelper.graphMembershipsAdd   (containerDescriptorsAdd   .map(containerDescriptor => { return { organization, subjectDescriptor: graphSubjectTarget.descriptor!, containerDescriptor } })); }
+        if (remove) { await azureDevOpsHelper.graphMembershipsRemove(containerDescriptorsRemove.map(containerDescriptor => { return { organization, subjectDescriptor: graphSubjectTarget.descriptor!, containerDescriptor } })); }
 
         console.log(JSON.stringify({
             parameters: {
-                tenantId,
+                tenant,
                 organization,
                 principalNameSource,
                 principalNameTarget

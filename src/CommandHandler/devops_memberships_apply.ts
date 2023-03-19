@@ -4,10 +4,10 @@ import { Helper            } from "../Helper";
 import { readFile          } from "fs/promises";
 
 export class devops_memberships_apply {
-    static async handle(tenantId: string, organization: string, path: string): Promise<void> {
+    static async handle(tenant: string, organization: string, path: string): Promise<void> {
         const startDate = new Date();
         
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
         const content = await readFile(path);
         const collection: { container: string, member: string }[] = JSON.parse(content.toString());
@@ -26,7 +26,7 @@ export class devops_memberships_apply {
             const memberDescriptor = graphMembers[memberPrincipalName]?.descriptor;
 
             if (memberDescriptor === undefined) {
-                throw new Error(JSON.stringify({ tenantId, organization, path, message: `Failed to resolve '${memberPrincipalName}' details in '${organization}'.` }))
+                throw new Error(JSON.stringify({ tenant, organization, path, message: `Failed to resolve '${memberPrincipalName}' details in '${organization}'.` }))
             }
 
             const graphMemberships = await azureDevOpsHelper.graphMembershipsLists([{ organization, subjectDescriptor: memberDescriptor, direction: 'up' }]);
@@ -47,7 +47,7 @@ export class devops_memberships_apply {
 
         console.log(JSON.stringify({
             parameters: {
-                tenantId,
+                tenant,
                 organization,
                 path
             },

@@ -1,23 +1,25 @@
 
 import axios from "axios";
 import { AzureDevOpsAccessControlList                                      } from "./models/AzureDevOpsAccessControlEntry";
+import { AzureDevOpsAuditLogEntry                                          } from "./models/AzureDevOpsAuditLogEntry";
 import { AzureDevOpsPat                                                    } from "./AzureDevOpsPat";
 import { AzureDevOpsSecurityNamespace                                      } from "./models/AzureDevOpsSecurityNamespace";
 import { AzureDevOpsSecurityNamespaceAction                                } from "./models/AzureDevOpsSecurityNamespaceAction";
-import { BacklogLevelConfiguration, TeamSetting, TeamSettingsIteration     } from "azure-devops-node-api/interfaces/WorkInterfaces";
+import { BacklogLevelConfiguration, Plan, TeamSettingsIteration            } from "azure-devops-node-api/interfaces/WorkInterfaces";
 import { BuildDefinitionReference                                          } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { Dashboard                                                         } from "azure-devops-node-api/interfaces/DashboardInterfaces";
 import { GitRepository                                                     } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Helper                                                            } from "./Helper";
 import { Identity                                                          } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
+import { QueryHierarchyItem, WorkItemClassificationNode                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 import { ReleaseDefinition                                                 } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
 import { TeamProjectReference, WebApiTeam                                  } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { WikiV2                                                            } from "azure-devops-node-api/interfaces/WikiInterfaces";
-import { WorkItemClassificationNode                                        } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 
 export class AzureDevOpsHelper {
-    static async instance(tenantId: string | undefined): Promise<AzureDevOpsHelper> {
-        const token = await AzureDevOpsPat.getPersonalAccessToken(tenantId);
+    static async instance(tenant: string | undefined): Promise<AzureDevOpsHelper> {
+        const token = await AzureDevOpsPat.getPersonalAccessToken(tenant);
         return new AzureDevOpsHelper(token);
     }
 
@@ -29,6 +31,12 @@ export class AzureDevOpsHelper {
 
     static isGraphUser (graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'user' ; }
     static isGraphGroup(graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'group'; }
+
+    auditLog(organization: string, startTime: Date | undefined, endTime: Date | undefined, count: number | undefined): Promise<AzureDevOpsAuditLogEntry[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/audit/audit-log/query?view=azure-devops-rest-7.1
+        const url = `https://auditservice.dev.azure.com/${organization}/_apis/audit/auditlog?startTime=${startTime == undefined ? '' : startTime}&endTime=${endTime === undefined ? '' : endTime}&api-version=7.1-preview.1`;
+        return this.getItemsForAuditLog(url, count);
+    }
 
     buildDefinitions(organization: string, project: string, count?: number): Promise<BuildDefinitionReference[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/list?view=azure-devops-rest-7.1
@@ -96,7 +104,7 @@ export class AzureDevOpsHelper {
     }
 
     graphMembershipsAdd(parameters: Array<{ organization: string, subjectDescriptor: string, containerDescriptor: string }>) {
-        return this.batchCalls(parameters, p => this.graphMembershipAdd(p));
+        return Helper.batchCalls(parameters, p => this.graphMembershipAdd(p));
     }
 
     graphMembershipRemove(parameters: { organization: string, subjectDescriptor: string, containerDescriptor: string }): Promise<void> {
@@ -107,11 +115,11 @@ export class AzureDevOpsHelper {
     }
 
     graphMembershipsRemove(parameters: Array<{ organization: string, subjectDescriptor: string, containerDescriptor: string }>) {
-        return this.batchCalls(parameters, p => this.graphMembershipRemove(p));
+        return Helper.batchCalls(parameters, p => this.graphMembershipRemove(p));
     }
 
     graphMembershipsLists(parameters: Array<{ organization: string, subjectDescriptor: string, direction: 'up' | 'down' }>) {
-        return this.batchCalls(parameters, p => this.graphMembershipsListArgs(p));
+        return Helper.batchCalls(parameters, p => this.graphMembershipsListArgs(p));
     }
 
     async inviteUser(organization: string, principalName: string, accessLevel: string) : Promise<any> {
@@ -154,6 +162,30 @@ export class AzureDevOpsHelper {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/teams/get-all-teams?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://dev.azure.com/${organization}/_apis/teams?api-version=7.1-preview.3`;
         return this.getValue(url);
+    }
+
+    teamsInProject(organization: string, projectId: string): Promise<WebApiTeam[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/teams/get-teams?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/_apis/projects/${projectId}/teams?api-version=7.1-preview.3`;
+        return this.getValue(url);
+    }
+
+    dashboards(organization: string, project: string, team: string, count?: number): Promise<Dashboard[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/dashboard/dashboards/list?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/dashboard/dashboards?api-version=7.1-preview.3`;
+        return this.getItemsWithContinuation(url, count);
+    }
+
+    plans(organization: string, project: string, count?: number): Promise<Plan[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/work/plans/list?view=azure-devops-rest-7.0
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/work/plans?api-version=7.0`;
+        return this.getItemsWithContinuation(url, count);
+    }
+
+    workItemQueryFolders(organization: string, project: string, depth: 0 | 1 | 2, expand: 'all' | 'clauses' | 'minimal' | 'none' | 'wiql'): Promise<QueryHierarchyItem[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/queries/list?view=azure-devops-rest-7.0&tabs=HTTP
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/wit/queries?$expand=${expand}&$depth=${depth}&api-version=7.0`;
+        return this.getItemsWithContinuation(url);
     }
 
     async team(organization: string, projectName: string, teamName: string): Promise<WebApiTeam | undefined> {
@@ -417,7 +449,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, data, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+            throw new Error(JSON.stringify({ url, data, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
         }
     }
 
@@ -454,7 +486,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, data, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+            throw new Error(JSON.stringify({ url, data, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
         }
     }
 
@@ -483,7 +515,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
         }
     }
 
@@ -511,7 +543,7 @@ export class AzureDevOpsHelper {
             }
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
         }
     }
 
@@ -526,7 +558,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
         }
     }
 
@@ -541,7 +573,7 @@ export class AzureDevOpsHelper {
             throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
         }
         catch (error: any) {
-            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
         }
     }
 
@@ -575,7 +607,44 @@ export class AzureDevOpsHelper {
                 }
             }
             catch (error: any) {
-                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
+            }
+        }
+
+        return collection.slice(0, count);
+    }
+
+    private async getItemsForAuditLog(url: string, count?: number): Promise<AzureDevOpsAuditLogEntry[]> {
+        const collection = new Array<AzureDevOpsAuditLogEntry>();
+
+        let continuationToken: string | undefined = undefined;
+
+        while (true) {
+            const urlWithContinuation: string = continuationToken === undefined ? url : `${url}&continuationToken=${continuationToken}`;
+
+            try {
+                const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
+
+                if (response.status === 200) {
+                    collection.push(...response.data.decoratedAuditLogEntries);
+
+                    if (response.data.hasMore === false) {
+                        break;
+                    }
+                    else {
+                        continuationToken = response.data.continuationToken;
+                    }
+                    
+                    if(count !== undefined && collection.length >= count){
+                        break;
+                    }
+                }
+                else {
+                    throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+                }
+            }
+            catch (error: any) {
+                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
             }
         }
 
@@ -613,27 +682,8 @@ export class AzureDevOpsHelper {
                 }
             }
             catch (error: any) {
-                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status, statusText: error?.statusText ?? error?.response?.statusText }));
+                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
             }
         }
-    }
-
-    private async batchCalls<TParameters, TResult>(parametersCollection: TParameters[], func: (parameters: TParameters) => Promise<TResult>, batchsize? : number): Promise<Array<{ parameters: TParameters, result: TResult }>> {
-        const batches = Helper.getBatches(parametersCollection, batchsize ?? 10);
-
-        const collection = new Array<{ parameters: TParameters, result: TResult }>();
-
-        for (const batch of batches) {
-            const promises = batch.map(p => { return { parameters: p, promise: func(p) } });
-
-            for (const promise of promises) {
-                collection.push({
-                    parameters: promise.parameters,
-                    result    : await promise.promise
-                });
-            }
-        }
-
-        return collection;
     }
 }

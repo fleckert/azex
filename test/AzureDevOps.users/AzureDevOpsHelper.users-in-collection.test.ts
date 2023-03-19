@@ -9,8 +9,8 @@ import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 test('AzureDevOpsHelper - users-in-collection', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const tenant            = config.azureDevOps.tenant;
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
     const file = path.join(__dirname, 'out', organization, `users-in-collection-${organization}.md`);

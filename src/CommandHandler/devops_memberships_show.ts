@@ -12,10 +12,10 @@ import { TeamProjectReference               } from "azure-devops-node-api/interf
 
 export class devops_memberships_show {
 
-    static async handle(tenantId: string, organization: string, projectName: string | undefined, principalName: string, path: string): Promise<void> {
+    static async handle(tenant: string, organization: string, projectName: string | undefined, principalName: string, path: string): Promise<void> {
         const startDate = new Date();
         
-        const azureDevOpsHelper =  await AzureDevOpsHelper.instance(tenantId);
+        const azureDevOpsHelper =  await AzureDevOpsHelper.instance(tenant);
 
         const project = projectName === undefined ? undefined : await azureDevOpsHelper.project(organization, projectName);
 
@@ -31,7 +31,7 @@ export class devops_memberships_show {
         const graphMember = await azureDevOpsHelper.graphMemberByPrincipalName(organization, ['User', 'Group'], principalName);
 
         if (graphMember?.descriptor === undefined) {
-            throw new Error(JSON.stringify({ organization, principalName, graphMember, message: `Failed to resolve '${principalName}' in '${organization}'.` }));
+            throw new Error(JSON.stringify({ tenant, organization, principalName, graphMember, message: `Failed to resolve '${principalName}' in '${organization}'.` }));
         }
 
         const itemAndOthersUpPromise   = new AzureDevOpsMembershipsResolver().resolve(azureDevOpsHelper, organization, graphMember.descriptor, 'up'  );
@@ -99,6 +99,7 @@ export class devops_memberships_show {
 
         console.log(JSON.stringify({
             parameters: {
+                tenant,
                 organization,
                 projectName,
                 principalName,

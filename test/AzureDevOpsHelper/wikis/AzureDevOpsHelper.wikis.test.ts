@@ -6,8 +6,8 @@ import { rm, writeFile             } from "fs/promises";
 test('AzureDevOpsHelper - wikis - collection', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const tenant            = config.azureDevOps.tenant;
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const testDir           = 'out';
     const testName          = 'wikis-collection';
 
@@ -20,9 +20,9 @@ test('AzureDevOpsHelper - wikis - collection', async () => {
 test('AzureDevOpsHelper - wikis - project', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
+    const tenant            = config.azureDevOps.tenant;
     const projectName       = config.azureDevOps.projectName;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const testDir           = 'out';
     const testName          = 'wikis-collection-project';
 
@@ -35,9 +35,9 @@ test('AzureDevOpsHelper - wikis - project', async () => {
 test('AzureDevOpsHelper - wiki - delete', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
+    const tenant            = config.azureDevOps.tenant;
     const projectName       = config.azureDevOps.projectName;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const wikiIdentifier    = '';
 
     if (`${wikiIdentifier}` !== '') {
@@ -54,9 +54,9 @@ test('AzureDevOpsHelper - wiki - deleteProjectWiki', async () => {
 
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
+    const tenant            = config.azureDevOps.tenant;
     const projectName       = config.azureDevOps.projectName;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const manualOnly        = '';
 
     const wikis = await azureDevOpsHelper.wikis(organization, projectName);

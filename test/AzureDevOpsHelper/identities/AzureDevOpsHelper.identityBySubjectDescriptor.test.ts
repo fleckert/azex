@@ -3,11 +3,11 @@ import { TestConfigurationProvider } from "../../_Configuration/TestConfiguratio
 
 test('AzureDevOpsHelper - identityBySubjectDescriptor', async () => {
     const config           = await TestConfigurationProvider.get();
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const organization     = config.azureDevOps.organization;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const usersPromise =  azureDevOpsHelper.graphUsersList (organization, maxNumberOfTests);
     const groupsPromise = azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
 

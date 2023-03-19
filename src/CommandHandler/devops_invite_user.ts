@@ -2,10 +2,10 @@ import { AzureDevOpsHelper } from "../AzureDevOpsHelper";
 import { Helper            } from "../Helper";
 
 export class devops_invite_user {
-    static async handle(tenantId: string, organization: string, principalName: string, accessLevel: string): Promise<void> {
+    static async handle(tenant: string, organization: string, principalName: string, accessLevel: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
         const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['User'], principalName);
 
@@ -27,6 +27,7 @@ export class devops_invite_user {
 
             console.log(JSON.stringify({
                 parameters: {
+                    tenant,
                     organization,
                     principalName,
                     accessLevel

@@ -4,7 +4,7 @@
 
 |Command|Sample|
 |-|-|
-|[devops permissions tokens](./tokens.md)|`azex devops permissions tokens --tenantId ... --organization ... --project ... [--out ...]`|
+|[devops permissions tokens](./tokens.md)|`azex devops permissions tokens --tenant ... --organization ... --project ... [--out ...]`|
 
 ## links
 - [StackOverflow - Automation of changing permission of Azure DevOps repository for a security group](https://stackoverflow.com/questions/74451156/automation-of-changing-permission-of-azure-devops-repository-for-a-security-grou)

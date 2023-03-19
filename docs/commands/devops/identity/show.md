@@ -5,11 +5,11 @@
 resolves the identity for a principalName
 
 ```
-azex devops identity show --tenantId ... --organization ... --principalName ...
+azex devops identity show --tenant ... --organization ... --principalName ...
 ```
 ```JSON
 {
-  "tenantId"          : "...",
+  "tenant"            : "...",
   "organization"      : "...",
   "principalName"     : "...",
   "subjectDescriptor" : "...",

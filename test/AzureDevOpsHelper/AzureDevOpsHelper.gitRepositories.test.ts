@@ -6,10 +6,10 @@ test('AzureDevOpsHelper - gitRepositories', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
     const projectName      = config.azureDevOps.projectName;
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const gitRepositories = await azureDevOpsHelper.gitRepositories(organization, projectName);
 
     const securityNamespaceName = 'Git Repositories';

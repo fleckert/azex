@@ -2,7 +2,7 @@
 
 # devops memberships copy
 
-`azex devops memberships copy --tenantId ... --organization ... --source ... --target ...`
+`azex devops memberships copy --tenant ... --organization ... --source ... --target ...`
 
 apply the same memberships of the `source` to the `target`
 

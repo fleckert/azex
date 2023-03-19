@@ -4,9 +4,9 @@ import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-user', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
+    const tenant            = config.azureDevOps.tenant;
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 
@@ -18,10 +18,10 @@ test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-user', async () => {
 }, 100000);
 
 test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-users-notExist', async () => {
-    const config = await TestConfigurationProvider.get();
-    const organization = config.azureDevOps.organization;
-    const tenantId = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const config            = await TestConfigurationProvider.get();
+    const organization      = config.azureDevOps.organization;
+    const tenant            = config.azureDevOps.tenant;
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     const principalName = "does-not-exist";
     const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['User'], principalName);
@@ -31,9 +31,9 @@ test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-users-notExist', async 
 test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-groups', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
+    const tenant            = config.azureDevOps.tenant;
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
 
@@ -52,8 +52,8 @@ test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-groups', async () => {
 test('AzureDevOpsHelper-graphSubjectQueryByPrincipalName-groups-notExist', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const tenant            = config.azureDevOps.tenant;
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     const principalName = "does-not-exist";
     const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, ['Group'], principalName);

@@ -7,10 +7,10 @@ import { Markdown          } from "../Converters/Markdown";
 import { writeFile         } from "fs/promises";
 
 export class devops_identity_list {
-    static async resolve(tenantId: string, organization: string, project: string | undefined, path: string): Promise<void> {
+    static async resolve(tenant: string, organization: string, project: string | undefined, path: string): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
         const groupsPromise = project === undefined ? azureDevOpsHelper.graphGroupsList(organization) : azureDevOpsHelper.graphGroupsListForProjectName(organization, project);
         const usersPromise  = project === undefined ? azureDevOpsHelper.graphUsersList (organization) : azureDevOpsHelper.graphUsersListForProjectName (organization, project);
@@ -66,7 +66,7 @@ export class devops_identity_list {
         ]);
 
         console.log(JSON.stringify({
-            tenantId,
+            tenant,
             organization,
             project,
             files: {

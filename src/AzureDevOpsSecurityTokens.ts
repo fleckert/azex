@@ -1,8 +1,9 @@
-import { AzureDevOpsHelper                                 } from "./AzureDevOpsHelper";
-import { AzureDevOpsSecurityNamespace                      } from "./models/AzureDevOpsSecurityNamespace";
-import { ReleaseDefinition, ReleaseDefinitionEnvironment   } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
-import { TeamProjectReference                              } from "azure-devops-node-api/interfaces/CoreInterfaces";
-import { TreeNodeStructureType, WorkItemClassificationNode } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
+import { AzureDevOpsHelper                                                     } from "./AzureDevOpsHelper";
+import { AzureDevOpsSecurityNamespace                                          } from "./models/AzureDevOpsSecurityNamespace";
+import { Helper                                                                } from "./Helper";
+import { QueryHierarchyItem, TreeNodeStructureType, WorkItemClassificationNode } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
+import { ReleaseDefinition, ReleaseDefinitionEnvironment                       } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
+import { TeamProjectReference                                                  } from "azure-devops-node-api/interfaces/CoreInterfaces";
 
 export class AzureDevOpsSecurityTokens {
     static GitRepositories_Project                  (projectId: string                                          ) { return `repoV2/${projectId}/`                ; }
@@ -11,7 +12,7 @@ export class AzureDevOpsSecurityTokens {
         const parts = branchName.split('/');
 
         const firstTwoSegments = parts.slice(0, 2);
-        const otherSegments = parts.slice(2).map(p => this.encode(p));
+        const otherSegments = parts.slice(2).map(p => AzureDevOpsSecurityTokens.encode(p));
 
         const partsEncoded = firstTwoSegments.concat(otherSegments).join('/');
 
@@ -19,23 +20,31 @@ export class AzureDevOpsSecurityTokens {
     }
 
     static async all(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
-        const analyticsViews      = this.analyticsViews     (azureDevOpsHelper, organization, project);
-        const gitRepositories     = this.gitRepositories    (azureDevOpsHelper, organization, project);
-        const prjct               = this.project            (azureDevOpsHelper, organization, project);
-        const tagging             = this.tagging            (azureDevOpsHelper, organization, project);
-        const buildDefinitions    = this.buildDefinitions   (azureDevOpsHelper, organization, project);
-        const releaseDefinitions  = this.releaseDefinitions (azureDevOpsHelper, organization, project);
-        const classificationNodes = this.classificationNodes(azureDevOpsHelper, organization, project);
+        const analyticsViews       = AzureDevOpsSecurityTokens.analyticsViews      (azureDevOpsHelper, organization, project);
+        const gitRepositories      = AzureDevOpsSecurityTokens.gitRepositories     (azureDevOpsHelper, organization, project);
+        const prjct                = AzureDevOpsSecurityTokens.project             (azureDevOpsHelper, organization, project);
+        const tagging              = AzureDevOpsSecurityTokens.tagging             (azureDevOpsHelper, organization, project);
+        const buildDefinitions     = AzureDevOpsSecurityTokens.buildDefinitions    (azureDevOpsHelper, organization, project);
+        const releaseManagement    = AzureDevOpsSecurityTokens.releaseManagement   (azureDevOpsHelper, organization, project);
+        const classificationNodes  = AzureDevOpsSecurityTokens.classificationNodes (azureDevOpsHelper, organization, project);
+        const identity             = AzureDevOpsSecurityTokens.identity            (azureDevOpsHelper, organization, project);
+        const dashboardsPrivileges = AzureDevOpsSecurityTokens.dashboardsPrivileges(azureDevOpsHelper, organization, project);
+        const plan                 = AzureDevOpsSecurityTokens.plan                (azureDevOpsHelper, organization, project);
+        const workItemQueryFolders = AzureDevOpsSecurityTokens.workItemQueryFolders(azureDevOpsHelper, organization, project);
 
         const collection = new Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>();
 
-        try { collection.push(...(await analyticsViews     ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
-        try { collection.push(...(await gitRepositories    ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
-        try { collection.push(...(await prjct              ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
-        try { collection.push(...(await tagging            ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
-        try { collection.push(...(await buildDefinitions   ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
-        try { collection.push(...(await releaseDefinitions ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
-        try { collection.push(...(await classificationNodes).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await analyticsViews      ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await gitRepositories     ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await prjct               ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await tagging             ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await buildDefinitions    ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await releaseManagement   ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await classificationNodes ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await identity            ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await dashboardsPrivileges).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await plan                ).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
+        try { collection.push(...(await workItemQueryFolders).map(p => { return { securityNamespace: p.securityNamespace, id: p.id, token: p.token } })) }catch{}
 
         collection.sort(
             (a: { securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }, b: { securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }) =>
@@ -60,10 +69,133 @@ export class AzureDevOpsSecurityTokens {
 
         const value = [{
             securityNamespace: securityNamespace,
-            id: `${prjct.name}`,
+            id: `/${prjct.name}`,
             token: prjct.id === undefined ? '' : `$/Shared/${prjct.id}`
         }];
 
+        return value;
+    }
+
+    static async dashboardsPrivileges(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#object-level-namespaces-and-permissions
+        const securityNamespaceName = 'DashboardsPrivileges';
+        const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
+
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
+            throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
+        }
+
+        const teams = await azureDevOpsHelper.teamsInProject(organization, prjct.id);
+        const parameters = teams.map(team => { return { organization, project: prjct, team }; })
+        const dashboardsAll = await Helper.batchCalls(parameters, p => azureDevOpsHelper.dashboards(p.organization, `${p.project.id}`, `${p.team.id}`));
+
+        const securityNamespace = await securityNamespacePromise;
+
+        const value = [];
+
+        for (const dashboard of dashboardsAll) {
+            for (const result of dashboard.result) {
+                value.push({
+                    securityNamespace: securityNamespace,
+                    id: `/${dashboard.parameters.project.name}/${dashboard.parameters.team.name}/${result.name}`,
+                    token: `$/${dashboard.parameters.project.id}/${dashboard.parameters.team.id}/${result.id}`
+                });
+            }
+        }
+
+        return value;
+    }
+
+    static async plan(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#object-level-namespaces-and-permissions
+        const securityNamespaceName = 'Plan';
+        const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
+
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
+            throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
+        }
+
+        const plans = await azureDevOpsHelper.plans(organization, prjct?.id);
+
+        const securityNamespace = await securityNamespacePromise;
+
+        const value = plans.map(plan => { return {
+            securityNamespace: securityNamespace,
+            id               : `/${prjct.name}/${plan.name}`,
+            token            : `Plan/${prjct.id}/${plan.id}`
+        }});
+        // $/2b388555-16b6-4aa1-9685-743e76984759/4d683b92-dae1-4659-82bf-b7dca8abda6c/adc8b838-ae86-4bd3-823b-1eee9210a2f5
+        return value;
+    }
+
+    
+    static async workItemQueryFolders(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#object-level-namespaces-and-permissions
+        const securityNamespaceName = 'WorkItemQueryFolders';
+        const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
+
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
+            throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
+        }
+
+        const workItemQueryFolders = await azureDevOpsHelper.workItemQueryFolders(organization, prjct?.id, 2, 'none');
+
+        const workItemQueryFoldersFlat  = AzureDevOpsSecurityTokens.flattenWorkItemQueryFolders(workItemQueryFolders, undefined);
+
+        const securityNamespace = await securityNamespacePromise;
+
+        const value = workItemQueryFoldersFlat.map(p => { return {
+            securityNamespace: securityNamespace,
+            id               : `/${prjct.name}/${p.item.path}`,
+            token            : `$/${prjct.id}${p.parent === undefined ? '' : `/${p.parent}`}/${p.item.id}`
+        }});
+
+        return value;
+    }
+
+    private static flattenWorkItemQueryFolders(items: QueryHierarchyItem[], parent: string | undefined): Array<{ parent: string | undefined, item: QueryHierarchyItem }> {
+        const collection = new Array<{ parent: string | undefined, item: QueryHierarchyItem }>();
+
+        for (const item of items) {
+            collection.push({ parent, item });
+
+            if (item.children !== undefined) {
+                collection.push(...AzureDevOpsSecurityTokens.flattenWorkItemQueryFolders(item.children, `${parent === undefined ? '' : `${parent}/`}${item.id}`));
+            }
+        }
+
+        return collection;
+    }
+
+    static async identity(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#internal-namespaces-and-permissions
+        const securityNamespaceName = 'Identity';
+        const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
+
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
+            throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.id.' }));
+        }
+
+        const securityNamespace = await securityNamespacePromise;
+
+        const value = [{
+            securityNamespace: securityNamespace,
+            id: `/${prjct.name}`,
+            token: prjct.id
+        }];
+
+        const teams = await azureDevOpsHelper.teamsInProject(organization, prjct.id);
+        for (const team of teams) {
+            value.push({
+                securityNamespace: securityNamespace,
+                id: `/${prjct.name}/${team.name}`,
+                token: `${prjct.id}/${team.id}`
+            });
+        }
         return value;
     }
 
@@ -71,10 +203,9 @@ export class AzureDevOpsSecurityTokens {
         const securityNamespaceName = 'Git Repositories';
         const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
         const gitRepositoriesPromise   = azureDevOpsHelper.gitRepositories        (organization, project);
-        const prjctPromise             = azureDevOpsHelper.project                (organization, project);
 
-        const prjct = await prjctPromise;
-        if (prjct === undefined) {
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
         const gitRepositories = await gitRepositoriesPromise;
@@ -82,19 +213,15 @@ export class AzureDevOpsSecurityTokens {
 
         const rootValue = {
             securityNamespace,
-            id: `${prjct.name}-root`,
-            token: prjct.id === undefined
-                ? ''
-                : this.GitRepositories_Project(prjct.id)
+            id   : `/${prjct.name} (all)`,
+            token: AzureDevOpsSecurityTokens.GitRepositories_Project(prjct.id)
         }
         const value = gitRepositories.map(
             p => {
                 return {
                     securityNamespace,
-                    id: `${p.name}`,
-                    token: prjct.id === undefined || p.id === undefined
-                        ? ''
-                        : this.GitRepositories_Project_Repository(prjct.id, p.id)
+                    id: `/${prjct.name}/${p.name}`,
+                    token: AzureDevOpsSecurityTokens.GitRepositories_Project_Repository(prjct.id!, p.id ?? '')
                 }
             });
 
@@ -105,10 +232,9 @@ export class AzureDevOpsSecurityTokens {
         // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#project-level-namespaces-and-permissions
         const securityNamespaceName = 'Project';
         const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        const prjctPromise             = azureDevOpsHelper.project                (organization, project              );
 
-        const prjct = await prjctPromise;
-        if (prjct === undefined) {
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
 
@@ -116,8 +242,8 @@ export class AzureDevOpsSecurityTokens {
 
         const value = [{
             securityNamespace: securityNamespace,
-            id: `${prjct.name}`,
-            token: prjct.id === undefined ? '' : `$PROJECT:vstfs:///Classification/TeamProject/${prjct.id}`
+            id               : `/${prjct.name}`,
+            token            : `$PROJECT:vstfs:///Classification/TeamProject/${prjct.id}`
         }];
 
         return value;
@@ -127,10 +253,9 @@ export class AzureDevOpsSecurityTokens {
         // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#project-level-namespaces-and-permissions
         const securityNamespaceName = 'Tagging';
         const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        const prjctPromise             = azureDevOpsHelper.project                (organization, project              );
 
-        const prjct = await prjctPromise;
-        if (prjct === undefined) {
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
 
@@ -138,8 +263,8 @@ export class AzureDevOpsSecurityTokens {
 
         const value = [{
             securityNamespace: securityNamespace,
-            id   : `${prjct.name}`,
-            token: prjct.id === undefined ? '' : `/${prjct.id}`
+            id               : `/${prjct.name}`,
+            token            : `/${prjct.id}`
         }];
 
         return value; 
@@ -149,11 +274,10 @@ export class AzureDevOpsSecurityTokens {
         // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#object-level-namespaces-and-permissions
         const securityNamespaceName = 'BuildAdministration';
         const securityNamespacePromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        const prjctPromise             = azureDevOpsHelper.project                (organization, project              );
         const buildDefinitionsPromise  = azureDevOpsHelper.buildDefinitions       (organization, project              );
 
-        const prjct = await prjctPromise;
-        if (prjct === undefined) {
+        const prjct = await azureDevOpsHelper.project(organization, project);
+        if (prjct?.id === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
 
@@ -163,21 +287,20 @@ export class AzureDevOpsSecurityTokens {
         const value = collection.map(p => {
             return {
                 securityNamespace: securityNamespace,
-                id: `${prjct.name} ${p.name}`,
-                token: prjct.id === undefined || p.id === undefined ? '' : `${prjct.id}/${p.id}`
+                id               : `/${prjct.name}/${p.name}`,
+                token            : `${prjct.id   }/${p.id  }`
             }
         });
 
         return value;
     }
 
-    static async releaseDefinitions(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{  securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
+    static async releaseManagement(azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string): Promise<Array<{  securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>> {
         const securityNamespaceName = 'ReleaseManagement';
         const securityNamespacePromise  = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
-        const prjctPromise              = azureDevOpsHelper.project                (organization, project              );
         const releaseDefinitionsPromise = azureDevOpsHelper.releaseDefinitions     (organization, project              );
 
-        const prjct = await prjctPromise;
+        const prjct = await azureDevOpsHelper.project(organization, project);
         if (prjct === undefined) {
             throw new Error(JSON.stringify({ organization, project, error: 'Failed to resolve project.' }));
         }
@@ -188,7 +311,7 @@ export class AzureDevOpsSecurityTokens {
         const value = new Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>();
 
         for (const item of collection) {
-            const items = this.releaseDefinitionTokens(prjct, securityNamespace, item);
+            const items = AzureDevOpsSecurityTokens.releaseDefinitionTokens(prjct, securityNamespace, item);
 
             value.push(...items);
         }
@@ -202,26 +325,23 @@ export class AzureDevOpsSecurityTokens {
         const depth = 10000;
         const securityNamespaceCSSPromise       = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceNameCSS      );
         const securityNamespaceIterationPromise = azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceNameIteration);
-        
-        const parameters = { organization, project, depth };
-        const classificationNodesPromise = azureDevOpsHelper.classificationNodes(parameters);
 
-        const collection = new Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>();
-
-        const classificationNodes = await classificationNodesPromise;
-        const paths = this.resolvePaths(classificationNodes);
+        const classificationNodes = await azureDevOpsHelper.classificationNodes({ organization, project, depth });
+        const paths = AzureDevOpsSecurityTokens.resolvePaths(classificationNodes);
         
         const securityNamespaceCSS       = await securityNamespaceCSSPromise;
         const securityNamespaceIteration = await securityNamespaceIterationPromise;
+
+        const collection = new Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>();
         for (const path of paths) {
-            const nodes = this.resolveNodes(path.path, classificationNodes);
+            const nodes = AzureDevOpsSecurityTokens.resolveNodes(path.path, classificationNodes);
             const token = nodes.map(p => `vstfs:///Classification/Node/${p.identifier}`).join(':');
             // fix enum comparison
             if (`${path.structureType}`.toLowerCase() === 'area') {
-                collection.push({ securityNamespace: securityNamespaceCSS, id: path.path, token });
+                collection.push({ securityNamespace: securityNamespaceCSS, id: path.path.replaceAll('\\', '/'), token });
             }
             else if (`${path.structureType}`.toLowerCase() === 'iteration') {
-                collection.push({ securityNamespace: securityNamespaceIteration, id: path.path, token });
+                collection.push({ securityNamespace: securityNamespaceIteration, id: path.path.replaceAll('\\', '/'), token });
             }
             else {
                 throw new Error(JSON.stringify({ path }));
@@ -239,7 +359,7 @@ export class AzureDevOpsSecurityTokens {
                 paths.push({ path: node.path, structureType: node.structureType });
             }
             if (node.children !== undefined) {
-                const childPaths = this.resolvePaths(node.children);
+                const childPaths = AzureDevOpsSecurityTokens.resolvePaths(node.children);
 
                 paths.push(...childPaths);
             }
@@ -258,7 +378,7 @@ export class AzureDevOpsSecurityTokens {
             return [node];
         }
         else if (node.children !== undefined) {
-            return [node, ...this.resolveNodes(path, node.children)];
+            return [node, ...AzureDevOpsSecurityTokens.resolveNodes(path, node.children)];
         }
         else {
             return new Array<WorkItemClassificationNode>();

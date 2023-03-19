@@ -5,11 +5,11 @@ import { mkdir, rm, writeFile      } from "fs/promises";
 
 test('AzureDevOpsHelper - securityNamespaces', async () => {
     const config            = await TestConfigurationProvider.get();
-    const tenantId          = config.azureDevOps.tenantId;
+    const tenant            = config.azureDevOps.tenant;
     const organization      = config.azureDevOps.organization;
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     await mkdir(path.join(__dirname, 'out'), { recursive: true });
     const file = path.join(__dirname, 'out', `securityNamespaces-${organization}.json`);

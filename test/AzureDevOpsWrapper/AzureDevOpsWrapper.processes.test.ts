@@ -7,8 +7,8 @@ test('AzureDevOpsWrapper - processes', async () => {
     const config = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
     const baseUrl      = config.azureDevOps.baseUrl;
-    const tenantId     = config.azureDevOps.tenantId;
-    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenantId);
+    const tenant       = config.azureDevOps.tenant;
+    const azureDevOpsWrapper = await AzureDevOpsWrapper.instance(baseUrl, tenant);
     
     const file = path.join(__dirname, 'out', `processes-${organization}.json`);
     const processes = await azureDevOpsWrapper.processes();
