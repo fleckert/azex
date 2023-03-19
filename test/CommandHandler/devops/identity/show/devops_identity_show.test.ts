@@ -5,27 +5,27 @@ import { TestConfigurationProvider } from "../../../../_Configuration/TestConfig
 test('devops_identity_show-user', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const collection = await azureDevOpsHelper.graphUsersList(config.azureDevOps.organization, maxNumberOfTests);
 
     for (const item of collection.filter(p => p.principalName !== undefined)) {
-        await devops_identity_show.resolve(tenantId, organization, item.principalName!, ['User']);
+        await devops_identity_show.resolve(tenant, organization, item.principalName!, ['User']);
     }
 }, 100000);
 
 test('devops_identity_show-group', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const collection = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
 
     for (const item of collection.filter(p => p.principalName !== undefined)) {
-        await devops_identity_show.resolve(tenantId, organization, item.principalName!, ['Group']);
+        await devops_identity_show.resolve(tenant, organization, item.principalName!, ['Group']);
     }
 }, 100000);

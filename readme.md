@@ -1,13 +1,13 @@
 
 | [Commands](/docs/commands/readme.md) | |
 |-|-|
-|[devops](/docs/commands/devops/readme.md) [identity   ](/docs/commands/devops/identity/readme.md   ) [list  ](/docs/commands/devops/identity/list.md     )|`azex devops identity list      --tenantId ... --organization ... [--project ...] [--out ...]`|
-|[devops](/docs/commands/devops/readme.md) [identity   ](/docs/commands/devops/identity/readme.md   ) [show  ](/docs/commands/devops/identity/show.md     )|`azex devops identity show      --tenantId ... --organization ... --principalName ...`        |
+|[devops](/docs/commands/devops/readme.md) [identity   ](/docs/commands/devops/identity/readme.md   ) [list  ](/docs/commands/devops/identity/list.md     )|`azex devops identity list      --tenant ... --organization ... [--project ...] [--out ...]`|
+|[devops](/docs/commands/devops/readme.md) [identity   ](/docs/commands/devops/identity/readme.md   ) [show  ](/docs/commands/devops/identity/show.md     )|`azex devops identity show      --tenant ... --organization ... --principalName ...`        |
 |||
-|[devops](/docs/commands/devops/readme.md) [permissions](/docs/commands/devops/permissions/readme.md) [tokens](/docs/commands/devops/permissions/tokens.md)|`azex devops permissions tokens --tenantId ... --organization ... --project ... [--out ...]`|
+|[devops](/docs/commands/devops/readme.md) [permissions](/docs/commands/devops/permissions/readme.md) [tokens](/docs/commands/devops/permissions/tokens.md)|`azex devops permissions tokens --tenant ... --organization ... --project ... [--out ...]`|
 |||
-|[devops](/docs/commands/devops/readme.md) [memberships](/docs/commands/devops/memberships/readme.md) [copy  ](/docs/commands/devops/memberships/copy.md  )|`azex devops permissions copy   --tenantId ... --organization ... --source ... --target ...`                      |
-|[devops](/docs/commands/devops/readme.md) [memberships](/docs/commands/devops/memberships/readme.md) [show  ](/docs/commands/devops/memberships/show.md  )|`azex devops memberships show   --tenantId ... --organization ... --principalName ... [--project ...] [--out ...]`|
+|[devops](/docs/commands/devops/readme.md) [memberships](/docs/commands/devops/memberships/readme.md) [copy  ](/docs/commands/devops/memberships/copy.md  )|`azex devops permissions copy   --tenant ... --organization ... --source ... --target ...`                      |
+|[devops](/docs/commands/devops/readme.md) [memberships](/docs/commands/devops/memberships/readme.md) [show  ](/docs/commands/devops/memberships/show.md  )|`azex devops memberships show   --tenant ... --organization ... --principalName ... [--project ...] [--out ...]`|
 |||
 |[rbac  ](/docs/commands/rbac/readme.md  ) [export     ](/docs/commands/rbac/export.md                                                                    )|`azex rbac export [--subscription ...] [--out ...]`                                      |
 |[rbac  ](/docs/commands/rbac/readme.md  ) [extend     ](/docs/commands/rbac/extend.md                                                                    )|`azex rbac extend --path path-to-rbac-definitions.json [--subscription ...] [--out ...]`|

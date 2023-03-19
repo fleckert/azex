@@ -5,11 +5,11 @@ import { TestConfigurationProvider } from "../../../../_Configuration/TestConfig
 test('devops_memberships_apply', async () => {
     const config       = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
-    const tenantId     = config.azureDevOps.tenantId;
+    const tenant       = config.azureDevOps.tenant;
 
     const pathIn = '' ?? path.join(__dirname, 'test.json');
 
     if (`${pathIn}` !== '') {
-        await devops_memberships_apply.handle(tenantId, organization, pathIn);
+        await devops_memberships_apply.handle(tenant, organization, pathIn);
     }
 }, 100000);

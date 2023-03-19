@@ -8,11 +8,11 @@ import { mkdir                     } from "fs/promises";
 test('devops_memberships_show-groups', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
     const batchSize        = 5;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const projects = await azureDevOpsHelper.projects(organization, maxNumberOfTests)
     const projectNames = projects.filter(p => p.name !== undefined).map(p => p.name!).sort();
 
@@ -30,8 +30,8 @@ test('devops_memberships_show-groups', async () => {
 
         for (const batch of batches) {
             const promises = batch.map(principalName => [
-                devops_memberships_show.handle(tenantId, organization, undefined  , principalName, pathOutOrg    ),
-                devops_memberships_show.handle(tenantId, organization, projectName, principalName, pathOutProject)
+                devops_memberships_show.handle(tenant, organization, undefined  , principalName, pathOutOrg    ),
+                devops_memberships_show.handle(tenant, organization, projectName, principalName, pathOutProject)
             ]).flat();
 
             await Promise.all(promises);
@@ -42,11 +42,11 @@ test('devops_memberships_show-groups', async () => {
 test('devops_memberships_show-users', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
     const batchSize        = 5;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const projects = await azureDevOpsHelper.projects(organization, maxNumberOfTests)
     const projectNames = projects.filter(p => p.name !== undefined).map(p => p.name!).sort();
 
@@ -64,8 +64,8 @@ test('devops_memberships_show-users', async () => {
 
         for (const batch of batches) {
             const promises = batch.map(principalName => [
-                devops_memberships_show.handle(tenantId, organization, undefined  , principalName, pathOutOrg    ),
-                devops_memberships_show.handle(tenantId, organization, projectName, principalName, pathOutProject)
+                devops_memberships_show.handle(tenant, organization, undefined  , principalName, pathOutOrg    ),
+                devops_memberships_show.handle(tenant, organization, projectName, principalName, pathOutProject)
             ]).flat();
 
             await Promise.all(promises);
@@ -76,11 +76,11 @@ test('devops_memberships_show-users', async () => {
 test('devops_memberships_show-all', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
-    const tenantId         = config.azureDevOps.tenantId;
+    const tenant           = config.azureDevOps.tenant;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
     const batchSize        = 5;
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const projects = await azureDevOpsHelper.projects(organization, maxNumberOfTests)
     const projectNames = projects.filter(p => p.name !== undefined).map(p => p.name!).sort();
 
@@ -100,11 +100,11 @@ test('devops_memberships_show-all', async () => {
         const principalNamesUsers  = (await azureDevOpsHelper.graphUsersListForProjectName (organization, projectName, maxNumberOfTests)).filter(p => p.principalName !== undefined).map(p => p.principalName!).sort();
         const principalNamesGroups = (await azureDevOpsHelper.graphGroupsListForProjectName(organization, projectName, maxNumberOfTests)).filter(p => p.principalName !== undefined).map(p => p.principalName!).sort();
 
-        parameters.push(...principalNamesUsers .map(principalName => { return { tenantId, organization, projectName: undefined, principalName, pathOut: pathOutUsersOrg      } }));
-        parameters.push(...principalNamesUsers .map(principalName => { return { tenantId, organization, projectName           , principalName, pathOut: pathOutUsersProject  } }));
-        parameters.push(...principalNamesGroups.map(principalName => { return { tenantId, organization, projectName: undefined, principalName, pathOut: pathOutGroupsOrg     } }));
-        parameters.push(...principalNamesGroups.map(principalName => { return { tenantId, organization, projectName           , principalName, pathOut: pathOutGroupsProject } }));
+        parameters.push(...principalNamesUsers .map(principalName => { return { tenant, organization, projectName: undefined, principalName, pathOut: pathOutUsersOrg      } }));
+        parameters.push(...principalNamesUsers .map(principalName => { return { tenant, organization, projectName           , principalName, pathOut: pathOutUsersProject  } }));
+        parameters.push(...principalNamesGroups.map(principalName => { return { tenant, organization, projectName: undefined, principalName, pathOut: pathOutGroupsOrg     } }));
+        parameters.push(...principalNamesGroups.map(principalName => { return { tenant, organization, projectName           , principalName, pathOut: pathOutGroupsProject } }));
     }
 
-    await Helper.batchCalls(parameters, p => devops_memberships_show.handle(p.tenantId, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
+    await Helper.batchCalls(parameters, p => devops_memberships_show.handle(p.tenant, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
 }, 1000000);

@@ -314,4 +314,61 @@ export class Html {
 
         return lines.join('\n');
     }
+
+    static tableWithSorting(title: string, headers: Array<string>, collection: Array<Array<string>>): string {
+
+        const lines = new Array<string>();
+
+        lines.push('<!DOCTYPE html>');
+        lines.push('<html lang="en">');
+        lines.push('<head>');
+        lines.push('  <meta charset="utf-8">');
+        lines.push('  <meta http-equiv="X-UA-Compatible" content="IE=edge">');
+        lines.push(`  <title>${title}</title>`);
+        lines.push('  <meta name="viewport" content="width=device-width, initial-scale=1">');
+        lines.push('  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">');
+        lines.push('  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">');
+        lines.push('  <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.css">');
+        
+        lines.push('  <style>');
+        lines.push('    a { text-decoration: none; }');
+        lines.push('  </style>');
+        lines.push('</head>');
+        lines.push('<body>');
+        lines.push(`<h2>${title}</h2>`);
+        lines.push('<table data-toggle="table"                ' +
+                          'data-search="true"                 ' + // https://examples.bootstrap-table.com/#options/table-search.html#view-source
+                          'data-show-pagination-switch="true" ' + // https://examples.bootstrap-table.com/#options/show-pagination-switch.html#view-source
+                          'data-search-highlight="true"       ' + // https://examples.bootstrap-table.com/#options/search-highlight.html#view-source
+                          'data-pagination="true"             ' + // https://examples.bootstrap-table.com/#options/table-pagination.html#view-source
+                          'data-page-size="100"               ' + // https://examples.bootstrap-table.com/#options/page-size.html#view-source
+                          'data-search-align="left"           ' + // https://examples.bootstrap-table.com/#options/search-align.html#view-source
+                          '>');
+        lines.push('  <thead>');
+        lines.push('    <tr>');
+        for (const header of headers) {
+            lines.push(`      <th scope="col" data-sortable="true" data-field="${header}">${header}</td>`);
+        }
+        lines.push('    </tr>');
+        lines.push('  </thead>');
+        lines.push('  <tbody>');
+
+        for (const items of collection) {
+            lines.push('  <tr>');
+            for (const item of items) {
+                lines.push(`     <td>${item}</td>`);
+            }
+            lines.push('  </tr>');
+        }
+        lines.push('  </tbody>');
+        lines.push('</table>');
+
+        lines.push('<script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>');
+        lines.push('<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>');
+        lines.push('<script src="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.js"></script>');
+
+        lines.push('</body>');
+
+        return lines.join('\n');
+    }
 }

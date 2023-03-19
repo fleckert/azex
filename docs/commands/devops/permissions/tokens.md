@@ -11,5 +11,5 @@ see https://learn.microsoft.com/en-us/azure/devops/organizations/security/securi
 
 The [az devops security permission](https://learn.microsoft.com/en-us/cli/azure/devops/security/permission?view=azure-cli-latest) commands use the  `--token` parameter.
 
-The command `azex devops permissions tokens --tenantId ... --organization ... --project ... [--out ...]` helps to resolve the values for these tokens.
+The command `azex devops permissions tokens --tenant ... --organization ... --project ... [--out ...]` helps to resolve the values for these tokens.
 

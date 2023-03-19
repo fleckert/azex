@@ -4,13 +4,13 @@ import { TestConfigurationProvider } from "../../_Configuration/TestConfiguratio
 import { mkdir, rm, writeFile      } from "fs/promises";
 
 test('AzureDevOpsHelper - inviteUser', async () => {
-    const config = await TestConfigurationProvider.get();
+    const config       = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
-    const tenantId = config.azureDevOps.tenantId;
+    const tenant       = config.azureDevOps.tenant;
 
     const principalName = '';
 
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     if (`${principalName}` !== '') {
         await mkdir(path.join(__dirname, 'out', organization), { recursive: true });

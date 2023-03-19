@@ -4,12 +4,14 @@ import { TestConfigurationProvider } from "../../../../_Configuration/TestConfig
 test('devops_permissions_copy', async () => {
     const config       = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
-    const tenantId     = config.azureDevOps.tenantId;
+    const tenant       = config.azureDevOps.tenant;
 
     const principalNameSource = '';
     const principalNameTarget = '';
 
     if (`${principalNameSource}` !== '' && `${principalNameTarget}` !== '') {
-        await devops_memberships_copy.handle(tenantId, organization, principalNameSource, principalNameTarget);
+        const add    = true;
+        const remove = true;
+        await devops_memberships_copy.handle(tenant, organization, principalNameSource, principalNameTarget, add, remove);
     }
 }, 100000);

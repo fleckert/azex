@@ -2,11 +2,11 @@
 
 # devops identity list
 
-`azex devops identity list --tenantId ... --organization ... [--project ...] [--out ...]`
+`azex devops identity list --tenant ... --organization ... [--project ...] [--out ...]`
 
 ```
 {
-  "tenantId"    : "...",
+  "tenant"    : "...",
   "organization": "...",
   "project"     : "...",
   "files": {

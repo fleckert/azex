@@ -11,9 +11,9 @@ import { Markdown                                                               
 import { az_devops_security_permission                                                } from "../AzureCli/devops/security/permission";
 
 export class devops_permissions_overview_show {
-    static async handle(tenantId: string, organization: string, project: string, securityNamespaceName: string, token: string, path: string): Promise<void> {
+    static async handle(tenant: string, organization: string, project: string, securityNamespaceName: string, token: string, path: string): Promise<void> {
         const startDate = new Date();
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
         const securityNamespace = await azureDevOpsHelper.securityNamespaceByName(organization, securityNamespaceName);
         //securityNamespace.actions.sort(AzureDevOpsSecurityNamespaceActionHelper.sort);
 
@@ -66,7 +66,7 @@ export class devops_permissions_overview_show {
 
         console.log(JSON.stringify({
             parameters: {
-                tenantId,
+                tenant,
                 organization,
                 securityNamespaceName,
                 token,
@@ -129,15 +129,27 @@ export class devops_permissions_overview_show {
             lines.push(line.join(''));
         }
 
+        // lines.push(``)
+        // lines.push(`## Samples`)
+        // lines.push(``)
+
+        // lines.push(`|sample |  |`);
+        // lines.push(`|:-     |:-|`);
+        // lines.push(`|[show  ](${az_devops_security_permission.showDocs  ()})|\`${az_devops_security_permission.show  (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token                                             ).replaceAll('--', '\`<br/>--\`') }\`|`);
+        // lines.push(`|[reset ](${az_devops_security_permission.resetDocs ()})|\`${az_devops_security_permission.reset (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[permission-bit]'                         ).replaceAll('--', '\`<br/>--\`') }\`|`);
+        // lines.push(`|[update](${az_devops_security_permission.updateDocs()})|\`${az_devops_security_permission.update(organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[allow-bit]', '[deny-bit]', '[true/false]').replaceAll('--', '\`<br/>--\`') }\`|`);
+
         lines.push(``)
         lines.push(`## Samples`)
         lines.push(``)
 
-        lines.push(`|sample |  |`);
-        lines.push(`|:-     |:-|`);
-        lines.push(`|[show  ](${az_devops_security_permission.showDocs  ()})|\`${az_devops_security_permission.show  (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token                                             )}\`|`);
-        lines.push(`|[reset ](${az_devops_security_permission.resetDocs ()})|\`${az_devops_security_permission.reset (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[permission-bit]'                         )}\`|`);
-        lines.push(`|[update](${az_devops_security_permission.updateDocs()})|\`${az_devops_security_permission.update(organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[allow-bit]', '[deny-bit]', '[true/false]')}\`|`);
+        lines.push(`|[show  ](${az_devops_security_permission.showDocs  ()}) | [reset ](${az_devops_security_permission.resetDocs ()})  | [update](${az_devops_security_permission.updateDocs()}) |`);
+        lines.push(`|:-     |:-|:-|`);
+        lines.push(`|\`${az_devops_security_permission.show  (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token).replaceAll('--', '\`<br/>--\`') }\`<br/><br/><br/><br/>` + 
+                   `|\`${az_devops_security_permission.reset (organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[permission-bit]').replaceAll('--', '\`<br/>--\`') }\`<br/><br/><br/>`+
+                   `|\`${az_devops_security_permission.update(organization, `${securityNamespace?.namespaceId}`, `[subject]`, token, '[allow-bit]', '[deny-bit]', '[true/false]').replaceAll('--', '\`<br/>--\`') }\`|`);
+
+
 
         lines.push(``)
         lines.push(`## Subjects`)

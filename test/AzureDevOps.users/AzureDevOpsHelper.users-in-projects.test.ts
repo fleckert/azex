@@ -11,8 +11,8 @@ test('AzureDevOpsHelper - users-in-projects', async () => {
 
     const config             = await TestConfigurationProvider.get();
     const organization       = config.azureDevOps.organization;
-    const tenantId           = config.azureDevOps.tenantId;
-    const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenantId);
+    const tenant             = config.azureDevOps.tenant;
+    const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenant);
     const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
     await mkdir(path.join(__dirname, 'out', organization), { recursive: true });

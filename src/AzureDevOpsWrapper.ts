@@ -20,8 +20,8 @@ export class AzureDevOpsWrapper {
         this.requestHandlers = [getPersonalAccessTokenHandler(token)];
      }
 
-    static async instance(baseUrl: string, tenantId? : string): Promise<AzureDevOpsWrapper> {
-        const token = await AzureDevOpsPat.getPersonalAccessToken(tenantId);
+    static async instance(baseUrl: string, tenant? : string): Promise<AzureDevOpsWrapper> {
+        const token = await AzureDevOpsPat.getPersonalAccessToken(tenant);
         return new AzureDevOpsWrapper(baseUrl, token);
     }
 

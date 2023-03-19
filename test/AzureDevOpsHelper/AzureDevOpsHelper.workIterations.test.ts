@@ -1,27 +1,31 @@
 import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
-import { writeFile                 } from "fs/promises";
+import { mkdir, rm, writeFile      } from "fs/promises";
 
 test('AzureDevOpsHelper - workIterations', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
-    const testDir           = 'out';
-    const testName          = 'workIterations';
+    const tenant            = config.azureDevOps.tenant;
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
-    await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-teams.json`), JSON.stringify({ message: 'test started' }, null, 2));
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
+    const testName          = 'workIterations';
+
+    await mkdir(path.join(__dirname, 'out', organization, 'workiteratons'), { recursive: true });
+
+    const fileTeams = path.join(__dirname, 'out', organization, 'workiteratons', `${testName}-${organization}-teams.json`);
+    await rm(fileTeams, { force: true });
     const teams = await azureDevOpsHelper.teams(organization);
-    await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-teams.json`), JSON.stringify(teams, null, 2));
+    await writeFile(fileTeams, JSON.stringify(teams, null, 2));
 
     for (const team of teams.filter(p => p.id !== undefined && p.projectName !== undefined).slice(0, maxNumberOfTests)) {
         const teamId = team.id!;
         const project = team.projectName!;
 
-        await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-${project}-${teamId}-workIterations.json`), JSON.stringify({ message: 'test started' }, null, 2));
+        const file = path.join(__dirname, 'out', organization, 'workiteratons', `${testName}-${organization}-${project}-${teamId}-workIterations.json`);
+        await rm(file, { force: true });
         const workIterations = await azureDevOpsHelper.workIterations(organization, project, teamId);
-        await writeFile(path.join(__dirname, testDir, `${testName}-${organization}-${project}-${teamId}-workIterations.json`), JSON.stringify(workIterations, null, 2));
+        await writeFile(file, JSON.stringify(workIterations, null, 2));
     }
 }, 100000);

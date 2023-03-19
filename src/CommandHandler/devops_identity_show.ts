@@ -2,10 +2,10 @@ import { AzureDevOpsHelper } from "../AzureDevOpsHelper";
 import { Helper            } from "../Helper";
 
 export class devops_identity_show {
-    static async resolve(tenantId: string, organization: string, principalName: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group']): Promise<void> {
+    static async resolve(tenant: string, organization: string, principalName: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group']): Promise<void> {
         const startDate = new Date();
 
-        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+        const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
         const graphSubject = await azureDevOpsHelper.graphSubjectQueryByPrincipalName(organization, subjectKind, principalName);
         if (graphSubject?.descriptor === undefined) {
@@ -18,7 +18,7 @@ export class devops_identity_show {
         }
 
         console.log(JSON.stringify({
-            tenantId,
+            tenant,
             organization,
             principalName,
             subjectDescriptor : graphSubject.descriptor,

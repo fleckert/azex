@@ -7,9 +7,9 @@ import { writeFile                 } from "fs/promises";
 test('AzureDevOpsHelper - workBacklogs', async () => {
     const config            = await TestConfigurationProvider.get();
     const organization      = config.azureDevOps.organization;
-    const tenantId          = config.azureDevOps.tenantId;
+    const tenant            = config.azureDevOps.tenant;
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenantId);
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const testDir           = 'out';
     const testName          ='workBacklogs';
 
