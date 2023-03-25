@@ -1,4 +1,23 @@
+import { writeFile } from "fs/promises";
 import { TestHelper } from "./TestHelper";
+
+test('TestHelper-prepareFile', async () => {
+
+    const testValues = [
+        [__dirname, 'out', 'file.json'   ],
+        [__dirname, 'out', 'file .json'  ],
+        [__dirname, 'out', 'file 0.json' ],
+        [__dirname, 'out', 'file\\1.json'],
+        [__dirname, 'out', 'file/2.json' ],
+    ]
+
+    await Promise.all(testValues.map(p => prepareFile(p)));
+});
+
+const prepareFile = async (values: string[]) => {
+    const file = await TestHelper.prepareFile(values)
+    await writeFile(file, '');
+}
 
 test('TestHelper-checkArrays-strings', async () => {
 

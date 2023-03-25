@@ -4,8 +4,9 @@ import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { mkdir, rm, writeFile      } from "fs/promises";
+import { writeFile                 } from "fs/promises";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('AzureDevOpsHelper - users-in-collection-groups', async () => {
 
@@ -15,9 +16,7 @@ test('AzureDevOpsHelper - users-in-collection-groups', async () => {
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
 
-    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
-    const file = path.join(__dirname, 'out', organization, `users-in-collection-groups-${organization}.md`);
-    await rm(file, { force: true });
+    const file = await TestHelper.prepareFile([__dirname, 'out', organization, `${organization}-users-in-collection-groups.md`]);
 
     const usersPromise = azureDevOpsHelper.graphUsersList(organization);
 

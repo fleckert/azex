@@ -9,7 +9,7 @@ test('AzureDevOpsHelper - userEntitlements', async () => {
     const tenant           = config.azureDevOps.tenant;
     const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
-    await mkdir(path.join(__dirname, 'out'), { recursive: true });
+    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
@@ -17,7 +17,7 @@ test('AzureDevOpsHelper - userEntitlements', async () => {
     const files = new Array<string>();
 
     for (const user of users.filter(p => p.descriptor !== undefined)) {
-        const file = path.join(__dirname, 'out', `userEntitlements-${organization}-${user.principalName}.json`);
+        const file = path.join(__dirname, 'out', organization, `userEntitlements-${organization}-${user.principalName}.json`);
         await rm(file, { force: true });
 
         const userEntitlements = await azureDevOpsHelper.userEntitlements(organization, user.descriptor!);

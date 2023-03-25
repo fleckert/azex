@@ -1,24 +1,23 @@
-import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphGroup, GraphUser     } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                      } from "../../src/Guid";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { rm, mkdir, writeFile      } from "fs/promises";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { TestHelper                } from "../_TestHelper/TestHelper";
+import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - users-in-project-groups', async () => {
 
-    const config            = await TestConfigurationProvider.get();
-    const organization      = config.azureDevOps.organization;
-    const projectName       = config.azureDevOps.projectName;
-    const tenant            = config.azureDevOps.tenant;
-    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
-    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const projectName      = config.azureDevOps.projectName;
+    const tenant           = config.azureDevOps.tenant;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
-    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
-    const file = path.join(__dirname, 'out', organization, `users-in-project-groups-${organization}-${projectName}.md`);
-    await rm(file, {force: true});
+    const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
+
+    const file = await TestHelper.prepareFile([__dirname, 'out', organization, `${organization}-users-in-project-groups.md`]);
 
     const scopeDescriptor = await azureDevOpsHelper.graphDescriptorForProjectName(organization, projectName);
 

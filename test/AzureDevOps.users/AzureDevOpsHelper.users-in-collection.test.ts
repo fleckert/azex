@@ -1,10 +1,10 @@
-import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphUser                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { rm, mkdir, writeFile      } from "fs/promises";
+import { writeFile                 } from "fs/promises";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { TestHelper                } from "../_TestHelper/TestHelper";
 
 test('AzureDevOpsHelper - users-in-collection', async () => {
     const config            = await TestConfigurationProvider.get();
@@ -12,9 +12,7 @@ test('AzureDevOpsHelper - users-in-collection', async () => {
     const tenant            = config.azureDevOps.tenant;
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
-    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
-    const file = path.join(__dirname, 'out', organization, `users-in-collection-${organization}.md`);
-    await rm(file, { force: true });
+    const file = await TestHelper.prepareFile([__dirname, 'out', organization, `${organization}-users-in-collection.md`]);
 
     const users = await azureDevOpsHelper.graphUsersList(organization);
 

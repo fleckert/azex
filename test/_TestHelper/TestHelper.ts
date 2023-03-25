@@ -1,4 +1,19 @@
+import { mkdir, rm } from "fs/promises";
+import path from "path";
+
 export class TestHelper {
+
+    static async prepareFile(parts: string[]) {
+        if(parts.length < 2){
+            throw new Error(`Provide at least two strings.`);
+        }
+
+        await mkdir(path.join(...parts.slice(0, parts.length - 1)), { recursive: true });
+        const file = path.join(...parts.slice(0, parts.length - 1), parts[parts.length-1].replaceAll(new RegExp('[^a-zA-Z0-9-_.]', 'g'), '_').replaceAll('__', '_'));
+        await rm(file, { force: true });
+
+        return file;
+    }
 
     static checkValueAndError(item: { value: any | undefined, error: Error | undefined }, values?: any) {
         if (item.error !== undefined) { throw item.error; }
