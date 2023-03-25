@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { AzureDevOpsAccessControlList                                      } from "./models/AzureDevOpsAccessControlEntry";
 import { AzureDevOpsAuditLogEntry                                          } from "./models/AzureDevOpsAuditLogEntry";
@@ -12,9 +11,11 @@ import { GitRepository                                                     } fro
 import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Helper                                                            } from "./Helper";
 import { Identity                                                          } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
+import { InstalledExtension                                                } from "azure-devops-node-api/interfaces/ExtensionManagementInterfaces";
+import { Process, TeamProjectReference, WebApiTeam                         } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { Profile                                                           } from "azure-devops-node-api/interfaces/ProfileInterfaces";
 import { QueryHierarchyItem, WorkItemClassificationNode                    } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 import { ReleaseDefinition                                                 } from "azure-devops-node-api/interfaces/ReleaseInterfaces";
-import { TeamProjectReference, WebApiTeam                                  } from "azure-devops-node-api/interfaces/CoreInterfaces";
 import { WikiV2                                                            } from "azure-devops-node-api/interfaces/WikiInterfaces";
 
 export class AzureDevOpsHelper {
@@ -42,6 +43,24 @@ export class AzureDevOpsHelper {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/list?view=azure-devops-rest-7.1
         const url = `https://dev.azure.com/${organization}/${project}/_apis/build/definitions?api-version=7.1-preview.7`;
         return this.getItemsWithContinuation(url, count);
+    }
+
+    extensions(organization: string, includeDisabledExtensions?: boolean, includeErrors?: boolean, includeInstallationIssues?: boolean, assetTypes?: string[]): Promise<InstalledExtension[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/extensionmanagement/installed-extensions/list?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://extmgmt.dev.azure.com/${organization}/_apis/extensionmanagement/installedextensions` +
+                    `?api-version=7.1-preview.1`+
+                    (includeDisabledExtensions === undefined             ? '' : `&includeDisabledExtensions=${includeDisabledExtensions ? 'true' : 'false'}`) +
+                    (includeErrors             === undefined             ? '' : `&includeErrors=${            includeErrors             ? 'true' : 'false'}`) +
+                    (includeInstallationIssues === undefined             ? '' : `&includeInstallationIssues=${includeInstallationIssues ? 'true' : 'false'}`) +
+                    (assetTypes === undefined || assetTypes.length === 0 ? '' : `&assetTypes=${               assetTypes.join(':')                        }`)
+                    ;
+        return this.getItemsWithContinuation(url);
+    }
+
+    profile(id: string, details: boolean = true) : Promise<Profile> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/profile/profiles/get?view=azure-devops-rest-7.0&tabs=HTTP
+        const url = `https://app.vssps.visualstudio.com/_apis/profile/profiles/${id}?details=${details ? 'true' : 'false'}&api-version=7.1-preview.3`;
+        return this.getValue(url);
     }
 
     releaseDefinitions(organization: string, project: string, count?: number): Promise<ReleaseDefinition[]> {
@@ -151,10 +170,16 @@ export class AzureDevOpsHelper {
         return response.data;
     }
 
+    static userEntitlementsUrl(organization: string, descriptor: string): string{
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/get?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vsaex.dev.azure.com/${organization}/_apis/userentitlements/${descriptor}?api-version=7.1-preview.3`;
+
+        return url;
+    }
     userEntitlements(organization: string, descriptor: string): Promise<any | undefined> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/get?view=azure-devops-rest-7.1&tabs=HTTP
         // npm package has no definitions for this...?!?
-        const url = `https://vsaex.dev.azure.com/${organization}/_apis/userentitlements/${descriptor}?api-version=7.1-preview.3`;
+        const url = AzureDevOpsHelper.userEntitlementsUrl(organization, descriptor);
         return this.get(url);
     }
 
@@ -170,9 +195,9 @@ export class AzureDevOpsHelper {
         return this.getValue(url);
     }
 
-    dashboards(organization: string, project: string, team: string, count?: number): Promise<Dashboard[]> {
+    dashboards(organization: string, project: string, team?: string, count?: number): Promise<Dashboard[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/dashboard/dashboards/list?view=azure-devops-rest-7.1&tabs=HTTP
-        const url = `https://dev.azure.com/${organization}/${project}/${team}/_apis/dashboard/dashboards?api-version=7.1-preview.3`;
+        const url = `https://dev.azure.com/${organization}/${project}/${team === undefined ? '' : `${team}/`}_apis/dashboard/dashboards?api-version=7.1-preview.3`;
         return this.getItemsWithContinuation(url, count);
     }
 
@@ -406,6 +431,13 @@ export class AzureDevOpsHelper {
         return this.getItemsWithContinuationAndBreak(url, predicate);
     }
 
+    processes(organization: string, count?: number): Promise<Process[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/core/processes/list?view=azure-devops-rest-7.1
+        const url = `https://dev.azure.com/${organization}/_apis/process/processes?api-version=7.1-preview.1`;
+
+        return this.getItemsWithContinuation(url, count);
+    }
+
     async graphUsersListForProjectName(organization: string, projectName: string, count?: number): Promise<GraphUser[]> {
         const project = await this.project(organization, projectName);
 
@@ -442,7 +474,10 @@ export class AzureDevOpsHelper {
         try {
             const response = await axios.post(url, data, { headers: this.getHeaders() });
 
-            if (response.status === 200) {
+            if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+            }
+            else if (response.status === 200) {
                 return response.data.value;
             }
 
@@ -459,6 +494,40 @@ export class AzureDevOpsHelper {
         return graphSubjects[descriptor];
     }
 
+    async graphSubjectQueryByDisplayName(organization: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group'], displayName: string): Promise<GraphSubject | undefined> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/subject-query/query?view=azure-devops-rest-7.1
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/subjectquery?api-version=7.1-preview.1`;
+        const data = JSON.stringify({
+            query: `${displayName}`,
+            subjectKind
+        });
+        try {
+            const response = await axios.post(url, data, { headers: this.getHeaders() });
+
+            if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+            }
+            else if (response.status === 200) {
+                if (response.data.count === 0) {
+                    return undefined;
+                }
+                else if (response.data.count === 1) {
+                    return response.data.value[0] == null ? undefined : response.data.value[0];
+                }
+                else{
+                    const item = response.data.value.find((p: { displayName: string | undefined }) => p.displayName?.toLowerCase() === displayName.toLowerCase());
+
+                    return item;
+                }
+            }
+
+            throw new Error(JSON.stringify({ url, data, status: response.status, statusText: response.statusText }));
+        }
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, data, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
+        }
+    }
+
     async graphSubjectQueryByPrincipalName(organization: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group'], principalName: string): Promise<GraphSubject | undefined> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/subject-query/query?view=azure-devops-rest-7.1
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/subjectquery?api-version=7.1-preview.1`;
@@ -469,7 +538,10 @@ export class AzureDevOpsHelper {
         try {
             const response = await axios.post(url, data, { headers: this.getHeaders() });
 
-            if (response.status === 200) {
+            if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+            }
+            else if (response.status === 200) {
                 if (response.data.count === 0) {
                     return undefined;
                 }
@@ -477,7 +549,7 @@ export class AzureDevOpsHelper {
                     return response.data.value[0] == null ? undefined : response.data.value[0];
                 }
                 else{
-                    const item = response.data.value.find((p: { principalName: string | undefined }) => p.principalName?.toLowerCase() === principalName.toLocaleLowerCase());
+                    const item = response.data.value.find((p: { principalName: string | undefined }) => p.principalName?.toLowerCase() === principalName.toLowerCase());
 
                     return item;
                 }
@@ -493,6 +565,10 @@ export class AzureDevOpsHelper {
     async graphMemberByPrincipalName(organization: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group'], principalName: string): Promise<GraphMember | undefined> {
          return this.graphSubjectQueryByPrincipalName(organization, subjectKind, principalName);
     }
+
+    async graphMemberByDisplayName(organization: string, subjectKind: ['User'] | ['Group'] | ['User', 'Group'], principalName: string): Promise<GraphMember | undefined> {
+        return this.graphSubjectQueryByDisplayName(organization, subjectKind, principalName);
+   }
 
     private getHeaders() {
         const headers = {
@@ -534,7 +610,7 @@ export class AzureDevOpsHelper {
         }
     }
 
-    private async delete(url: string, statusCodeExpected : number): Promise<void> {
+    async delete(url: string, statusCodeExpected : number): Promise<void> {
         try {
             const response = await axios.delete(url, { headers: this.getHeaders() });
 
@@ -551,7 +627,10 @@ export class AzureDevOpsHelper {
         try {
             const response = await axios.get(url, { headers: this.getHeaders() });
 
-            if (response.status === 200) {
+            if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+            }
+            else if (response.status === 200) {
                 return response.data;
             }
 
@@ -566,7 +645,10 @@ export class AzureDevOpsHelper {
         try {
             const response = await axios.get(url, { headers: this.getHeaders() });
 
-            if (response.status === 200) {
+            if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+            }
+            else if (response.status === 200) {
                 return response.data.value;
             }
 
@@ -588,7 +670,10 @@ export class AzureDevOpsHelper {
             try {
                 const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
 
-                if (response.status === 200) {
+                if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                    throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+                }
+                else if (response.status === 200) {
                     collection.push(...response.data.value);
 
                     if (response.headers[this.continuationTokenHeader] === undefined) {
@@ -625,7 +710,10 @@ export class AzureDevOpsHelper {
             try {
                 const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
 
-                if (response.status === 200) {
+                if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                    throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+                }
+                else if (response.status === 200) {
                     collection.push(...response.data.decoratedAuditLogEntries);
 
                     if (response.data.hasMore === false) {
@@ -660,7 +748,10 @@ export class AzureDevOpsHelper {
             try {
                 const response = await axios.get(urlWithContinuation, { headers: this.getHeaders() });
 
-                if (response.status === 200) {
+                if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                    throw new Error(JSON.stringify({ url, status: 401, statusText: 'Unauthorized' }));
+                }
+                else if (response.status === 200) {
                     const collection = new Array<T>();
 
                     collection.push(...response.data.value);
