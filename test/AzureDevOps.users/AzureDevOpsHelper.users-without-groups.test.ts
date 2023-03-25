@@ -1,21 +1,20 @@
-import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../src/AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks    } from "../../src/AzureDevOpsPortalLinks";
 import { GraphUser                 } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Markdown                  } from "../../src/Converters/Markdown";
-import { rm, mkdir, writeFile      } from "fs/promises";
 import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
+import { TestHelper                } from "../_TestHelper/TestHelper";
+import { writeFile                 } from "fs/promises";
 
 test('AzureDevOpsHelper - users-without-groups', async () => {
-    const config             = await TestConfigurationProvider.get();
-    const organization       = config.azureDevOps.organization;
-    const tenant             = config.azureDevOps.tenant;
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const tenant           = config.azureDevOps.tenant;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
+    
     const azureDevOpsHelper  = await AzureDevOpsHelper.instance(tenant);
-    const maxNumberOfTests   = config.azureDevOps.maxNumberOfTests;
 
-    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
-    const file = path.join(__dirname, 'out', organization, `users-without-groups-${organization}.md`);
-    await rm(file, {force: true});
+    const file = await TestHelper.prepareFile([__dirname, 'out', organization, `${organization}-users-without-groups.md`]);
 
     const users = await azureDevOpsHelper.graphUsersList(organization, maxNumberOfTests);
 

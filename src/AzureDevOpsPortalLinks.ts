@@ -2,7 +2,7 @@
 export class AzureDevOpsPortalLinks {
     
     static projectRepositorySettings (organization: string, project: string): string { return `https://dev.azure.com/${organization}/${project}/_settings/repositories?_a=permissions`; }
-    
+
 
     static repositorySettings        (organization: string, project: string, repositoryId: string): string { return `https://dev.azure.com/${organization}/${project}/_settings/repositories?repo=${repositoryId}`                  ; }
     static repositorySettingsPolicies(organization: string, project: string, repositoryId: string): string { return `https://dev.azure.com/${organization}/${project}/_settings/repositories?repo=${repositoryId}&_a=policiesMid`   ; }
@@ -14,7 +14,13 @@ export class AzureDevOpsPortalLinks {
             + `_settings/permissions`
             + (subjectDescriptor === undefined ? '' : `?subjectDescriptor=${subjectDescriptor}`);
     }
+  // todo remove whitespace
+    static Project                         (organization: string, project: string                      ) { return `https://dev.azure.com/${organization}/${project}`                                                            }
+    static ProjectConfigurationAreas       (organization: string, project: string                      ) { return `https://dev.azure.com/${organization}/${project}/_settings/work?_a=areas`                                    }
+    static ProjectConfigurationIterations  (organization: string, project: string                      ) { return `https://dev.azure.com/${organization}/${project}/_settings/work?_a=iterations`                               }
+    static ProjectConfigurationRepositories(organization: string, project: string                      ) { return `https://dev.azure.com/${organization}/${project}/_settings/repositories`                                     }
+    static ProjectConfigurationRepository  (organization: string, project: string, repositoryId: string) { return `https://dev.azure.com/${organization}/${project}/_settings/repositories?repo=${repositoryId}&_a=policiesMid` }
 
-    static ProjectConfigurationAreas     (organization: string, project: string) { return `https://dev.azure.com/${organization}/${project}/_settings/work?_a=areas`      }
-    static ProjectConfigurationIterations(organization: string, project: string) { return `https://dev.azure.com/${organization}/${project}/_settings/work?_a=iterations` }
+    static ProjectProcess                  (organization: string, processName: string                    ) { return `https://dev.azure.com/${organization}/_settings/process?process-name=${processName}&_a=workitemtypes`}
+    
 }

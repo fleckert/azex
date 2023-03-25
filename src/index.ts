@@ -98,7 +98,7 @@ else if (args[0]?.toLowerCase() === "devops") {
         const tenant       = checkDevOpsTenant      (argv.tenant      );
         const organization = checkDevOpsOrganization(argv.organization);
 
-        devops_auditlog_query.handle(tenant, organization, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
+        devops_auditlog_query.handle(tenant, organization, 100000, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
     }
     else if (args[1]?.toLowerCase() === "pat") {
         var argv = getArgv(2);

@@ -4,6 +4,10 @@ export class Helper {
         return (new Date().getTime() - startDate.getTime()) / 1000;
     }
 
+    static isInDebugMode() {
+        return require('inspector').url() !== undefined;
+    }
+
     static async batchCalls<TParameters, TResult>(parametersCollection: TParameters[], func: (parameters: TParameters) => Promise<TResult>, batchsize?: number)
     : Promise<Array<{ parameters: TParameters, result: TResult }>> {
         const batches = Helper.getBatches(parametersCollection, batchsize ?? 10);

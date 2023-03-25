@@ -1,22 +1,23 @@
-import   path                                 from "path";
 import { AzureDevOpsHelper                  } from "../../src/AzureDevOpsHelper";
+import { AzureDevOpsMembershipsResolver     } from "../../src/AzureDevOpsMembershipsResolver";
 import { AzureDevOpsPortalLinks             } from "../../src/AzureDevOpsPortalLinks";
 import { GraphGroup, GraphMember, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Guid                               } from "../../src/Guid";
 import { Helper                             } from "../../src/Helper";
 import { Markdown                           } from "../../src/Converters/Markdown";
-import { mkdir, rm, writeFile               } from "fs/promises";
 import { TestConfigurationProvider          } from "../_Configuration/TestConfiguration";
-import { AzureDevOpsMembershipsResolver     } from "../../src/AzureDevOpsMembershipsResolver";
+import { TestHelper                         } from "../_TestHelper/TestHelper";
+import { writeFile                          } from "fs/promises";
 
 test('AzureDevOpsHelper - groups', async () => {
 
-    const config            = await TestConfigurationProvider.get();
-    const organization      = config.azureDevOps.organization;
-    const tenant            = config.azureDevOps.tenant;
+    const config           = await TestConfigurationProvider.get();
+    const organization     = config.azureDevOps.organization;
+    const tenant           = config.azureDevOps.tenant;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
+    const batchSize        = 5;
+
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
-    const maxNumberOfTests  = config.azureDevOps.maxNumberOfTests;
-    const batchSize = 5;
 
     const parameters = [
         // 'Project Collection Administrators',
@@ -30,9 +31,7 @@ test('AzureDevOpsHelper - groups', async () => {
 
 
 const testGroup = async (azureDevOpsHelper:AzureDevOpsHelper,organization:string, groupName: string,maxNumberOfTests:number)=>{
-    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
-    const file = path.join(__dirname, 'out', organization, `${organization}-${groupName}`.toLowerCase().replaceAll(new RegExp('[^a-zA-Z0-9_]', 'g'), '_').replaceAll('__', '_') + `.md`);
-    await rm(file, { force: true });
+    const file = await TestHelper.prepareFile([__dirname, 'out', organization, `${organization}-${groupName}.md`]);
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
     const groupsFiltered = groups.filter(group => group.descriptor !== undefined).filter(p => `${p.principalName}`.toLowerCase().indexOf(groupName.toLowerCase()) >= 0);
@@ -96,11 +95,8 @@ const testGroup = async (azureDevOpsHelper:AzureDevOpsHelper,organization:string
     console.log({ file });
 }
 
-
 const testGroupMembers = async (azureDevOpsHelper: AzureDevOpsHelper, organization: string, groupName: string, maxNumberOfTests: number) => {
-    await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
-    const file = path.join(__dirname, 'out', organization, `${organization}-${groupName}`.toLowerCase().replaceAll(new RegExp('[^a-zA-Z0-9_]', 'g'), '_').replaceAll('__', '_') + `-all.md`);
-    await rm(file, { force: true });
+    const file = await TestHelper.prepareFile([__dirname, 'out', organization, `${organization}-${groupName}-all.md`]);
 
     const groups = await azureDevOpsHelper.graphGroupsList(organization, maxNumberOfTests);
     const groupsFiltered = groups.filter(group => group.descriptor !== undefined).filter(p => `${p.principalName}`.toLowerCase().indexOf(groupName.toLowerCase()) >= 0);

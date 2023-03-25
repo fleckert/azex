@@ -63,7 +63,8 @@ export class Html {
     }
 
     static getLinkWithToolTip(title: string, url: string, tooltip: string) {
-        return `<a href="${url}" title="${tooltip}" target="_blank">${title}</a>`;
+        // x-my-search is to enable searching by title... <a href=... may be an id or any string, but the title is visible
+        return `<a x-my-search="${title}" href="${url}" title="${tooltip}" target="_blank">${title}</a>`;
     }
 
     static subscription(tenantId: string, subscriptionId: string, subscriptionDisplayName: string | undefined): string {
@@ -356,7 +357,7 @@ export class Html {
         for (const items of collection) {
             lines.push('  <tr>');
             for (const item of items) {
-                lines.push(`     <td>${item}</td>`);
+                lines.push(`     <td style="vertical-align:top;">${item}</td>`);
             }
             lines.push('  </tr>');
         }
