@@ -15,20 +15,21 @@ import { AzureDevOpsAuditLogEntry,
          AzureDevOpsAuditLogEntry_Data_SecurityModifyAccessControlLists,
          AzureDevOpsAuditLogEntry_Data_SecurityModifyPermission,
          AzureDevOpsAuditLogEntry_Data_SecurityRemoveAccessControlLists, 
+         AzureDevOpsAuditLogEntry_Data_SecurityRemovePermission, 
          AzureDevOpsAuditLogEntry_Data_TokenPatCreateEvent,              
          AzureDevOpsAuditLogEntry_Data_TokenPatRevokeEvent              } from "../models/AzureDevOpsAuditLogEntry";
 import { az_devops_security_permission                                  } from "../AzureCli/devops/security/permission";
 import { AzureDevOpsHelper                                              } from "../AzureDevOpsHelper";
 import { AzureDevOpsPortalLinks                                         } from "../AzureDevOpsPortalLinks";
-import { AzureDevOpsSecurityNamespace                                   } from "../models/AzureDevOpsSecurityNamespace";
-import { AzureDevOpsSecurityTokens                                      } from "../AzureDevOpsSecurityTokens";
+import { AzureDevOpsSecurityTokenElement, AzureDevOpsSecurityTokens     } from "../AzureDevOpsSecurityTokens";
+import { AzureDevOpsSecurityTokenParser                                 } from "../AzureDevOpsSecurityTokenParser";
 import { GraphMember                                                    } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Helper                                                         } from "../Helper";
 import { Html                                                           } from "../Converters/Html";
 import { InstalledExtension                                             } from "azure-devops-node-api/interfaces/ExtensionManagementInterfaces";
 import { Markdown                                                       } from "../Converters/Markdown";
 import { readFile, writeFile                                            } from "fs/promises";
-import { TeamProjectReference } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { TeamProjectReference                                           } from "azure-devops-node-api/interfaces/CoreInterfaces";
 
 export class devops_auditlog_query {
     static async handle(tenant: string, organization: string, count: number, path: string): Promise<void> {
@@ -44,12 +45,18 @@ export class devops_auditlog_query {
 
         const securityTokensPromise = devops_auditlog_query.resolveSecurityTokens(azureDevOpsHelper, organization);
         const extensionsPromise     = azureDevOpsHelper.extensions(organization, includeDisabledExtensions, includeErrors);
+        const projectsPromise       = azureDevOpsHelper.projects(organization);
 
         const auditLogEntries: AzureDevOpsAuditLogEntry[] = await azureDevOpsHelper.auditLog(organization, startTime, endTime, count);
 
-        const members        = await devops_auditlog_query.resolve_Members(azureDevOpsHelper, organization, auditLogEntries);
+        const membersPromise = devops_auditlog_query.resolve_Members(azureDevOpsHelper, organization, auditLogEntries);
+
+        const correlationIdsFiltered = devops_auditlog_query.getCorrelationIds(auditLogEntries);
+
         const securityTokens = await securityTokensPromise;
         const extensions     = await extensionsPromise;
+        const projects       = await projectsPromise;
+        const members        = await membersPromise;
 
         const title = `${organization}-auditlog`;
 
@@ -64,12 +71,13 @@ export class devops_auditlog_query {
 
             await writeFile(`${path}-${title}-unresolved.txt` , unresolved.join('\n')              );
             await writeFile(`${path}-${title}-extensions.json`, JSON.stringify(extensions, null, 2));
+            await writeFile(`${path}-${title}-projects.json`  , JSON.stringify(projects  , null, 2));
         }
 
-        const valuesMappedMarkdown = devops_auditlog_query.mapMarkdown(organization, auditLogEntries, securityTokens, members, offsetInSeconds, extensions);
-        const valuesMappedHtml     = devops_auditlog_query.mapHtml    (organization, auditLogEntries, securityTokens, members, offsetInSeconds, extensions);
+        const valuesMappedMarkdown = devops_auditlog_query.mapMarkdown(organization, auditLogEntries, securityTokens, members, offsetInSeconds, extensions, projects, correlationIdsFiltered);
+        const valuesMappedHtml     = devops_auditlog_query.mapHtml    (organization, auditLogEntries, securityTokens, members, offsetInSeconds, extensions, projects, correlationIdsFiltered);
 
-        const headers = ['timestamp', 'project', 'actor',  'action', 'details'];
+        const headers = ['timestamp', 'scope', 'actor',  'action', 'details'];
 
         await Promise.all([
             writeFile(`${path}-${title}.json`               , JSON.stringify       (auditLogEntries, null, 2            )),
@@ -96,14 +104,16 @@ export class devops_auditlog_query {
     private static mapHtml(
         organization   : string,
         auditLogEntries: AzureDevOpsAuditLogEntry[],
-        securityTokens : Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>,
+        securityTokens : Array<AzureDevOpsSecurityTokenElement>,
         members        : Array<GraphMember>,
         offsetInSeconds: number,
-        extensions     : InstalledExtension[]
+        extensions     : InstalledExtension[],
+        projects       : TeamProjectReference[],
+        correlationIds : string[]
     ): string[][] {
         return auditLogEntries.map(p => [
-            devops_auditlog_query.timeStampHtml(organization, p.timestamp, offsetInSeconds),
-            devops_auditlog_query.projectHtml(organization, p),
+            devops_auditlog_query.timeStampHtml(organization, p, offsetInSeconds, correlationIds),
+            devops_auditlog_query.projectHtml(organization, p, securityTokens, projects, members),
             devops_auditlog_query.actorHtml(organization, p, members),
             p.actionId ?? '',
             devops_auditlog_query.detailsHtml(p, organization, securityTokens, members, extensions),
@@ -113,28 +123,207 @@ export class devops_auditlog_query {
     private static mapMarkdown(
         organization   : string,
         auditLogEntries: AzureDevOpsAuditLogEntry[],
-        securityTokens : Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>,
+        securityTokens : Array<AzureDevOpsSecurityTokenElement>,
         members        : Array<GraphMember>,
         offsetInSeconds: number,
-        extensions     : InstalledExtension[]
+        extensions     : InstalledExtension[],
+        projects       : TeamProjectReference[],
+        correlationIds : string[]
     ): string[][] {
         return auditLogEntries.map(p => [
-            devops_auditlog_query.timeStampMarkdown(organization, p.timestamp, offsetInSeconds),
-            devops_auditlog_query.projectMarkdown(organization, p),
+            devops_auditlog_query.timeStampMarkdown(organization, p, offsetInSeconds, correlationIds),
+            devops_auditlog_query.projectMarkdown(organization, p, securityTokens, projects, members),
             devops_auditlog_query.actorMarkdown(organization, p, members),
             p.actionId ?? '',
             devops_auditlog_query.detailsMarkdown(p, organization, securityTokens, members, extensions),
         ])
     }
 
-    private static project(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string {
-        return auditLogEntry.projectName === undefined || auditLogEntry.projectName === null
-             ? '' 
-             : funcLink(auditLogEntry.projectName, AzureDevOpsPortalLinks.Project(organization, auditLogEntry.projectName), 'open project');
+    private static getCorrelationIds(auditLogEntries: AzureDevOpsAuditLogEntry[]): Array<string>{
+        const correlationIds = new Map<string, number>();
+        for (const entry of auditLogEntries) {
+            if (entry.correlationId !== undefined) {
+                const count = correlationIds.get(entry.correlationId);
+                if (count === undefined) {
+                    correlationIds.set(entry.correlationId, 1);
+                }
+                else {
+                    correlationIds.set(entry.correlationId, count + 1);
+                }
+            }
+        }
+        const correlationIdsFiltered = new Array<string>();
+        for (const item of correlationIds) {
+            if(item[1] > 1){
+                correlationIdsFiltered.push(item[0])
+            }
+        }
+        return correlationIdsFiltered;
     }
 
-    private static projectHtml    (organization: string, auditLogEntry: AzureDevOpsAuditLogEntry): string { return devops_auditlog_query.project(organization, auditLogEntry, Html    .getLinkWithToolTip); }
-    private static projectMarkdown(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry): string { return devops_auditlog_query.project(organization, auditLogEntry, Markdown.getLinkWithToolTip); }
+    private static project(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, securityTokens: Array<AzureDevOpsSecurityTokenElement>, projects: TeamProjectReference[], members                 : Array<GraphMember>, funcLink: (title: string, url: string, tooltip: string) => string): string {
+
+        if (auditLogEntry.projectName !== undefined && auditLogEntry.projectName !== null) {
+            return funcLink(auditLogEntry.projectName, AzureDevOpsPortalLinks.Project(organization, auditLogEntry.projectName), 'open project');
+        }
+
+        return devops_auditlog_query.project_AuditLog_AccessLog               (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Extension_Installed              (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Extension_VersionUpdated         (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Group_UpdateGroupMembership_Add  (organization, auditLogEntry, members       , projects, funcLink)
+            ?? devops_auditlog_query.project_Licensing_Assigned               (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Licensing_Modified               (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Licensing_Removed                (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Security_ModifyPermission        (organization, auditLogEntry, securityTokens, projects, funcLink)
+            ?? devops_auditlog_query.project_Security_RemovePermission        (organization, auditLogEntry, securityTokens, projects, funcLink)
+            ?? devops_auditlog_query.project_Security_RemoveAccessControlLists(organization, auditLogEntry, securityTokens, projects, funcLink)
+            ?? devops_auditlog_query.project_Group_UpdateGroups_Delete        (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Group_UpdateGroups_Modify        (organization, auditLogEntry,                           funcLink)
+            ?? '';
+    }
+    private static project_AuditLog_AccessLog(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.AuditLog_AccessLog) {
+            return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationAuditLog(organization), 'open auditLog');
+        }
+        return undefined;
+    }
+    private static project_Extension_Installed(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Extension_Installed) {
+            return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationExtensions(organization), 'open extentions');
+        }
+        return undefined;
+    }
+    private static project_Extension_VersionUpdated(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Extension_VersionUpdated) {
+            return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationExtensions(organization), 'open extentions');
+        }
+        return undefined;
+    }
+    private static project_Group_UpdateGroupMembership_Add(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, members : Array<GraphMember>, projects: TeamProjectReference[], funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Group_UpdateGroupMembership_Add) {
+            const data : AzureDevOpsAuditLogEntry_Data_GroupUpdateGroupMembership = auditLogEntry.data;
+              
+            const scope = data.GroupName !== undefined && data.GroupName.startsWith('[') && data.GroupName.indexOf(']') > 0 ? data.GroupName.substring(1, data.GroupName.indexOf(']')) : undefined;
+            const graphGroup  = members.filter(p => AzureDevOpsHelper.isGraphGroup(p)).find(p => data.GroupName !== undefined && p.principalName?.toLowerCase() === data.GroupName?.toLowerCase());
+
+            const project = projects.find(project => scope!== undefined && project?.name?.toLowerCase() === scope.toLowerCase());
+
+            if(project?.name !== undefined){
+                return funcLink(project.name, AzureDevOpsPortalLinks.Permissions(organization, project.name, graphGroup?.descriptor), 'open permissions');
+            }
+
+            if (scope?.toLowerCase() === organization.toLowerCase()) {
+                return funcLink(auditLogEntry.scopeDisplayName ?? scope, AzureDevOpsPortalLinks.Permissions(organization, undefined, undefined), 'open permissions');
+            }
+
+            if (scope !== undefined) {
+                return funcLink(auditLogEntry.scopeDisplayName ?? scope, AzureDevOpsPortalLinks.Permissions(organization, undefined, undefined), 'open permissions');
+            }
+        }
+        return undefined;
+    }
+    private static project_Licensing_Assigned(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Licensing_Assigned) {
+            return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationUsers(organization), 'open users');
+        }
+        return undefined;
+    }
+    private static project_Licensing_Modified(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Licensing_Modified) {
+            return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationUsers(organization), 'open users');
+        }
+        return undefined;
+    }
+    private static project_Licensing_Removed(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Licensing_Removed) {
+            return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationUsers(organization), 'open users');
+        }
+        return undefined;
+    }
+    private static project_Security_ModifyPermission(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, securityTokens: Array<AzureDevOpsSecurityTokenElement>, projects: TeamProjectReference[], funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Security_ModifyPermission) {
+            const data: AzureDevOpsAuditLogEntry_Data_SecurityModifyPermission = auditLogEntry.data;
+            const securityToken = devops_auditlog_query.resolveSecurityTokenId(securityTokens, data.NamespaceId, data.Token);
+
+            if (securityToken?.project?.name !== undefined) {
+                return funcLink(securityToken?.project?.name, AzureDevOpsPortalLinks.Project(organization, securityToken?.project?.name), 'open project');
+            }
+            else {
+                if (data.Token !== undefined) {
+                    const project = AzureDevOpsSecurityTokenParser.getProject(`${data.NamespaceName}`, data.Token, projects, securityTokens);
+
+                    if (project !== undefined) {
+                        return funcLink(`${project.name}`, AzureDevOpsPortalLinks.Project(organization, `${project.name}`), 'open project')
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+    private static project_Security_RemovePermission(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, securityTokens: Array<AzureDevOpsSecurityTokenElement>, projects: TeamProjectReference[], funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Security_RemovePermission) {
+            const data: AzureDevOpsAuditLogEntry_Data_SecurityRemovePermission = auditLogEntry.data;
+            const securityToken = devops_auditlog_query.resolveSecurityTokenId(securityTokens, data.NamespaceId, data.Token);
+
+            if (securityToken?.project?.name !== undefined) {
+                return funcLink(securityToken?.project?.name, AzureDevOpsPortalLinks.Project(organization, securityToken?.project?.name), 'open project');
+            }
+            else {
+                if (data.Token !== undefined) {
+                    const project = AzureDevOpsSecurityTokenParser.getProject(`${data.NamespaceName}`, data.Token, projects, securityTokens);
+
+                    if (project !== undefined) {
+                        return funcLink(`${project.name}`, AzureDevOpsPortalLinks.Project(organization, `${project.name}`), 'open project')
+                    }
+                    else if (data.Token.startsWith('$PROCESS:')) {
+                        return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationProcess(organization), 'open processes')
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+    private static project_Security_RemoveAccessControlLists(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, securityTokens: Array<AzureDevOpsSecurityTokenElement>, projects: TeamProjectReference[], funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Security_RemoveAccessControlLists) {
+            const data: AzureDevOpsAuditLogEntry_Data_SecurityRemoveAccessControlLists = auditLogEntry.data;
+
+            if (data.Tokens !== undefined) {
+                const projectsNames = [...new Set<string>(data.Tokens.map(token => AzureDevOpsSecurityTokenParser.getProject(`${data.NamespaceName}`, token, projects, securityTokens)).filter(p => p !== undefined).map(p => p!).map(p => p.name).filter(p => p !== undefined).map(p => p!))];
+
+                if (projectsNames.length === 1) {
+                    return funcLink(projectsNames[0], AzureDevOpsPortalLinks.Project(organization, projectsNames[0]), 'open project')
+                }
+            }
+        }
+        return undefined;
+    }
+    private static project_Group_UpdateGroups_Delete(organization: string, azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Group_UpdateGroups_Delete) {
+            // [ProjectName]\GroupName group was deleted
+            const indexEnd = `${azureDevOpsAuditLogEntry.details}`.indexOf(']');
+            if (`${azureDevOpsAuditLogEntry.details}`.startsWith('[') && indexEnd > 1) {
+                const projectName = `${azureDevOpsAuditLogEntry.details}`.substring(1, indexEnd);
+                return funcLink(`${projectName}`, AzureDevOpsPortalLinks.Project(organization, projectName), 'open project');
+            }
+        }
+
+        return undefined;
+    }
+    private static project_Group_UpdateGroups_Modify(organization: string, azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Group_UpdateGroups_Modify) {
+            // [ProjectName]\GroupName group information was updated
+            const indexEnd = `${azureDevOpsAuditLogEntry.details}`.indexOf(']');
+            if (`${azureDevOpsAuditLogEntry.details}`.startsWith('[') && indexEnd > 1) {
+                const projectName = `${azureDevOpsAuditLogEntry.details}`.substring(1, indexEnd);
+                return funcLink(`${projectName}`, AzureDevOpsPortalLinks.Project(organization, projectName), 'open project');
+            }
+        }
+
+        return undefined;
+    }
+
+    private static projectHtml    (organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, securityTokens: Array<AzureDevOpsSecurityTokenElement>, projects: TeamProjectReference[], members: Array<GraphMember>): string { return devops_auditlog_query.project(organization, auditLogEntry, securityTokens, projects, members, Html    .getLinkWithToolTip); }
+    private static projectMarkdown(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, securityTokens: Array<AzureDevOpsSecurityTokenElement>, projects: TeamProjectReference[], members: Array<GraphMember>): string { return devops_auditlog_query.project(organization, auditLogEntry, securityTokens, projects, members, Markdown.getLinkWithToolTip); }
 
     private static resolve_GroupUpdateGroupMembership_GroupNames(auditLogEntries: AzureDevOpsAuditLogEntry[]): Array<string> {
         const groupNames = [...new Set<string>((
@@ -278,22 +467,17 @@ export class devops_auditlog_query {
         return securityTokens;
     }
 
-    private static timeStampMarkdown(organization: string, value: string | undefined, offsetInSeconds: number): string {
-        if (value === undefined) { return ''; }
-
-        const date = Date.parse(value);
-
-        if (Number.isNaN(date)) { return value; }
-
-        const startTime = new Date(date - offsetInSeconds * 1000).toISOString();
-        const endTime   = new Date(date + offsetInSeconds * 1000).toISOString();
-
-        const url = Markdown.getLinkWithToolTip(devops_auditlog_query.timeStampDisplay(value), devops_auditlog_query.auditLogUrl(organization, startTime, endTime), value);
-
-        return `<pre>${url}</pre>`;
+    private static timeStampMarkdown(organization: string, azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry, offsetInSeconds: number, correlationIds : string[]): string {
+        return devops_auditlog_query.timeStamp(organization , azureDevOpsAuditLogEntry , offsetInSeconds, correlationIds, Markdown.getLinkWithToolTip);
     };
+    private static timeStampHtml(organization: string, azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry, offsetInSeconds: number, correlationIds : string[]): string {
+        return devops_auditlog_query.timeStamp(organization , azureDevOpsAuditLogEntry , offsetInSeconds, correlationIds, Html.getLinkWithToolTip);
+    };
+    private static timeStamp(organization: string, azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry, offsetInSeconds: number, correlationIds : string[], funcLink: (title: string, url: string, tooltip: string) => string): string {
+        if (azureDevOpsAuditLogEntry === undefined) { return ''; }
 
-    private static timeStampHtml(organization: string, value: string | undefined, offsetInSeconds: number): string {
+        const value = azureDevOpsAuditLogEntry.timestamp;
+
         if (value === undefined) { return ''; }
 
         const date = Date.parse(value);
@@ -303,9 +487,11 @@ export class devops_auditlog_query {
         const startTime = new Date(date - offsetInSeconds * 1000).toISOString();
         const endTime   = new Date(date + offsetInSeconds * 1000).toISOString();
 
-        const url = Html.getLinkWithToolTip(devops_auditlog_query.timeStampDisplay(value), devops_auditlog_query.auditLogUrl(organization, startTime, endTime), value);
+        const url = funcLink(devops_auditlog_query.timeStampDisplay(value), devops_auditlog_query.auditLogUrl(organization, startTime, endTime), value);
 
-        return `<pre>${url}</pre>`;
+        const showCorrelationId = correlationIds.some(p => p === azureDevOpsAuditLogEntry.correlationId);
+
+        return `<pre>${url}` + (showCorrelationId ? `<br/>${azureDevOpsAuditLogEntry.correlationId}` : '') + `</pre>`;
     };
 
     private static timeStampDisplay(value: string) {
@@ -339,20 +525,20 @@ export class devops_auditlog_query {
     }
 
 
-    private static resolveSecurityTokenId(securityTokens: Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>, namespaceId: string | undefined, token: string | undefined): string | undefined {
+    private static resolveSecurityTokenId(securityTokens: Array<AzureDevOpsSecurityTokenElement>, namespaceId: string | undefined, token: string | undefined): AzureDevOpsSecurityTokenElement | undefined {
         if (namespaceId === undefined) { return undefined; }
         if (token       === undefined) { return undefined; }
 
         const securityToken = securityTokens.find(p => p.securityNamespace.namespaceId?.toLowerCase() === namespaceId.toLowerCase() && p.token.toLowerCase() === token.toLowerCase());
 
-        return securityToken?.id;
+        return securityToken;
     }
 
 
     private static detailsMarkdown(
         azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry,
         organization            : string,
-        securityTokens          : Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>,
+        securityTokens          : Array<AzureDevOpsSecurityTokenElement>,
         members                 : Array<GraphMember>,
         extensions              : InstalledExtension[]
     ) : string {
@@ -362,7 +548,7 @@ export class devops_auditlog_query {
     private static detailsHtml(
         azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry,
         organization            : string,
-        securityTokens          : Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>,
+        securityTokens          : Array<AzureDevOpsSecurityTokenElement>,
         members                 : Array<GraphMember>,
         extensions              : InstalledExtension[]
     ) : string {
@@ -372,7 +558,7 @@ export class devops_auditlog_query {
     private static details(
         azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry,
         organization            : string,
-        securityTokens          : Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>,
+        securityTokens          : Array<AzureDevOpsSecurityTokenElement>,
         members                 : Array<GraphMember>,
         extensions              : InstalledExtension[],
         funcLink                : (title: string, url: string, tooltip: string) => string
@@ -547,10 +733,86 @@ export class devops_auditlog_query {
 
         return undefined;
     }
+    private static details_SecurityModifyPermission_link(
+        data                 : AzureDevOpsAuditLogEntry_Data_SecurityModifyPermission,
+        organization         : string,
+        securityTokens       : Array<AzureDevOpsSecurityTokenElement>,
+        useProjectNameAsTitle: boolean,
+        funcLink             : (title: string, url: string, tooltip: string) => string
+    ) : string | undefined{
+        const securityToken = devops_auditlog_query.resolveSecurityTokenId(securityTokens, data.NamespaceId, data.Token);
+
+        if (securityToken?.project !== undefined) {
+            const title = useProjectNameAsTitle
+                        ? `${securityToken.project.name}`
+                        : `${data.NamespaceName} ${securityToken.id}`;
+            if (securityToken.securityNamespace.name === 'Analytics') {
+                return funcLink(title, AzureDevOpsPortalLinks.Project(organization, `${securityToken.project.name}`), 'open project');
+            }
+
+            if (securityToken.securityNamespace.name === 'CSS') {
+                return funcLink(title, AzureDevOpsPortalLinks.ProjectConfigurationAreas(organization, `${securityToken.project.name}`), 'open area path configuration');
+            }
+
+            if (securityToken.securityNamespace.name === 'DashboardsPrivileges') {
+                return funcLink(title, AzureDevOpsPortalLinks.ProjectDashboards(organization, `${securityToken.project.name}`), 'open dashboards');
+            }
+
+            if (securityToken.securityNamespace.name === 'Iteration') {
+                return funcLink(title, AzureDevOpsPortalLinks.ProjectConfigurationIterations(organization, `${securityToken.project.name}`), 'open area path configuration');
+            }
+
+            if (securityToken.securityNamespace.name === 'Git Repositories') {
+                return funcLink(title, AzureDevOpsPortalLinks.ProjectConfigurationRepositories(organization, `${securityToken.project.name}`), 'open git repositories');
+            }
+
+            if (securityToken.securityNamespace.name === 'Identity') {
+                return funcLink(title, AzureDevOpsPortalLinks.Project(organization, `${securityToken.project.name}`), 'open project');
+            }
+
+            if (securityToken.securityNamespace.name === 'Plan') {
+                return funcLink(title, AzureDevOpsPortalLinks.ProjectDeliveryPlans(organization, `${securityToken.project.name}`), 'open delviery plans');
+            }
+
+            if (securityToken.securityNamespace.name === 'Project') {
+                return funcLink(title, AzureDevOpsPortalLinks.Project(organization, `${securityToken.project.name}`), 'open project');
+            }
+
+            if (securityToken.securityNamespace.name === 'Tagging') {
+                return funcLink(title, AzureDevOpsPortalLinks.Project(organization, `${securityToken.project.name}`), 'open project');
+            }
+
+            if (securityToken.securityNamespace.name === 'WorkItemQueryFolders') {
+                return funcLink(title, AzureDevOpsPortalLinks.ProjectWorkItemQueryFolders(organization, `${securityToken.project.name}`), 'open git repositories');
+            }
+
+            return funcLink(title, AzureDevOpsPortalLinks.Project(organization, `${securityToken.project.name}`), 'open project');
+        }
+
+        if (securityToken !== undefined) {
+            const title = `${data.NamespaceName} ${securityToken.id}`;
+
+            if (securityToken.securityNamespace.name === 'AuditLog') {
+                return funcLink(title, AzureDevOpsPortalLinks.OrganizationAuditLog(organization), 'open auditLog');
+            }
+
+            if (securityToken.securityNamespace.name === 'Git Repositories') {
+                return funcLink(title, AzureDevOpsPortalLinks.OrganizationConfigurationRepositories(organization), 'open git repositories');
+            }
+
+            if (securityToken.securityNamespace.name === 'Process') {
+                return funcLink(title, AzureDevOpsPortalLinks.OrganizationProcess(organization), 'open processes');
+            }
+
+            return funcLink(title, AzureDevOpsPortalLinks.OrganizationConfiguration(organization), 'open organization');
+        }
+
+        return undefined;
+    }
     private static details_SecurityModifyPermission(
         azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry,
         organization            : string,
-        securityTokens          : Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>,
+        securityTokens          : Array<AzureDevOpsSecurityTokenElement>,
         members                 : Array<GraphMember>,
         funcLink                : (title: string, url: string, tooltip: string) => string
     ) : string | undefined{
@@ -589,17 +851,17 @@ export class devops_auditlog_query {
                   )]
                   .sort().join(`${linebreak}${linebreak}`);
 
+            const useProjectNameAsTitle = false;
+            const linkProject = devops_auditlog_query.details_SecurityModifyPermission_link(data, organization, securityTokens,useProjectNameAsTitle, funcLink );
 
-            const securityTokenId = devops_auditlog_query.resolveSecurityTokenId(securityTokens, data.NamespaceId, data.Token);
-
-            if(securityTokenId !== undefined){
+            if (linkProject !== undefined) {
                 return `${azureDevOpsAuditLogEntry.details}${linebreak}${linebreak}`+
-                       `${data.NamespaceName}  ${securityTokenId}${linebreak}${linebreak}`+
+                       `${linkProject} ${linebreak}${linebreak}` +
                        `${eventSummary}${linebreak}${linebreak}`+
                        `<pre>${eventSummaryAzureCli}</pre>`;
             }
             else {
-                return `<mark>${azureDevOpsAuditLogEntry.details}${linebreak}${linebreak}` +
+                return `${azureDevOpsAuditLogEntry.details}${linebreak}${linebreak}` +
                        `${data.NamespaceName} ${data.Token}${linebreak}${linebreak}` +
                        `${eventSummary}${linebreak}${linebreak}`+
                        `<pre>${eventSummaryAzureCli}</pre>`;
@@ -610,28 +872,22 @@ export class devops_auditlog_query {
     }
     private static details_SecurityRemoveAccessControlLists(
         azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry,
-        securityTokens          : Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>,
+        securityTokens          : Array<AzureDevOpsSecurityTokenElement>,
     ) : string | undefined{
         if (azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Security_RemoveAccessControlLists) {
             const linebreak = '<br/>';
 
             const data: AzureDevOpsAuditLogEntry_Data_SecurityRemoveAccessControlLists = azureDevOpsAuditLogEntry.data;
 
-            const securityTokenIds = data.Tokens?.map(securityToken => devops_auditlog_query.resolveSecurityTokenId(securityTokens, data.NamespaceId, securityToken)).filter(p => p !== undefined).map(p => p!);
+            const securityTokensResolved = data.Tokens?.map(securityToken => devops_auditlog_query.resolveSecurityTokenId(securityTokens, data.NamespaceId, securityToken)).filter(p => p !== undefined).map(p => p!);
 
-            const allResolved = data.Tokens !== undefined
-                                && securityTokenIds !== undefined
-                                && securityTokenIds.length === data.Tokens?.length;
-
-            if (securityTokenIds !== undefined && securityTokenIds.length > 0) {
-                return `${allResolved ? '' : '<mark>'}`+
-                       `${azureDevOpsAuditLogEntry.details}${linebreak}${linebreak}` +
+            if (securityTokensResolved !== undefined && securityTokensResolved.length > 0) {
+                return `${azureDevOpsAuditLogEntry.details}${linebreak}${linebreak}` +
                        `${data.NamespaceName} Recurse(${data.Recurse})${linebreak}${linebreak}` +
-                       securityTokenIds.join(linebreak);
+                       securityTokensResolved.map(p => p.id).join(linebreak);
             }
             else {
-                return `${allResolved ? '' : '<mark>'}`+
-                       `${azureDevOpsAuditLogEntry.details}${linebreak}${linebreak}` +
+                return `${azureDevOpsAuditLogEntry.details}${linebreak}${linebreak}` +
                        `${data.NamespaceName} Recurse(${data.Recurse})`;
             }
         }

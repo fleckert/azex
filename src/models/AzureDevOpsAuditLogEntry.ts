@@ -1,5 +1,6 @@
 export interface AzureDevOpsAuditLogEntry {
     id                 : string | undefined,
+    correlationId      : string | undefined,
     actorUPN           : string | undefined,
     timestamp          : string | undefined,
     scopeType          : string | undefined,
@@ -27,6 +28,13 @@ export interface AzureDevOpsAuditLogEntry_Data_SecurityModifyPermission {
             subjectDisplayName: string | undefined 
         }
     ] | undefined
+}
+
+export interface AzureDevOpsAuditLogEntry_Data_SecurityRemovePermission {
+    NamespaceId  : string   | undefined,
+    NamespaceName: string   | undefined,
+    Token        : string   | undefined,
+    Identities   : string[] | undefined
 }
 
 export interface AzureDevOpsAuditLogEntry_Data_SecurityRemoveAccessControlLists {
@@ -173,6 +181,7 @@ export interface AzureDevOpsAuditLogEntry_Data_PolicyPolicyConfigRemoved {
 }
 
 export class AzureDevOpsAuditLogEntryActionIds {
+    static AuditLog_AccessLog                 = "AuditLog.AccessLog"
     static Extension_Installed                = "Extension.Installed"
     static Extension_VersionUpdated           = 'Extension.VersionUpdated'
     static Group_CreateGroups                 = 'Group.CreateGroups';
@@ -185,7 +194,7 @@ export class AzureDevOpsAuditLogEntryActionIds {
     static Licensing_Removed                  = 'Licensing.Removed'
     static Policy_PolicyConfigCreated         = 'Policy.PolicyConfigCreated'
     static Policy_PolicyConfigModified        = 'Policy.PolicyConfigModified'
-    static Policy_PolicyConfigRemoved        = 'Policy.PolicyConfigRemoved'
+    static Policy_PolicyConfigRemoved         = 'Policy.PolicyConfigRemoved'
     static Project_AreaPath_Create            = 'Project.AreaPath.Create'
     static Project_AreaPath_Delete            = 'Project.AreaPath.Delete'
     static Project_AreaPath_Update            = 'Project.AreaPath.Update'
@@ -195,6 +204,7 @@ export class AzureDevOpsAuditLogEntryActionIds {
     static Project_Process_Modify             = 'Project.Process.Modify'
     static Security_ModifyAccessControlLists  = 'Security.ModifyAccessControlLists'
     static Security_ModifyPermission          = 'Security.ModifyPermission'
+    static Security_RemovePermission          = 'Security.RemovePermission'
     static Security_RemoveAccessControlLists  = 'Security.RemoveAccessControlLists'
     static Token_PatCreateEvent               = 'Token.PatCreateEvent'
     static Token_PatRevokeEvent               = 'Token.PatRevokeEvent'

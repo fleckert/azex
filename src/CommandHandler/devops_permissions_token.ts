@@ -1,10 +1,9 @@
-import { AzureDevOpsHelper            } from "../AzureDevOpsHelper";
-import { AzureDevOpsSecurityNamespace } from "../models/AzureDevOpsSecurityNamespace";
-import { AzureDevOpsSecurityTokens    } from "../AzureDevOpsSecurityTokens";
-import { Helper                       } from "../Helper";
-import { Html                         } from "../Converters/Html";
-import { Markdown                     } from "../Converters/Markdown";
-import { writeFile                    } from "fs/promises";
+import { AzureDevOpsHelper                                          } from "../AzureDevOpsHelper";
+import { AzureDevOpsSecurityTokenElement, AzureDevOpsSecurityTokens } from "../AzureDevOpsSecurityTokens";
+import { Helper                                                     } from "../Helper";
+import { Html                                                       } from "../Converters/Html";
+import { Markdown                                                   } from "../Converters/Markdown";
+import { writeFile                                                  } from "fs/promises";
 
 export class devops_permissions_token {
     static async all                 (tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.all                 , 'tokens'               ); }
@@ -15,6 +14,7 @@ export class devops_permissions_token {
     static async identity            (tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.identity            , 'identity'             ); }
     static async classificationNodes (tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.classificationNodes , 'classificationNodes'  ); }
     static async dashboardsPrivileges(tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.dashboardsPrivileges, 'dashboardsPrivileges' ); }
+    static async environment         (tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.environment         , 'environment'          ); }
     static async gitRepositories     (tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.gitRepositories     , 'gitRepositories'      ); }
     static async library             (tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.library             , 'library'              ); }
     static async plan                (tenant: string, organization: string, project: string, path: string): Promise<void> { return devops_permissions_token.run(tenant, organization, project, path, AzureDevOpsSecurityTokens.plan                , 'plan'                 ); }
@@ -29,7 +29,7 @@ export class devops_permissions_token {
         organization: string,
         project     : string,
         path        : string,
-        func        : (azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string) => Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>>,
+        func        : (azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string) => Promise<Array<AzureDevOpsSecurityTokenElement>>,
         titleSuffix : string
     ) : Promise<void> {
         const startDate = new Date();
@@ -38,7 +38,7 @@ export class devops_permissions_token {
         const response = await func(azureDevOpsHelper, organization, project);
 
         response.sort((a, b) => {
-            const map = (value: { securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }): string => { return `${value.securityNamespace.name}-${value.id}`.toLowerCase(); }
+            const map = (value: AzureDevOpsSecurityTokenElement): string => { return `${value.securityNamespace.name}-${value.id}`.toLowerCase(); }
 
             return map(a).localeCompare(map(b));
         });
