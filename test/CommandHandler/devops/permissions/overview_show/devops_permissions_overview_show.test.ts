@@ -1,11 +1,10 @@
-import   path                               from "path";
-import { AzureDevOpsHelper                } from "../../../../../src/AzureDevOpsHelper";
-import { AzureDevOpsSecurityNamespace     } from "../../../../../src/models/AzureDevOpsSecurityNamespace";
-import { AzureDevOpsSecurityTokens        } from "../../../../../src/AzureDevOpsSecurityTokens";
-import { devops_permissions_overview_show } from "../../../../../src/CommandHandler/devops_permissions_overview_show";
-import { Helper                           } from "../../../../../src/Helper";
-import { mkdir                            } from "fs/promises";
-import { TestConfigurationProvider        } from "../../../../_Configuration/TestConfiguration";
+import   path                                                         from "path";
+import { AzureDevOpsHelper                                          } from "../../../../../src/AzureDevOpsHelper";
+import { AzureDevOpsSecurityTokenElement, AzureDevOpsSecurityTokens } from "../../../../../src/AzureDevOpsSecurityTokens";
+import { devops_permissions_overview_show                           } from "../../../../../src/CommandHandler/devops_permissions_overview_show";
+import { Helper                                                     } from "../../../../../src/Helper";
+import { mkdir                                                      } from "fs/promises";
+import { TestConfigurationProvider                                  } from "../../../../_Configuration/TestConfiguration";
 
 test('devops_permissions_overview_show_all'                              , async () => { await runTest           ('all'                 , AzureDevOpsSecurityTokens.all                 ); }, 1000000);
 test('devops_permissions_overview_show_auditLog'                         , async () => { await runTest           ('auditLog'            , AzureDevOpsSecurityTokens.auditLog            ); }, 1000000);
@@ -14,6 +13,7 @@ test('devops_permissions_overview_show_analyticsViews'                   , async
 test('devops_permissions_overview_show_buildDefinitions'                 , async () => { await runTest           ('buildDefinitions'    , AzureDevOpsSecurityTokens.buildDefinitions    ); }, 1000000);
 test('devops_permissions_overview_show_classificationNodes'              , async () => { await runTest           ('classificationNodes ', AzureDevOpsSecurityTokens.classificationNodes ); }, 1000000);
 test('devops_permissions_overview_show_dashboardsPrivileges'             , async () => { await runTest           ('dashboardsPrivileges', AzureDevOpsSecurityTokens.dashboardsPrivileges); }, 1000000);
+test('devops_permissions_overview_show_environment'                      , async () => { await runTest           ('environment'         , AzureDevOpsSecurityTokens.environment         ); }, 1000000);
 test('devops_permissions_overview_show_gitRepositories'                  , async () => { await runTest           ('gitRepositories'     , AzureDevOpsSecurityTokens.gitRepositories     ); }, 1000000);
 test('devops_permissions_overview_show_identity'                         , async () => { await runTest           ('identity'            , AzureDevOpsSecurityTokens.identity            ); }, 1000000);
 test('devops_permissions_overview_show_plans'                            , async () => { await runTest           ('plan'                , AzureDevOpsSecurityTokens.plan                ); }, 1000000);
@@ -31,6 +31,7 @@ test('devops_permissions_overview_show_all_projects_analyticsViews'      , async
 test('devops_permissions_overview_show_all_projects_buildDefinitions'    , async () => { await runTestAllProjects('buildDefinitions'    , AzureDevOpsSecurityTokens.buildDefinitions    ); }, 1000000);
 test('devops_permissions_overview_show_all_projects_classificationNodes' , async () => { await runTestAllProjects('classificationNodes ', AzureDevOpsSecurityTokens.classificationNodes ); }, 1000000);
 test('devops_permissions_overview_show_all_projects_dashboardsPrivileges', async () => { await runTestAllProjects('dashboardsPrivileges', AzureDevOpsSecurityTokens.dashboardsPrivileges); }, 1000000);
+test('devops_permissions_overview_show_all_environment'                  , async () => { await runTestAllProjects('environment'         , AzureDevOpsSecurityTokens.environment         ); }, 1000000);
 test('devops_permissions_overview_show_all_projects_gitRepositories'     , async () => { await runTestAllProjects('gitRepositories'     , AzureDevOpsSecurityTokens.gitRepositories     ); }, 1000000);
 test('devops_permissions_overview_show_all_projects_identity'            , async () => { await runTestAllProjects('identity'            , AzureDevOpsSecurityTokens.identity            ); }, 1000000);
 test('devops_permissions_overview_show_all_projects_library'             , async () => { await runTestAllProjects('library'             , AzureDevOpsSecurityTokens.library             ); }, 1000000);
@@ -43,7 +44,7 @@ test('devops_permissions_overview_show_all_projects_workItemQueryFolders', async
 
 const runTest = async (
     name: string, 
-    func: (azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string) => Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>>
+    func: (azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string) => Promise<Array<AzureDevOpsSecurityTokenElement>>
 ) => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
@@ -72,7 +73,7 @@ const runTest = async (
 
 const runTestAllProjects = async (
     name: string, 
-    func: (azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string) => Promise<Array<{ securityNamespace: AzureDevOpsSecurityNamespace, id: string, token: string }>>
+    func: (azureDevOpsHelper: AzureDevOpsHelper, organization: string, project: string) => Promise<Array<AzureDevOpsSecurityTokenElement>>
 ) => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;

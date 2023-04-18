@@ -7,6 +7,7 @@ import { AzureDevOpsSecurityNamespaceAction                                } fro
 import { BacklogLevelConfiguration, Plan, TeamSettingsIteration            } from "azure-devops-node-api/interfaces/WorkInterfaces";
 import { BuildDefinitionReference                                          } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import { Dashboard                                                         } from "azure-devops-node-api/interfaces/DashboardInterfaces";
+import { EnvironmentInstance                                               } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import { GitRepository                                                     } from "azure-devops-node-api/interfaces/GitInterfaces";
 import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Helper                                                            } from "./Helper";
@@ -42,6 +43,12 @@ export class AzureDevOpsHelper {
     buildDefinitions(organization: string, project: string, count?: number): Promise<BuildDefinitionReference[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/list?view=azure-devops-rest-7.1
         const url = `https://dev.azure.com/${organization}/${project}/_apis/build/definitions?api-version=7.1-preview.7`;
+        return this.getItemsWithContinuation(url, count);
+    }
+
+    environments(organization: string, project: string, count?: number): Promise<EnvironmentInstance[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/distributedtask/environments/list?view=azure-devops-rest-7.1
+        const url = `https://dev.azure.com/${organization}/${project}/_apis/distributedtask/environments?api-version=7.1-preview.1`;
         return this.getItemsWithContinuation(url, count);
     }
 

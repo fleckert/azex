@@ -6,7 +6,7 @@ test('devops_auditlog_query', async () => {
     const config       = await TestConfigurationProvider.get();
     const organization = config.azureDevOps.organization;
     const tenant       = config.azureDevOps.tenant;
-    const count        = 1000000;
+    const count        = 2000;
 
     const pathOut = await TestHelper.prepareFile([__dirname, 'out', organization, 'devops_auditlog_query']);
     

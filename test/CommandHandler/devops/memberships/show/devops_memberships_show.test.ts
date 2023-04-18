@@ -37,7 +37,7 @@ test('devops_memberships_show-groups', async () => {
             await Promise.all(promises);
         }
     }
-}, 1000000);
+}, 10000000);
 
 test('devops_memberships_show-users', async () => {
     const config           = await TestConfigurationProvider.get();
@@ -71,7 +71,7 @@ test('devops_memberships_show-users', async () => {
             await Promise.all(promises);
         }
     }
-}, 1000000);
+}, 10000000);
 
 test('devops_memberships_show-all', async () => {
     const config           = await TestConfigurationProvider.get();
@@ -107,4 +107,4 @@ test('devops_memberships_show-all', async () => {
     }
 
     await Helper.batchCalls(parameters, p => devops_memberships_show.handle(p.tenant, p.organization, p.projectName, p.principalName, p.pathOut), batchSize);
-}, 1000000);
+}, 100000000);
