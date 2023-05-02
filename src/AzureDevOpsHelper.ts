@@ -9,7 +9,7 @@ import { BuildDefinitionReference                                          } fro
 import { Dashboard                                                         } from "azure-devops-node-api/interfaces/DashboardInterfaces";
 import { EnvironmentInstance                                               } from "azure-devops-node-api/interfaces/TaskAgentInterfaces";
 import { GitRepository                                                     } from "azure-devops-node-api/interfaces/GitInterfaces";
-import { GraphGroup, GraphMember, GraphMembership, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { GraphGroup, GraphMember, GraphMembership, GraphServicePrincipal, GraphSubject, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
 import { Helper                                                            } from "./Helper";
 import { Identity                                                          } from "azure-devops-node-api/interfaces/IdentitiesInterfaces";
 import { InstalledExtension                                                } from "azure-devops-node-api/interfaces/ExtensionManagementInterfaces";
@@ -31,8 +31,9 @@ export class AzureDevOpsHelper {
 
     private readonly continuationTokenHeader = "x-ms-continuationtoken";
 
-    static isGraphUser (graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'user' ; }
-    static isGraphGroup(graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'group'; }
+    static isGraphUser       (graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'user'            ; }
+    static isGraphGroup      (graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'group'           ; }
+    static isServicePrincipal(graphMember: GraphMember) { return graphMember.subjectKind !== undefined && graphMember.subjectKind.toLowerCase() === 'serviceprincipal'; }
 
     auditLog(organization: string, startTime: Date | undefined, endTime: Date | undefined, count: number | undefined): Promise<AzureDevOpsAuditLogEntry[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/audit/audit-log/query?view=azure-devops-rest-7.1
@@ -91,6 +92,12 @@ export class AzureDevOpsHelper {
     graphUsersListForScopeDescriptor(organization: string, scopeDescriptor: string, count?: number): Promise<GraphUser[]> {
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/users/list?view=azure-devops-rest-7.1&tabs=HTTP
         const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/users?&scopeDescriptor=${scopeDescriptor}&api-version=7.1-preview.1`;
+        return this.getItemsWithContinuation(url, count);
+    }
+
+    graphServicePrincipalsListForScopeDescriptor(organization: string, scopeDescriptor: string, count?: number): Promise<GraphServicePrincipal[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/service-principals/list?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/serviceprincipals?&scopeDescriptor=${scopeDescriptor}&api-version=7.1-preview.1`;
         return this.getItemsWithContinuation(url, count);
     }
 
@@ -418,7 +425,7 @@ export class AzureDevOpsHelper {
         return response[0] === null ? undefined : response[0];
     }
 
-    groupByPrincipalName(organization: string, principalName: string): Promise<GraphSubject | undefined> {
+    groupByPrincipalName(organization: string, principalName: string): Promise<GraphGroup | undefined> {
         return this.graphSubjectQueryByPrincipalName(organization, ['Group'], principalName);
     }
 

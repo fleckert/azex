@@ -32,13 +32,13 @@ test('AzureDevOpsHelper - userLastAccess', async () => {
         return valueStripped;
     }
 
-    
     const html = Html.tableWithSorting(
         `${organization} - users`,
-        ['displayName', 'principalName', 'lastAccessedDate'],
+        ['displayName', 'principalName', 'dateCreated', 'lastAccessedDate'],
         userEntitlements.map(p => [
             p.parameters.displayName ?? '',
             Html.getLinkWithToolTip(`${p.parameters.principalName}`, AzureDevOpsPortalLinks.Permissions(organization,undefined, p.parameters.descriptor!), 'open permissions'),
+            Html.getLinkWithToolTip((`${p.result.dateCreated     }` === '0001-01-01T00:00:00Z' ? ''      : timeStampDisplay(`${p.result.dateCreated     }`)) ?? '', AzureDevOpsHelper.userEntitlementsUrl(organization, p.parameters.descriptor!), 'show details'),
             Html.getLinkWithToolTip((`${p.result.lastAccessedDate}` === '0001-01-01T00:00:00Z' ? 'never' : timeStampDisplay(`${p.result.lastAccessedDate}`)) ?? '', AzureDevOpsHelper.userEntitlementsUrl(organization, p.parameters.descriptor!), 'show details')
         ])
     );

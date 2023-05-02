@@ -31,19 +31,19 @@ export class AzureDevOpsMembershipsResolver {
 
         const containerDescriptors = graphMembershipLists.map(p => p.result).flat().filter(p=>p.containerDescriptor !== undefined).map(p=>p.containerDescriptor!);
 
-        // this is starting unbounded parallel execution
-        const collection = await Promise.all(
-            containerDescriptors.map(containerDescriptor => this.resolveInternalUp(azureDevOpsHelper, organization, containerDescriptor, cache))
-        );
+        // // this is starting unbounded parallel execution
+        // const collection = await Promise.all(
+        //     containerDescriptors.map(containerDescriptor => this.resolveInternalUp(azureDevOpsHelper, organization, containerDescriptor, cache))
+        // );
 
-        itemAndOthers.others.push(...collection);
+        // itemAndOthers.others.push(...collection);
 
-        // for (const containerDescriptor of containerDescriptors) {
+        for (const containerDescriptor of containerDescriptors) {
 
-        //     const itemAndOthersInternal = await this.resolveInternalUp(azureDevOpsHelper, organization, containerDescriptor, cache);
+            const itemAndOthersInternal = await this.resolveInternalUp(azureDevOpsHelper, organization, containerDescriptor, cache);
 
-        //     itemAndOthers.others.push(itemAndOthersInternal);
-        // }
+            itemAndOthers.others.push(itemAndOthersInternal);
+        }
 
         return itemAndOthers;
     }
@@ -65,18 +65,18 @@ export class AzureDevOpsMembershipsResolver {
 
         const memberDescriptors = graphMembershipLists.map(p => p.result).flat().filter(p => p.memberDescriptor !== undefined).map(p => p.memberDescriptor!);
 
-        // this is starting unbounded parallel execution
-        const collection = await Promise.all(
-            memberDescriptors.map(memberDescriptor => this.resolveInternalDown(azureDevOpsHelper, organization, memberDescriptor, cache))
-        );
+        // // this is starting unbounded parallel execution
+        // const collection = await Promise.all(
+        //     memberDescriptors.map(memberDescriptor => this.resolveInternalDown(azureDevOpsHelper, organization, memberDescriptor, cache))
+        // );
 
-        itemAndOthers.others.push(...collection);
+        // itemAndOthers.others.push(...collection);
 
-        // for (const memberDescriptor of memberDescriptors) {
-        //     const itemAndOthersInternal = await this.resolveInternalDown(azureDevOpsHelper, organization, memberDescriptor, cache);
+        for (const memberDescriptor of memberDescriptors) {
+            const itemAndOthersInternal = await this.resolveInternalDown(azureDevOpsHelper, organization, memberDescriptor, cache);
 
-        //     itemAndOthers.others.push(itemAndOthersInternal);
-        // }
+            itemAndOthers.others.push(itemAndOthersInternal);
+        }
 
         return itemAndOthers;
     }

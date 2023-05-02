@@ -5,3 +5,4 @@ temp
 test/**/out/**/**.html
 test/**/out/**/**.json
 test/**/out/**/**.md
+test/**/out/**/**.txt

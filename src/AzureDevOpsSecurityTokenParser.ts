@@ -3,21 +3,13 @@ import { TeamProjectReference            } from "azure-devops-node-api/interface
 
 export class AzureDevOpsSecurityTokenParser {
     static getProject(namespaceName: string, token: string, projects: TeamProjectReference[], securityTokens: Array<AzureDevOpsSecurityTokenElement>): TeamProjectReference | undefined {
-        if (namespaceName === 'CSS') {
-            return AzureDevOpsSecurityTokenParser.getProject_CSS(token, projects, securityTokens);
-        }
-        if (namespaceName === 'Git Repositories') {
-            return AzureDevOpsSecurityTokenParser.getProject_GitRepositories(token, projects);
-        }
-        if (namespaceName === 'Identity') {
-            return AzureDevOpsSecurityTokenParser.getProject_Identity(token, projects);
-        }
-        if (namespaceName === 'Iteration') {
-            return AzureDevOpsSecurityTokenParser.getProject_Iteration(token, projects, securityTokens);
-        }
-        if (namespaceName === 'DashboardsPrivileges') {
-            return AzureDevOpsSecurityTokenParser.getProject_DashboardsPrivileges(token, projects);
-        }
+        if (namespaceName === 'CSS'                 ) { return AzureDevOpsSecurityTokenParser.getProject_CSS                 (token, projects, securityTokens); }
+        if (namespaceName === 'DashboardsPrivileges') { return AzureDevOpsSecurityTokenParser.getProject_DashboardsPrivileges(token, projects                ); }
+        if (namespaceName === 'DistributedTask'     ) { return AzureDevOpsSecurityTokenParser.getProject_DistributedTask     (token, projects                ); }
+        if (namespaceName === 'Git Repositories'    ) { return AzureDevOpsSecurityTokenParser.getProject_GitRepositories     (token, projects                ); }
+        if (namespaceName === 'Identity'            ) { return AzureDevOpsSecurityTokenParser.getProject_Identity            (token, projects                ); }
+        if (namespaceName === 'Iteration'           ) { return AzureDevOpsSecurityTokenParser.getProject_Iteration           (token, projects, securityTokens); }
+        if (namespaceName === 'Library'             ) { return AzureDevOpsSecurityTokenParser.getProject_Library             (token, projects                ); }
         return undefined;
     }
 
@@ -100,6 +92,28 @@ export class AzureDevOpsSecurityTokenParser {
     private static getProject_DashboardsPrivileges(token: string, projects: TeamProjectReference[]): TeamProjectReference | undefined {
         // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#internal-namespaces-and-permissions
         if (token.startsWith('$/') === false) {
+            return undefined;
+        }
+
+        const tokenStripped = token.split('/')[1];
+
+        return projects.find(p => p.id === tokenStripped);
+    }
+
+    private static getProject_DistributedTask(token: string, projects: TeamProjectReference[]): TeamProjectReference | undefined {
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#role-based-namespaces-and-permissions
+        if (token.startsWith('MachineGroups/') === false && token.startsWith('AgentQueues/') === false) {
+            return undefined;
+        }
+
+        const tokenStripped = token.split('/')[1];
+
+        return projects.find(p => p.id === tokenStripped);
+    }
+
+    private static getProject_Library(token: string, projects: TeamProjectReference[]): TeamProjectReference | undefined {
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#role-based-namespaces-and-permissions
+        if (token.startsWith('Library/') === false) {
             return undefined;
         }
 

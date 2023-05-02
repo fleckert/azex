@@ -36,7 +36,7 @@ export class devops_permissions_overview_show {
         const subjectDescriptors  = identities.filter(p => p.identity?.subjectDescriptor !== undefined).map(p => p.identity?.subjectDescriptor!);
         const graphSubjects       = await azureDevOpsHelper.graphSubjectsLookup(organization, subjectDescriptors);
 
-        const accessControlListMapped = this.mapItems(securityNamespace, accessControlLists, identities, Helper.toArray(graphSubjects));
+        const accessControlListMapped = devops_permissions_overview_show.mapItems(securityNamespace, accessControlLists, identities, Helper.toArray(graphSubjects));
 
         const titleMarkDown = Markdown.tableKeyValue('scope', `${organization} / ${project}`, [
             { key: 'namespace', value: `${securityNamespace.name} [${securityNamespace.namespaceId}]`},
@@ -118,13 +118,15 @@ export class devops_permissions_overview_show {
                 const isAllowInherited = acl.allowInherited.mapping.find(p => p.bit === action.bit) !== undefined;
                 const isDenyInherited  = acl.denyInherited .mapping.find(p => p.bit === action.bit) !== undefined;
 
-                     if (isAllowInherited) { line.push(`|Allow`); }
-                else if (isAllowEffective) { line.push(`|Allow`); }
-                else if (isAllow         ) { line.push(`|Allow`); }
-                else if (isDenyInherited ) { line.push(`|Deny` ); }
-                else if (isDenyEffective ) { line.push(`|Deny` ); }
-                else if (isDeny          ) { line.push(`|Deny` ); }
-                else                       { line.push(`|`     ); }
+                     if (isDenyEffective  && isDenyInherited ) { line.push(`|Deny<br/>(inherited)` ); }
+                else if (isAllowEffective && isAllowInherited) { line.push(`|Allow<br/>(inherited)`); }
+                else if (isDenyEffective                     ) { line.push(`|Deny` ); }
+                else if (isAllowEffective                    ) { line.push(`|Allow`); }
+                else if (isDeny                              ) { line.push(`|Deny` ); }
+                else if (isAllow                             ) { line.push(`|Allow`); }
+                else if (isDenyInherited                     ) { line.push(`|Deny<br/>(inherited)` ); }
+                else if (isAllowInherited                    ) { line.push(`|Allow<br/>(inherited)`); }
+                else                                         { line.push(`|`     ); }
             }
             lines.push(line.join(''));
         }

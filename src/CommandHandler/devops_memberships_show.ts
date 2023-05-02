@@ -1,13 +1,13 @@
-import { AzureDevOpsHelper                  } from "../AzureDevOpsHelper";
-import { AzureDevOpsItemAndOthersEx         } from "../models/AzureDevOpsItemAndOthersEx";
-import { AzureDevOpsMembershipsResolver     } from "../AzureDevOpsMembershipsResolver";
-import { AzureDevOpsPortalLinks             } from "../AzureDevOpsPortalLinks";
-import { GraphGroup, GraphMember, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { Helper                             } from "../Helper";
-import { Html                               } from "../Converters/Html";
-import { Markdown                           } from "../Converters/Markdown";
-import { rm, writeFile                      } from "fs/promises";
-import { TeamProjectReference               } from "azure-devops-node-api/interfaces/CoreInterfaces";
+import { AzureDevOpsHelper                                         } from "../AzureDevOpsHelper";
+import { AzureDevOpsItemAndOthersEx                                } from "../models/AzureDevOpsItemAndOthersEx";
+import { AzureDevOpsMembershipsResolver                            } from "../AzureDevOpsMembershipsResolver";
+import { AzureDevOpsPortalLinks                                    } from "../AzureDevOpsPortalLinks";
+import { GraphGroup, GraphMember, GraphServicePrincipal, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { Helper                                                    } from "../Helper";
+import { Html                                                      } from "../Converters/Html";
+import { Markdown                                                  } from "../Converters/Markdown";
+import { rm, writeFile                                             } from "fs/promises";
+import { TeamProjectReference                                      } from "azure-devops-node-api/interfaces/CoreInterfaces";
 
 
 export class devops_memberships_show {
@@ -63,7 +63,7 @@ export class devops_memberships_show {
         const displayForMember    = (member   : GraphMember) => { return AzureDevOpsHelper.isGraphUser(member) ? `${member.displayName}${linebreak}${member.principalName}` : `${member.principalName}` };
         const displayForContainer = (container: GraphMember) => { return `${container.principalName}`; }
         const displayForGroup     = (group    : GraphGroup ) => { return `${group    .principalName}`; }
-        const displayForUsers     = (users    : GraphUser[]) => { return users.map(m => `${m.displayName}`).join(`${linebreak}`); }
+        const displayForUsers     = (users    : (GraphUser | GraphServicePrincipal)[]) => { return users.map(m => `${m.displayName}`).join(`${linebreak}`); }
     
         const focus  = [{ value: principalNameResolved }];
         const styles = [

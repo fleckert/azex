@@ -1,7 +1,7 @@
-import   path                        from "path";
 import { AzureDevOpsHelper         } from "../../../src/AzureDevOpsHelper";
 import { TestConfigurationProvider } from "../../_Configuration/TestConfiguration";
-import { mkdir, rm, writeFile      } from "fs/promises";
+import { writeFile                 } from "fs/promises";
+import { TestHelper                } from "../../_TestHelper/TestHelper";
 
 test('AzureDevOpsHelper - inviteUser', async () => {
     const config       = await TestConfigurationProvider.get();
@@ -13,12 +13,12 @@ test('AzureDevOpsHelper - inviteUser', async () => {
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 
     if (`${principalName}` !== '') {
-        await mkdir(path.join(__dirname, 'out', organization), { recursive: true });
-        const file = path.join(__dirname, 'out', organization, `${organization}-${principalName}.json`)
-        await rm(file, { force: true });
+        const file = await TestHelper.prepareFile([__dirname, 'out', organization, `${organization}-${principalName}.json`]);
         
         const response = await azureDevOpsHelper.inviteUser(organization, principalName, 'express');
         
         await writeFile(file, JSON.stringify(response, null, 2));
+
+        console.log({ file })
     }
 }, 100000);
