@@ -42,6 +42,34 @@ export class ActiveDirectoryHelper {
         readonly credentials: TokenCredential
     ) { }
 
+    async getUsers(count?: number): Promise<ActiveDirectoryUser[]> {
+        const headers = await this.getHeaders();
+
+        const collection = new Array<ActiveDirectoryUser>();
+
+        let url = `${this.microsoftGraphV1Endpoint}/users?${this.selectUser}`;
+
+        while (url !== undefined) {
+            const response = await axios.get(url, { headers });
+
+            if (response.status === 200) {
+                const itemsInResponse = response.data.value as ActiveDirectoryUser[];
+                collection.push(...itemsInResponse);
+                url = response.data['@odata.nextLink'];
+
+                if (count !== undefined && collection.length >= count) {
+                    break;
+                }
+                console.log(collection.length)
+            }
+            else {
+                throw new Error(JSON.stringify({url, status: response.status}));
+            }
+        }
+
+        return collection.slice(0, count);
+    }
+
     getUsersById                     (ids                : string[]): Promise<{ items: Array<ActiveDirectoryUser            >, failedRequests: Array<string> }> { return this.getUsersByIdBatched                     (ids                ); }
     getGroupsById                    (ids                : string[]): Promise<{ items: Array<ActiveDirectoryGroup           >, failedRequests: Array<string> }> { return this.getGroupsByIdBatched                    (ids                ); }
     getServicePrincipalsById         (ids                : string[]): Promise<{ items: Array<ActiveDirectoryServicePrincipal>, failedRequests: Array<string> }> { return this.getServicePrincipalsByIdBatched         (ids                ); }

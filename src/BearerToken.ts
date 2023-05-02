@@ -5,15 +5,9 @@ export class BearerToken{
     static microsoftGraph (tenant: string | undefined): Promise<string> { return this.get('https://graph.microsoft.com'         , tenant); }
 
     static async get(resource: string, tenant: string | undefined): Promise<string> {
-        
-        const bearerTokenAzureCliPromise            = BearerTokenAzureCli           .get(resource, tenant);
-        const bearerTokenAzurePowerShellCorePromise = BearerTokenAzurePowerShellCore.get(resource, tenant);
-        const bearerTokenAzurePowerShellPromise     = BearerTokenAzurePowerShell    .get(resource, tenant);
-        
-        // use try-catch instead of Promise.any to define sequence
-        try { return await bearerTokenAzureCliPromise           ; } catch { }
-        try { return await bearerTokenAzurePowerShellCorePromise; } catch { }
-        try { return await bearerTokenAzurePowerShellPromise    ; } catch { }
+        try { return await BearerTokenAzureCli           .get(resource, tenant); } catch { }
+        try { return await BearerTokenAzurePowerShellCore.get(resource, tenant); } catch { }
+        try { return await BearerTokenAzurePowerShell    .get(resource, tenant); } catch { }
 
         throw new Error(`Failed to resolve accessToken resource[${resource}] tenant[${tenant}].`);
     }

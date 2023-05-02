@@ -1,23 +1,23 @@
-import { GraphGroup, GraphMember, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
-import { AzureDevOpsHelper                  } from "../AzureDevOpsHelper";
-import { AzureDevOpsItemAndOthers           } from "./AzureDevOpsItemAndOthers";
+import { GraphGroup, GraphMember, GraphServicePrincipal, GraphUser } from "azure-devops-node-api/interfaces/GraphInterfaces";
+import { AzureDevOpsHelper                                         } from "../AzureDevOpsHelper";
+import { AzureDevOpsItemAndOthers                                  } from "./AzureDevOpsItemAndOthers";
 
 
 
 export class AzureDevOpsItemAndOthersEx {
     readonly item  : GraphMember;
-    readonly users : Array<GraphUser>;
+    readonly users : Array<GraphUser | GraphServicePrincipal>;
     readonly others: Array<AzureDevOpsItemAndOthersEx>;
 
     constructor(
         itemAndOthers: AzureDevOpsItemAndOthers
     ) {
         this.item = itemAndOthers.item;
-        this.users = new Array<GraphUser>();
+        this.users = new Array<GraphUser | GraphServicePrincipal>();
         this.others = new Array<AzureDevOpsItemAndOthersEx>();
 
         for (const other of itemAndOthers.others) {
-            if (AzureDevOpsHelper.isGraphUser(other.item)) {
+            if (AzureDevOpsHelper.isGraphUser(other.item) || AzureDevOpsHelper.isServicePrincipal(other.item)) {
                 this.users.push(other.item);
             }
             else if (AzureDevOpsHelper.isGraphGroup(other.item)) {
@@ -37,14 +37,14 @@ export class AzureDevOpsItemAndOthersEx {
 
     private id(a: GraphMember, b: GraphMember) { return `${a.descriptor?.toLowerCase()}-${b.descriptor?.toLowerCase()}`; }
 
-    private flattenUp(): Array<{ container: GraphMember; users: Array<GraphUser>; } | { container: GraphMember; group: GraphGroup; }> {
-        const map = new Map<string, { container: GraphMember; users: Array<GraphUser>; } | { container: GraphMember; group: GraphGroup; }>();
+    private flattenUp(): Array<{ container: GraphMember; users: Array<GraphUser | GraphServicePrincipal>;  } | { container: GraphMember; group: GraphGroup; }> {
+        const map = new Map<string, { container: GraphMember; users: Array<GraphUser | GraphServicePrincipal>; } | { container: GraphMember; group: GraphGroup; }>();
 
         for (const otherGroup of this.others.filter(p => AzureDevOpsHelper.isGraphGroup(p.item))) {
             if (AzureDevOpsHelper.isGraphGroup(this.item)) {
                 map.set(`${this.id(otherGroup.item, this.item)}`, { container: otherGroup.item, group: this.item });
             }
-            else if (AzureDevOpsHelper.isGraphUser(this.item)) {
+            else if (AzureDevOpsHelper.isGraphUser(this.item) || AzureDevOpsHelper.isServicePrincipal(this.item)) {
                 map.set(`${this.id(otherGroup.item, this.item)}`, { container: otherGroup.item, users: [this.item] });
             }
             else {
@@ -68,8 +68,8 @@ export class AzureDevOpsItemAndOthersEx {
         return [...map.values()];
     }
 
-    private flattenDown(): Array<{ container: GraphMember; users: Array<GraphUser>; } | { container: GraphMember; group: GraphGroup; }> {
-        const map = new Map<string, { container: GraphMember; users: Array<GraphUser>; } | { container: GraphMember; group: GraphGroup; }>();
+    private flattenDown(): Array<{ container: GraphMember; users: Array<GraphUser | GraphServicePrincipal>; } | { container: GraphMember; group: GraphGroup; }> {
+        const map = new Map<string, { container: GraphMember; users: Array<GraphUser | GraphServicePrincipal>; } | { container: GraphMember; group: GraphGroup; }>();
 
         if (this.users.length > 0) {
             map.set(`${this.item.descriptor}-users`, { container: this.item, users: this.users });
