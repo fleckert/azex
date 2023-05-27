@@ -316,7 +316,7 @@ export class Html {
         return lines.join('\n');
     }
 
-    static tableWithSorting(title: string, headers: Array<string>, collection: Array<Array<string>>): string {
+    static tableWithSorting(title: string, headers: Array<string>, collection: Array<Array<string>>, dataPageSize = 100): string {
 
         const lines = new Array<string>();
 
@@ -342,7 +342,7 @@ export class Html {
                           'data-show-pagination-switch="true" ' + // https://examples.bootstrap-table.com/#options/show-pagination-switch.html#view-source
                           'data-search-highlight="true"       ' + // https://examples.bootstrap-table.com/#options/search-highlight.html#view-source
                           'data-pagination="true"             ' + // https://examples.bootstrap-table.com/#options/table-pagination.html#view-source
-                          'data-page-size="100"               ' + // https://examples.bootstrap-table.com/#options/page-size.html#view-source
+                          `data-page-size="${dataPageSize}"   ` + // https://examples.bootstrap-table.com/#options/page-size.html#view-source
                           'data-search-align="left"           ' + // https://examples.bootstrap-table.com/#options/search-align.html#view-source
                           '>');
         lines.push('  <thead>');

@@ -183,6 +183,13 @@ export class AzureDevOpsSecurityTokens {
             });
         }
 
+        value.push({
+            securityNamespace: securityNamespace,
+            id               : `/${prjct.name}`,
+            token            : `$/${prjct.id}`,
+            project          : prjct
+        });
+
         return value;
     }
 
@@ -323,7 +330,7 @@ export class AzureDevOpsSecurityTokens {
 
         const value = new Array<AzureDevOpsSecurityTokenElement>({
             securityNamespace: securityNamespace,
-            id               : `/${prjct.name}`,
+            id               : `${prjct.name}`,
             token            : prjct.id,
             project          : prjct
         });
@@ -332,11 +339,28 @@ export class AzureDevOpsSecurityTokens {
         for (const team of teams) {
             value.push({
                 securityNamespace: securityNamespace,
-                id               : `/${prjct.name}/${team.name}`,
-                token            : `${prjct.id}/${team.id}`,
+                id               : `${prjct.name}\\${team.name}`,
+                token            : `${prjct.id}\\${team.id}`,
                 project          : prjct
             });
         }
+
+        if (prjct.name !== undefined) {
+            const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, prjct.name);
+            for (const group of groups) {
+                if (group.originId === undefined) {
+                    continue
+                }
+
+                value.push({
+                    securityNamespace: securityNamespace,
+                    id: `${group.principalName}`,
+                    token: `${prjct.id}\\${group.originId}`,
+                    project: prjct
+                });
+            }
+        }
+
         return value;
     }
 

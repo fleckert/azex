@@ -10,6 +10,7 @@ export class AzureDevOpsSecurityTokenParser {
         if (namespaceName === 'Identity'            ) { return AzureDevOpsSecurityTokenParser.getProject_Identity            (token, projects                ); }
         if (namespaceName === 'Iteration'           ) { return AzureDevOpsSecurityTokenParser.getProject_Iteration           (token, projects, securityTokens); }
         if (namespaceName === 'Library'             ) { return AzureDevOpsSecurityTokenParser.getProject_Library             (token, projects                ); }
+        if (namespaceName === 'WorkItemQueryFolders') { return AzureDevOpsSecurityTokenParser.getProject_WorkItemQueryFolders(token, projects                ); }
         return undefined;
     }
 
@@ -22,7 +23,7 @@ export class AzureDevOpsSecurityTokenParser {
 
         const tokenStripped = token.substring('vstfs:///Classification/Node/'.length, indexOfColon < 0 ? undefined : indexOfColon);
 
-        const project = projects.find(p => p.id === tokenStripped);
+        const project = projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());
 
         if (project !== undefined) {
             return project;
@@ -50,14 +51,14 @@ export class AzureDevOpsSecurityTokenParser {
 
         const tokenStripped = token.split('/')[1];
 
-        return projects.find(p => p.id === tokenStripped);
+        return projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());
     }
 
     private static getProject_Identity(token: string, projects: TeamProjectReference[]): TeamProjectReference | undefined {
         // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#internal-namespaces-and-permissions
-        const projectId = token.split('\\')[0];
+        const tokenStripped = token.split('\\')[0];
 
-        return projects.find(p => p.id === projectId);
+        return projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());
     }
 
     private static getProject_Iteration(token: string, projects: TeamProjectReference[], securityTokens: Array<AzureDevOpsSecurityTokenElement>): TeamProjectReference | undefined {
@@ -69,7 +70,7 @@ export class AzureDevOpsSecurityTokenParser {
 
         const tokenStripped = token.substring('vstfs:///Classification/Node/'.length, indexOfColon < 0 ? undefined : indexOfColon);
 
-        const project = projects.find(p => p.id === tokenStripped);
+        const project = projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());;
 
         if (project !== undefined) {
             return project;
@@ -97,7 +98,7 @@ export class AzureDevOpsSecurityTokenParser {
 
         const tokenStripped = token.split('/')[1];
 
-        return projects.find(p => p.id === tokenStripped);
+        return projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());
     }
 
     private static getProject_DistributedTask(token: string, projects: TeamProjectReference[]): TeamProjectReference | undefined {
@@ -108,7 +109,7 @@ export class AzureDevOpsSecurityTokenParser {
 
         const tokenStripped = token.split('/')[1];
 
-        return projects.find(p => p.id === tokenStripped);
+        return projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());
     }
 
     private static getProject_Library(token: string, projects: TeamProjectReference[]): TeamProjectReference | undefined {
@@ -119,6 +120,17 @@ export class AzureDevOpsSecurityTokenParser {
 
         const tokenStripped = token.split('/')[1];
 
-        return projects.find(p => p.id === tokenStripped);
+        return projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());
+    }
+
+    private static getProject_WorkItemQueryFolders(token: string, projects: TeamProjectReference[]): TeamProjectReference | undefined {
+        // https://learn.microsoft.com/en-us/azure/devops/organizations/security/namespace-reference?view=azure-devops#object-level-namespaces-and-permissions
+        if (token.startsWith('$/') === false) {
+            return undefined;
+        }
+
+        const tokenStripped = token.split('/')[1];
+
+        return projects.find(p => `${p.id}`.toLowerCase() === tokenStripped.toLowerCase());
     }
 }

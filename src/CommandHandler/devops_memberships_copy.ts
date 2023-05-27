@@ -46,8 +46,8 @@ export class devops_memberships_copy {
                 permissionsSource: AzureDevOpsPortalLinks.Permissions(organization, undefined, graphSubjectSource.descriptor),
                 permissionsTarget: AzureDevOpsPortalLinks.Permissions(organization, undefined, graphSubjectTarget.descriptor)
             },
-            groupsAdded  : groupsAdded  .map(p => { return { group: p.principalName, permissions: AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor) } }),
-            groupsRemoved: groupsRemoved.map(p => { return { group: p.principalName, permissions: AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor) } }),
+            groupsAdded  : add    ? groupsAdded  .map(p => { return { group: p.principalName, permissions: AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor) } }) : [],
+            groupsRemoved: remove ? groupsRemoved.map(p => { return { group: p.principalName, permissions: AzureDevOpsPortalLinks.Permissions(organization, undefined, p.descriptor) } }) : [],
         }, null, 2));
     }
 }

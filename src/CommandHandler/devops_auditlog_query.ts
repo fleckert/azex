@@ -81,8 +81,8 @@ export class devops_auditlog_query {
 
         await Promise.all([
             writeFile(`${path}-${title}.json`               , JSON.stringify       (auditLogEntries, null, 2            )),
-            writeFile(`${path}-${title}.md`                 , Markdown.table       (title, headers, valuesMappedMarkdown)),
-            writeFile(`${path}-${title}.html`               , Html.tableWithSorting(title, headers, valuesMappedHtml    )),
+            writeFile(`${path}-${title}.md`                 , Markdown.table       (`${title} - ${new Date().toISOString()}`, headers, valuesMappedMarkdown)),
+            writeFile(`${path}-${title}.html`               , Html.tableWithSorting(`${title} - ${new Date().toISOString()}`, headers, valuesMappedHtml    )),
             writeFile(`${path}-${title}-securityTokens.json`, JSON.stringify       (securityTokens, null, 2             ))
         ]);
 
