@@ -6,7 +6,7 @@ import { TestConfigurationProvider } from "../_Configuration/TestConfiguration";
 import { TestHelper                } from "../_TestHelper/TestHelper";
 import { writeFile                 } from "fs/promises";
 
-test('AzureDevOpsHelper - userLastAccess', async () => {
+test('AzureDevOpsHelper_userLastAccess', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
     const tenant           = config.azureDevOps.tenant;
@@ -20,7 +20,7 @@ test('AzureDevOpsHelper - userLastAccess', async () => {
 
     const userEntitlements = await Helper.batchCalls(
         users.filter(p => p.descriptor !== undefined)
-             .filter(p=> p.descriptor!.startsWith('svc.') === false),
+             .filter(p => p.descriptor!.startsWith('svc.') === false),
         user => azureDevOpsHelper.userEntitlements(organization, user.descriptor!)
     );
 
@@ -32,15 +32,19 @@ test('AzureDevOpsHelper - userLastAccess', async () => {
         return valueStripped;
     }
 
+    const dataPageSize = 1000;
+
     const html = Html.tableWithSorting(
-        `${organization} - users`,
+        `${organization} - users - ${new Date().toISOString()}`,
         ['displayName', 'principalName', 'dateCreated', 'lastAccessedDate'],
-        userEntitlements.map(p => [
+        userEntitlements
+            .map(p => [
             p.parameters.displayName ?? '',
             Html.getLinkWithToolTip(`${p.parameters.principalName}`, AzureDevOpsPortalLinks.Permissions(organization,undefined, p.parameters.descriptor!), 'open permissions'),
             Html.getLinkWithToolTip((`${p.result.dateCreated     }` === '0001-01-01T00:00:00Z' ? ''      : timeStampDisplay(`${p.result.dateCreated     }`)) ?? '', AzureDevOpsHelper.userEntitlementsUrl(organization, p.parameters.descriptor!), 'show details'),
             Html.getLinkWithToolTip((`${p.result.lastAccessedDate}` === '0001-01-01T00:00:00Z' ? 'never' : timeStampDisplay(`${p.result.lastAccessedDate}`)) ?? '', AzureDevOpsHelper.userEntitlementsUrl(organization, p.parameters.descriptor!), 'show details')
-        ])
+        ]),
+        dataPageSize
     );
 
     await writeFile(file, html);
