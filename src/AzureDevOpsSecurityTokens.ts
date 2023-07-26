@@ -345,20 +345,18 @@ export class AzureDevOpsSecurityTokens {
             });
         }
 
-        if (prjct.name !== undefined) {
-            const groups = await azureDevOpsHelper.graphGroupsListForProjectName(organization, prjct.name);
-            for (const group of groups) {
-                if (group.originId === undefined) {
-                    continue
-                }
-
-                value.push({
-                    securityNamespace: securityNamespace,
-                    id: `${group.principalName}`,
-                    token: `${prjct.id}\\${group.originId}`,
-                    project: prjct
-                });
+        const groups = await azureDevOpsHelper.graphGroupsListForProjectId(organization, prjct.id);
+        for (const group of groups) {
+            if (group.originId === undefined) {
+                continue
             }
+
+            value.push({
+                securityNamespace: securityNamespace,
+                id: `${group.principalName}`,
+                token: `${prjct.id}\\${group.originId}`,
+                project: prjct
+            });
         }
 
         return value;

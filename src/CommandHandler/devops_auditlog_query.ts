@@ -11,6 +11,7 @@ import { AzureDevOpsAuditLogEntry,
          AzureDevOpsAuditLogEntry_Data_PolicyPolicyConfigRemoved,
          AzureDevOpsAuditLogEntry_Data_ProjectArea,
          AzureDevOpsAuditLogEntry_Data_ProjectIteration,
+         AzureDevOpsAuditLogEntry_Data_ProjectProcess,
          AzureDevOpsAuditLogEntry_Data_ProjectProcessModify,
          AzureDevOpsAuditLogEntry_Data_SecurityModifyAccessControlLists,
          AzureDevOpsAuditLogEntry_Data_SecurityModifyPermission,
@@ -167,22 +168,31 @@ export class devops_auditlog_query {
             return funcLink(auditLogEntry.projectName, AzureDevOpsPortalLinks.Project(organization, auditLogEntry.projectName), 'open project');
         }
 
-        return devops_auditlog_query.project_AuditLog_AccessLog               (organization, auditLogEntry,                           funcLink)
-            ?? devops_auditlog_query.project_Extension_Installed              (organization, auditLogEntry,                           funcLink)
-            ?? devops_auditlog_query.project_Extension_VersionUpdated         (organization, auditLogEntry,                           funcLink)
-            ?? devops_auditlog_query.project_Group_UpdateGroupMembership_Add  (organization, auditLogEntry, members       , projects, funcLink)
-            ?? devops_auditlog_query.project_Licensing_Assigned               (organization, auditLogEntry,                           funcLink)
-            ?? devops_auditlog_query.project_Licensing_Modified               (organization, auditLogEntry,                           funcLink)
-            ?? devops_auditlog_query.project_Licensing_Removed                (organization, auditLogEntry,                           funcLink)
-            ?? devops_auditlog_query.project_Security_ModifyPermission        (organization, auditLogEntry, securityTokens, projects, funcLink)
-            ?? devops_auditlog_query.project_Security_RemovePermission        (organization, auditLogEntry, securityTokens, projects, funcLink)
-            ?? devops_auditlog_query.project_Security_RemoveAccessControlLists(organization, auditLogEntry, securityTokens, projects, funcLink)
-            ?? devops_auditlog_query.project_Group_UpdateGroups_Delete        (organization, auditLogEntry,                           funcLink)
-            ?? devops_auditlog_query.project_Group_UpdateGroups_Modify        (organization, auditLogEntry,                           funcLink)
+        return devops_auditlog_query.project_AuditLog_AccessLog                (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_AuditLog_DownloadLog              (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Extension_Installed               (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Extension_VersionUpdated          (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Group_UpdateGroupMembership_Add   (organization, auditLogEntry, members       , projects, funcLink)
+            ?? devops_auditlog_query.project_Group_UpdateGroupMembership_Remove(organization, auditLogEntry, members       , projects, funcLink)
+            ?? devops_auditlog_query.project_Licensing_Assigned                (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Licensing_Modified                (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Licensing_Removed                 (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Security_ModifyPermission         (organization, auditLogEntry, securityTokens, projects, funcLink)
+            ?? devops_auditlog_query.project_Security_RemovePermission         (organization, auditLogEntry, securityTokens, projects, funcLink)
+            ?? devops_auditlog_query.project_Security_RemoveAccessControlLists (organization, auditLogEntry, securityTokens, projects, funcLink)
+            ?? devops_auditlog_query.project_Group_UpdateGroups_Delete         (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Group_UpdateGroups_Modify         (organization, auditLogEntry,                           funcLink)
+            ?? devops_auditlog_query.project_Process_xxx                       (organization, auditLogEntry,                           funcLink)
             ?? '';
     }
     private static project_AuditLog_AccessLog(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
         if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.AuditLog_AccessLog) {
+            return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationAuditLog(organization), 'open auditLog');
+        }
+        return undefined;
+    }
+    private static project_AuditLog_DownloadLog(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.AuditLog_DownloadLog) {
             return funcLink(auditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationAuditLog(organization), 'open auditLog');
         }
         return undefined;
@@ -199,16 +209,39 @@ export class devops_auditlog_query {
         }
         return undefined;
     }
-    private static project_Group_UpdateGroupMembership_Add(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, members : Array<GraphMember>, projects: TeamProjectReference[], funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+    private static project_Group_UpdateGroupMembership_Add(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, members: Array<GraphMember>, projects: TeamProjectReference[], funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
         if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Group_UpdateGroupMembership_Add) {
-            const data : AzureDevOpsAuditLogEntry_Data_GroupUpdateGroupMembership = auditLogEntry.data;
-              
+            const data: AzureDevOpsAuditLogEntry_Data_GroupUpdateGroupMembership = auditLogEntry.data;
+
             const scope = data.GroupName !== undefined && data.GroupName.startsWith('[') && data.GroupName.indexOf(']') > 0 ? data.GroupName.substring(1, data.GroupName.indexOf(']')) : undefined;
-            const graphGroup  = members.filter(p => AzureDevOpsHelper.isGraphGroup(p)).find(p => data.GroupName !== undefined && p.principalName?.toLowerCase() === data.GroupName?.toLowerCase());
+            const graphGroup = members.filter(p => AzureDevOpsHelper.isGraphGroup(p)).find(p => data.GroupName !== undefined && p.principalName?.toLowerCase() === data.GroupName?.toLowerCase());
 
-            const project = projects.find(project => scope!== undefined && project?.name?.toLowerCase() === scope.toLowerCase());
+            const project = projects.find(project => scope !== undefined && project?.name?.toLowerCase() === scope.toLowerCase());
 
-            if(project?.name !== undefined){
+            if (project?.name !== undefined) {
+                return funcLink(project.name, AzureDevOpsPortalLinks.Permissions(organization, project.name, graphGroup?.descriptor), 'open permissions');
+            }
+
+            if (scope?.toLowerCase() === organization.toLowerCase()) {
+                return funcLink(auditLogEntry.scopeDisplayName ?? scope, AzureDevOpsPortalLinks.Permissions(organization, undefined, undefined), 'open permissions');
+            }
+
+            if (scope !== undefined) {
+                return funcLink(auditLogEntry.scopeDisplayName ?? scope, AzureDevOpsPortalLinks.Permissions(organization, undefined, undefined), 'open permissions');
+            }
+        }
+        return undefined;
+    }
+    private static project_Group_UpdateGroupMembership_Remove(organization: string, auditLogEntry: AzureDevOpsAuditLogEntry, members: Array<GraphMember>, projects: TeamProjectReference[], funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (auditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Group_UpdateGroupMembership_Remove) {
+            const data: AzureDevOpsAuditLogEntry_Data_GroupUpdateGroupMembership = auditLogEntry.data;
+
+            const scope = data.GroupName !== undefined && data.GroupName.startsWith('[') && data.GroupName.indexOf(']') > 0 ? data.GroupName.substring(1, data.GroupName.indexOf(']')) : undefined;
+            const graphGroup = members.filter(p => AzureDevOpsHelper.isGraphGroup(p)).find(p => data.GroupName !== undefined && p.principalName?.toLowerCase() === data.GroupName?.toLowerCase());
+
+            const project = projects.find(project => scope !== undefined && project?.name?.toLowerCase() === scope.toLowerCase());
+
+            if (project?.name !== undefined) {
                 return funcLink(project.name, AzureDevOpsPortalLinks.Permissions(organization, project.name, graphGroup?.descriptor), 'open permissions');
             }
 
@@ -317,6 +350,27 @@ export class devops_auditlog_query {
                 const projectName = `${azureDevOpsAuditLogEntry.details}`.substring(1, indexEnd);
                 return funcLink(`${projectName}`, AzureDevOpsPortalLinks.Project(organization, projectName), 'open project');
             }
+        }
+
+        return undefined;
+    }
+    private static project_Process_xxx(organization: string, azureDevOpsAuditLogEntry: AzureDevOpsAuditLogEntry, funcLink: (title: string, url: string, tooltip: string) => string): string | undefined {
+        if (   azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Control_Create
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Control_Delete
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Control_Update
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Field_Add
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Field_Create
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Field_Remove
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Group_Add
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_List_Create
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_State_Add
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_State_Create
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_State_Delete
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_State_Update
+            || azureDevOpsAuditLogEntry.actionId === AzureDevOpsAuditLogEntryActionIds.Process_Process_EditWithoutNewInformation
+        ) {
+            const data: AzureDevOpsAuditLogEntry_Data_ProjectProcess = azureDevOpsAuditLogEntry.data;
+            return funcLink(azureDevOpsAuditLogEntry.scopeDisplayName ?? organization, AzureDevOpsPortalLinks.OrganizationProcess(organization), 'open processes')
         }
 
         return undefined;

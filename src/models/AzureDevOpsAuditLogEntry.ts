@@ -119,6 +119,10 @@ export interface AzureDevOpsAuditLogEntry_Data_ProjectArea {
     ProjectName: string | undefined
 }
 
+export interface AzureDevOpsAuditLogEntry_Data_ProjectProcess {
+    ProcessName: string | undefined
+}
+
 export interface AzureDevOpsAuditLogEntry_Data_ProjectProcessModify {
     ProcessName   : string | undefined
     OldProcessName: string | undefined
@@ -181,32 +185,46 @@ export interface AzureDevOpsAuditLogEntry_Data_PolicyPolicyConfigRemoved {
 }
 
 export class AzureDevOpsAuditLogEntryActionIds {
-    static AuditLog_AccessLog                 = "AuditLog.AccessLog"
-    static Extension_Installed                = "Extension.Installed"
-    static Extension_VersionUpdated           = 'Extension.VersionUpdated'
-    static Group_CreateGroups                 = 'Group.CreateGroups';
-    static Group_UpdateGroupMembership_Add    = 'Group.UpdateGroupMembership.Add'
-    static Group_UpdateGroupMembership_Remove = 'Group.UpdateGroupMembership.Remove'
-    static Group_UpdateGroups_Delete          = 'Group.UpdateGroups.Delete'
-    static Group_UpdateGroups_Modify          = 'Group.UpdateGroups.Modify';
-    static Licensing_Assigned                 = 'Licensing.Assigned'
-    static Licensing_Modified                 = 'Licensing.Modified'
-    static Licensing_Removed                  = 'Licensing.Removed'
-    static Policy_PolicyConfigCreated         = 'Policy.PolicyConfigCreated'
-    static Policy_PolicyConfigModified        = 'Policy.PolicyConfigModified'
-    static Policy_PolicyConfigRemoved         = 'Policy.PolicyConfigRemoved'
-    static Project_AreaPath_Create            = 'Project.AreaPath.Create'
-    static Project_AreaPath_Delete            = 'Project.AreaPath.Delete'
-    static Project_AreaPath_Update            = 'Project.AreaPath.Update'
-    static Project_IterationPath_Create       = 'Project.IterationPath.Create'
-    static Project_IterationPath_Delete       = 'Project.IterationPath.Delete'
-    static Project_IterationPath_Update       = 'Project.IterationPath.Update'
-    static Project_Process_Modify             = 'Project.Process.Modify'
-    static Security_ModifyAccessControlLists  = 'Security.ModifyAccessControlLists'
-    static Security_ModifyPermission          = 'Security.ModifyPermission'
-    static Security_RemovePermission          = 'Security.RemovePermission'
-    static Security_RemoveAccessControlLists  = 'Security.RemoveAccessControlLists'
-    static Token_PatCreateEvent               = 'Token.PatCreateEvent'
-    static Token_PatRevokeEvent               = 'Token.PatRevokeEvent'
+    static AuditLog_AccessLog                        = 'AuditLog.AccessLog'
+    static AuditLog_DownloadLog                      = 'AuditLog.DownloadLog'
+    static Extension_Installed                       = 'Extension.Installed'
+    static Extension_VersionUpdated                  = 'Extension.VersionUpdated'
+    static Group_CreateGroups                        = 'Group.CreateGroups'
+    static Group_UpdateGroupMembership_Add           = 'Group.UpdateGroupMembership.Add'
+    static Group_UpdateGroupMembership_Remove        = 'Group.UpdateGroupMembership.Remove'
+    static Group_UpdateGroups_Delete                 = 'Group.UpdateGroups.Delete'
+    static Group_UpdateGroups_Modify                 = 'Group.UpdateGroups.Modify'
+    static Licensing_Assigned                        = 'Licensing.Assigned'
+    static Licensing_Modified                        = 'Licensing.Modified'
+    static Licensing_Removed                         = 'Licensing.Removed'
+    static Policy_PolicyConfigCreated                = 'Policy.PolicyConfigCreated'
+    static Policy_PolicyConfigModified               = 'Policy.PolicyConfigModified'
+    static Policy_PolicyConfigRemoved                = 'Policy.PolicyConfigRemoved'
+    static Process_Control_Create                    = 'Process.Control.Create'
+    static Process_Control_Delete                    = 'Process.Control.Delete'
+    static Process_Control_Update                    = 'Process.Control.Update'
+    static Process_Field_Add                         = 'Process.Field.Add'
+    static Process_Field_Create                      = 'Process.Field.Create'
+    static Process_Field_Remove                      = 'Process.Field.Remove'
+    static Process_Group_Add                         = 'Process.Group.Add'
+    static Process_List_Create                       = 'Process.List.Create'
+    static Process_State_Add                         = 'Process.State.Add'
+    static Process_State_Create                      = 'Process.State.Create'
+    static Process_State_Delete                      = 'Process.State.Delete'
+    static Process_State_Update                      = 'Process.State.Update'
+    static Process_Process_EditWithoutNewInformation = 'Process.Process.EditWithoutNewInformation'
+    static Project_AreaPath_Create                   = 'Project.AreaPath.Create'
+    static Project_AreaPath_Delete                   = 'Project.AreaPath.Delete'
+    static Project_AreaPath_Update                   = 'Project.AreaPath.Update'
+    static Project_IterationPath_Create              = 'Project.IterationPath.Create'
+    static Project_IterationPath_Delete              = 'Project.IterationPath.Delete'
+    static Project_IterationPath_Update              = 'Project.IterationPath.Update'
+    static Project_Process_Modify                    = 'Project.Process.Modify'
+    static Security_ModifyAccessControlLists         = 'Security.ModifyAccessControlLists'
+    static Security_ModifyPermission                 = 'Security.ModifyPermission'
+    static Security_RemovePermission                 = 'Security.RemovePermission'
+    static Security_RemoveAccessControlLists         = 'Security.RemoveAccessControlLists'
+    static Token_PatCreateEvent                      = 'Token.PatCreateEvent'
+    static Token_PatRevokeEvent                      = 'Token.PatRevokeEvent'
 
 }

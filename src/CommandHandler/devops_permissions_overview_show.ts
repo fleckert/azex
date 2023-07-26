@@ -80,8 +80,8 @@ export class devops_permissions_overview_show {
     }
 
     private static toMarkDown(
-        organization:string,
-        token:string,
+        organization     : string,
+        token            : string,
         securityNamespace: AzureDevOpsSecurityNamespace,
         title            : string,
         tableHeader      : string,

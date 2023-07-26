@@ -4,6 +4,7 @@ import { devops_auditlog_query     } from "./CommandHandler/devops_auditlog_quer
 import { devops_identity_list      } from "./CommandHandler/devops_identity_list";
 import { devops_identity_show      } from "./CommandHandler/devops_identity_show";
 import { devops_invite_user        } from "./CommandHandler/devops_invite_user";
+import { devops_memberships_clear  } from "./CommandHandler/devops_memberships_clear";
 import { devops_memberships_copy   } from "./CommandHandler/devops_memberships_copy";
 import { devops_memberships_show   } from "./CommandHandler/devops_memberships_show";
 import { devops_pat                } from "./CommandHandler/devops_pat";
@@ -166,6 +167,15 @@ else if (args[0]?.toLowerCase() === "devops") {
             const remove              = false; 
 
             devops_memberships_copy.handle(tenant, organization, principalNameSource , principalNameTarget, add, remove);
+        }
+        else if (args[2]?.toLowerCase() === "clear") {
+            var argv = getArgv(3);
+
+            const tenant        = checkDevOpsTenant       (argv.tenant       );
+            const organization  = checkDevOpsOrganization (argv.organization );
+            const principalName = checkDevOpsPrincipalName(argv.principalName);
+
+            devops_memberships_clear.handle(tenant, organization, principalName);
         }
         else {
             console.error(`${args[0]} ${args[1]} ${args[2]} - unknown command`.toLowerCase());
