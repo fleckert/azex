@@ -155,6 +155,18 @@ export class AzureDevOpsHelper {
         return Helper.batchCalls(parameters, p => this.graphMembershipsListArgs(p));
     }
 
+    async graphMembershipExists(organization: string, subjectDescriptor: string, containerDescriptor: string): Promise<boolean> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/graph/memberships/check-membership-existence?view=azure-devops-rest-7.1&tabs=HTTP
+        const url = `https://vssps.dev.azure.com/${organization}/_apis/graph/memberships/${subjectDescriptor}/${containerDescriptor}?api-version=7.1-preview.1`
+
+        try {
+            await this.head(url, 200);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     async inviteUser(organization: string, principalName: string, accessLevel: string) : Promise<any> {
 
         // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/user-entitlements/add?view=azure-devops-rest-7.1&tabs=HTTP
@@ -471,7 +483,11 @@ export class AzureDevOpsHelper {
             throw new Error(`${JSON.stringify({ organization, projectName, project, error:'Failed to resolve project.id.' })}`);
         }
 
-        const scopeDescriptor = await this.graphDescriptorForProjectId(organization, project.id);
+        return await this.graphGroupsListForProjectId(organization, project.id, count);
+    }
+
+    async graphGroupsListForProjectId(organization: string, projectId: string, count?: number): Promise<GraphGroup[]> {
+        const scopeDescriptor = await this.graphDescriptorForProjectId(organization, projectId);
 
         return await this.graphGroupsListForScopeDescriptor(organization, scopeDescriptor, count);
     }
@@ -649,6 +665,19 @@ export class AzureDevOpsHelper {
             }
 
             throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+        }
+        catch (error: any) {
+            throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
+        }
+    }
+
+    async head(url: string, statusCodeExpected : number): Promise<void> {
+        try {
+            const response = await axios.head(url, { headers: this.getHeaders() });
+
+            if (response.status !== statusCodeExpected) {
+                throw new Error(JSON.stringify({ url, status: response.status, statusText: response.statusText }));
+            }
         }
         catch (error: any) {
             throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
