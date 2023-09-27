@@ -1,6 +1,7 @@
 import axios from "axios";
 import { AzureDevOpsAccessControlList                                      } from "./models/AzureDevOpsAccessControlEntry";
 import { AzureDevOpsAuditLogEntry                                          } from "./models/AzureDevOpsAuditLogEntry";
+import { AzureDevOpsMemberEntitlement                                      } from "./models/AzureDevOpsMemberEntitlement";
 import { AzureDevOpsPat                                                    } from "./AzureDevOpsPat";
 import { AzureDevOpsSecurityNamespace                                      } from "./models/AzureDevOpsSecurityNamespace";
 import { AzureDevOpsSecurityNamespaceAction                                } from "./models/AzureDevOpsSecurityNamespaceAction";
@@ -63,6 +64,13 @@ export class AzureDevOpsHelper {
                     (assetTypes === undefined || assetTypes.length === 0 ? '' : `&assetTypes=${               assetTypes.join(':')                        }`)
                     ;
         return this.getItemsWithContinuation(url);
+    }
+
+    memberEntitlements(organization: string, count?: number): Promise<AzureDevOpsMemberEntitlement[]> {
+        // https://learn.microsoft.com/en-us/rest/api/azure/devops/memberentitlementmanagement/members/get?view=azure-devops-rest-7.1
+        const url = `https://vsaex.dev.azure.com/${organization}/_apis/memberentitlements?$orderBy=name%20Ascending&api-version=7.1-preview.2`;
+
+        return this.getItemsWithContinuationProperty(url, count);
     }
 
     profile(id: string, details: boolean = true) : Promise<Profile> {
@@ -735,7 +743,47 @@ export class AzureDevOpsHelper {
                 }
             }
             catch (error: any) {
-                throw new Error(JSON.stringify({ url, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
+                throw new Error(JSON.stringify({ url: urlWithContinuation, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
+            }
+        }
+
+        return collection.slice(0, count);
+    }
+
+    private async getItemsWithContinuationProperty<T>(url: string, count?: number): Promise<T[]> {
+        const collection = new Array<T>();
+
+        let continuationToken: string | undefined = undefined;
+
+        while (true) {
+            const urlWithContinuationEncoded: string = continuationToken === undefined ? url : `${url}&continuationToken=${encodeURIComponent(continuationToken)}`;
+
+            try {
+                const response = await axios.get(urlWithContinuationEncoded, { headers: this.getHeaders() });
+
+                if (response.status === 200 && `${response.data}`.startsWith('\r\n\r\n<!DOCTYPE html')) {
+                    throw new Error(JSON.stringify({ url: urlWithContinuationEncoded, status: 401, statusText: 'Unauthorized' }));
+                }
+                else if (response.status === 200) {
+                    collection.push(...response.data.items);
+
+                    if (response.data.continuationToken === undefined || response.data.continuationToken === null) {
+                        break;
+                    }
+                    else {
+                        continuationToken = response.data.continuationToken;
+                    }
+                    
+                    if(count !== undefined && collection.length >= count){
+                        break;
+                    }
+                }
+                else {
+                    throw new Error(JSON.stringify({ url: urlWithContinuationEncoded, status: response.status, statusText: response.statusText }));
+                }
+            }
+            catch (error: any) {
+                throw new Error(JSON.stringify({ url: urlWithContinuationEncoded, status: error?.status ?? error?.response?.status ?? error?.code, statusText: error?.statusText ?? error?.response?.statusText ?? error?.message }));
             }
         }
 
