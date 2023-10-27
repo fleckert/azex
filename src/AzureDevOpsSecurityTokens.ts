@@ -1,4 +1,5 @@
 import { AzureDevOpsHelper                                                     } from "./AzureDevOpsHelper";
+import { AzureDevOpsPortalLinks                                                } from "./AzureDevOpsPortalLinks";
 import { AzureDevOpsSecurityNamespace                                          } from "./models/AzureDevOpsSecurityNamespace";
 import { Helper                                                                } from "./Helper";
 import { QueryHierarchyItem, TreeNodeStructureType, WorkItemClassificationNode } from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
@@ -10,6 +11,7 @@ export interface AzureDevOpsSecurityTokenElement {
     id               : string
     token            : string
     project          : TeamProjectReference | undefined
+    url?             : string
 }
 
 export class AzureDevOpsSecurityTokens {
@@ -378,7 +380,8 @@ export class AzureDevOpsSecurityTokens {
             securityNamespace: securityNamespace,
             id               : `/${prjct.name} (all)`,
             token            : AzureDevOpsSecurityTokens.GitRepositories_Project(prjct.id),
-            project          : prjct
+            project          : prjct,
+            url              : AzureDevOpsPortalLinks.ProjectConfigurationRepositorySecurityAll(organization, project)
         }
         const value = gitRepositories.map(
             p => {
@@ -386,7 +389,8 @@ export class AzureDevOpsSecurityTokens {
                     securityNamespace: securityNamespace,
                     id               : `/${prjct.name}/${p.name}`,
                     token            : AzureDevOpsSecurityTokens.GitRepositories_Project_Repository(prjct.id!, p.id ?? ''),
-                    project          : prjct
+                    project          : prjct,
+                    url              : AzureDevOpsPortalLinks.ProjectConfigurationRepositorySecurity(organization, project, p.id ?? '')
                 }
             });
 

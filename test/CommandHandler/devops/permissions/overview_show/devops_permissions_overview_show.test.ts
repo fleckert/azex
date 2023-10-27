@@ -58,6 +58,8 @@ const runTest = async (
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
     const tokens = await func(azureDevOpsHelper, organization, projectName);
 
+    tokens.sort((a,b,)=> `${a.id}`.toLowerCase().localeCompare(`${b.id}`.toLowerCase()));
+    
     const items = tokens.filter(p => p.securityNamespace.name !== undefined).map(p => { return { token: p.token, securityNamespaceName: p.securityNamespace.name! } });
 
     const batches = Helper.getBatches(items.slice(0, maxNumberOfTests), 5);

@@ -43,12 +43,14 @@ export class devops_permissions_overview_show {
             { key: 'token'    , value: token},
         ]);
 
+        const tableHeader = securityToken.url === undefined ? securityToken.id : Markdown.getLinkWithToolTip(securityToken.id, securityToken.url, `open ${securityToken.url}`);
+
         const markdown = this.toMarkDown(
             organization,
             token,
             securityNamespace,
             titleMarkDown,
-            securityToken.id,
+            tableHeader,
             accessControlListMapped
         );
 
