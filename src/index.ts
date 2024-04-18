@@ -11,6 +11,7 @@ import { devops_pat                } from "./CommandHandler/devops_pat";
 import { devops_permissions_token  } from "./CommandHandler/devops_permissions_token";
 import { rbac_apply                } from "./CommandHandler/rbac_apply";
 import { rbac_export               } from "./CommandHandler/rbac_export";
+import { rbac_export_cosmosdb      } from "./CommandHandler/rbac_export_cosmosdb";
 import { rbac_extend               } from "./CommandHandler/rbac_extend";
 import { rbac_verify               } from "./CommandHandler/rbac_verify";
 import { SubscriptionIdResolver    } from "./SubscriptionIdResolver";
@@ -47,13 +48,24 @@ const checkParameter = (parameterName: string, parameterValue: string | undefine
 
 if (args[0]?.toLowerCase() === "rbac") {
     if (args[1]?.toLowerCase() === "export") {
-        var argv = getArgv(2);
-  
-        new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
-        .then(async subscriptionId => {
-            checkSubscriptionId(subscriptionId);
-            await rbac_export.handle(TokenCredentialProvider.get(), subscriptionId!, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
-        });
+        if (args[2]?.toLowerCase() === "cosmosdb") {
+            var argv = getArgv(3);
+    
+            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+            .then(async subscriptionId => {
+                checkSubscriptionId(subscriptionId);
+                await rbac_export_cosmosdb.handle(TokenCredentialProvider.get(), subscriptionId!, argv.out ?? `${commandName}-${args[0]}-${args[1]}-${args[2]}`.toLowerCase());
+            });
+        }
+        else {
+            var argv = getArgv(2);
+    
+            new SubscriptionIdResolver().getSubscriptionId(argv.subscription)
+            .then(async subscriptionId => {
+                checkSubscriptionId(subscriptionId);
+                await rbac_export.handle(TokenCredentialProvider.get(), subscriptionId!, argv.out ?? `${commandName}-${args[0]}-${args[1]}`.toLowerCase());
+            });
+        }
     }
     else if (args[1]?.toLowerCase() === "verify") {
         var argv = getArgv(2);
