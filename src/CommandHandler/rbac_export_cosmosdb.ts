@@ -7,6 +7,9 @@ import { TokenCredential                      } from "@azure/identity";
 import { writeFile                            } from "fs/promises";
 import { AzureRoleAssignmentsResolverCosmosDb } from "../AzureRoleAssignmentsResolverCosmosDb";
 import { AzureRoleAssignmentCosmosDbHelper    } from "../models/AzureRoleAssignmentCosmosDb";
+import { AzureRoleAssignmentsCosmosDbConverter } from "../AzureRoleAssignmentsCosmosDbConverter";
+import { AzureRoleAssignmentsCosmosDbToMarkdown } from "../Converters/AzureRoleAssignmentsCosmosDbToMarkdown";
+import { AzureRoleAssignmentsCosmosDbToHtml } from "../Converters/AzureRoleAssignmentsCosmosDbToHtml";
 
 export class rbac_export_cosmosdb {
     static async handle(credentials: TokenCredential, subscriptionId: string, path: string) : Promise<void> {
@@ -17,11 +20,11 @@ export class rbac_export_cosmosdb {
 
         await Promise.all([
             writeFile(`${path}-${subscriptionId}.full.json` , JSON.stringify(result                                                                     , null, 2)),
-            // writeFile(`${path}-${subscriptionId}.min.json`  , JSON.stringify(new AzureRoleAssignmentsConverter().mapMinimal     (result.roleAssignments), null, 2)),
-            // writeFile(`${path}-${subscriptionId}.ext.json`  , JSON.stringify(new AzureRoleAssignmentsConverter().mapExtendend   (result.roleAssignments), null, 2)),
-            // writeFile(`${path}-${subscriptionId}.names.json`, JSON.stringify(new AzureRoleAssignmentsConverter().mapMinimalNoIds(result.roleAssignments), null, 2)),
-            // writeFile(`${path}-${subscriptionId}.md`        , new AzureRoleAssignmentsToMarkdown().convert(result.roleAssignments)),
-            // writeFile(`${path}-${subscriptionId}.html`      , new AzureRoleAssignmentsToHtml    ().convert(result.roleAssignments)),
+            writeFile(`${path}-${subscriptionId}.min.json`  , JSON.stringify(new AzureRoleAssignmentsCosmosDbConverter().mapMinimal     (result.roleAssignments), null, 2)),
+            writeFile(`${path}-${subscriptionId}.ext.json`  , JSON.stringify(new AzureRoleAssignmentsCosmosDbConverter().mapExtendend   (result.roleAssignments), null, 2)),
+            writeFile(`${path}-${subscriptionId}.names.json`, JSON.stringify(new AzureRoleAssignmentsCosmosDbConverter().mapMinimalNoIds(result.roleAssignments), null, 2)),
+            writeFile(`${path}-${subscriptionId}.md`        , new AzureRoleAssignmentsCosmosDbToMarkdown().convert(result.roleAssignments)),
+            writeFile(`${path}-${subscriptionId}.html`      , new AzureRoleAssignmentsCosmosDbToHtml    ().convert(result.roleAssignments)),
         ]);
 
         console.log(JSON.stringify({

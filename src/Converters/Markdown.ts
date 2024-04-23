@@ -5,11 +5,12 @@ import { AzurePortalLinks                           } from "../AzurePortalLinks"
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
 import { Md5                                        } from 'ts-md5'
 import { RoleAssignmentHelper                       } from "../RoleAssignmentHelper";
+import { AzureRoleAssignmentCosmosDb, AzureRoleAssignmentCosmosDbEx } from "../models/AzureRoleAssignmentCosmosDb";
 
 export class Markdown {
     private static readonly lineBreak = "&#013;";
 
-    static activeDirectoryPrincipal(item: AzureRoleAssignment): string {
+    static activeDirectoryPrincipal(item: AzureRoleAssignment | AzureRoleAssignmentCosmosDb): string {
 
         const principalId = item.principal?.id ?? `${item.roleAssignment.principalId}`;
 
@@ -114,6 +115,17 @@ export class Markdown {
         return markdown;
     }
 
+    static cosmosDb(tenantId: string, subscriptionId: string, resourceGroupName: string, accountName: string): string {
+        const markdown
+            = Markdown.getLinkWithToolTip(
+                accountName,
+                `https://portal.azure.com/#@${tenantId}/resource/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}/overview`,
+                `show link to '${accountName}'`)
+            ;
+
+        return markdown;
+    }
+
     static roleDefinition(item: AzureRoleAssignment): string {
         if (item.roleDefinition.roleType === 'BuiltInRole') {
             const title   = `${item.roleDefinition.roleName}`;
@@ -127,6 +139,26 @@ export class Markdown {
             const title   = `${item.roleDefinition.roleName}`;
             const url     = `https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles`;
             const tooltip = `${item.roleDefinition.description}${this.lineBreak}${this.lineBreak}show link to ${url}`;
+
+            return Markdown.getLinkWithToolTip(title, url, tooltip);
+        }
+
+        return `${item.roleDefinition.roleName}`;
+    }
+
+    static roleDefinitionCosmosDb(item: AzureRoleAssignmentCosmosDb): string {
+        if (item.roleDefinition.typePropertiesType === 'BuiltInRole') {
+            const title   = `${item.roleDefinition.roleName}`;
+            const url     = `https://learn.microsoft.com/en-us/azure/cosmos-db/role-based-access-control#built-in-roles`;
+            const tooltip = '';
+
+            return Markdown.getLinkWithToolTip(title, url, tooltip);
+        }
+
+        if (item.roleDefinition.typePropertiesType === 'CustomRole') {
+            const title   = `${item.roleDefinition.roleName}`;
+            const url     = `https://learn.microsoft.com/en-us/azure/cosmos-db/role-based-access-control#custom-roles`;
+            const tooltip = '';
 
             return Markdown.getLinkWithToolTip(title, url, tooltip);
         }
@@ -149,6 +181,20 @@ export class Markdown {
     }
 
     static azureRoleAssignmentStatus(item: AzureRoleAssignmentEx): string | undefined{
+        const tooltip = 
+        `scope${this.lineBreak}    ${item.roleAssignment.scope}${this.lineBreak}${this.lineBreak}`+
+        `principalId${this.lineBreak}    ${item.principal?.id}${this.lineBreak}${this.lineBreak}`+
+        `roleDefinitionId${this.lineBreak}    ${item.roleDefinition.id}`;
+
+        switch (item.roleAssignmentStatus) {
+            case 'missing-rbac'    : return `<div style="color:red" title="${tooltip}">missing<br/>rbac</div>`;
+            case 'missing-resource': return `<div style="color:red" title="${tooltip}">missing<br/>resource</div>`  ;
+            case 'okay'            : return `<div style="color:green" title="${tooltip}">okay</div>`            ;
+            case 'unexpected-rbac' : return `<div style="color:yellow" title="${tooltip}">unexpected<br/>rbac</div>`;
+            default: return undefined;
+        }
+    }
+    static azureRoleAssignmentStatusCosmosDb(item: AzureRoleAssignmentCosmosDbEx): string | undefined{
         const tooltip = 
         `scope${this.lineBreak}    ${item.roleAssignment.scope}${this.lineBreak}${this.lineBreak}`+
         `principalId${this.lineBreak}    ${item.principal?.id}${this.lineBreak}${this.lineBreak}`+
