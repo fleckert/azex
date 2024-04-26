@@ -3,7 +3,6 @@ import { ActiveDirectoryGroup            } from "./models/ActiveDirectoryGroup";
 import { ActiveDirectoryHelper           } from "./ActiveDirectoryHelper";
 import { ActiveDirectoryServicePrincipal } from "./models/ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser             } from "./models/ActiveDirectoryUser";
-import { AzureResourceId                 } from "./AzureResourceId";
 import { AzureRoleAssignment             } from "./models/AzureRoleAssignment";
 import { ManagementGroupInfo             } from "@azure/arm-managementgroups";
 import { ManagementGroupsHelper          } from "./ManagementGroupsHelper";

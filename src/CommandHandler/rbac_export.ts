@@ -14,6 +14,11 @@ export class rbac_export {
         const result = await new AzureRoleAssignmentsResolver().resolve(credentials, subscriptionId);
         result.roleAssignments.sort(AzureRoleAssignmentHelper.sort);
 
+        const scopes = result.roleAssignments.map(p=>p.roleAssignment.scope);
+        scopes.sort();
+        console.log(scopes);
+        await writeFile('test.txt', scopes.join('\n'));
+
         await Promise.all([
             writeFile(`${path}-${subscriptionId}.full.json` , JSON.stringify(result                                                                     , null, 2)),
             writeFile(`${path}-${subscriptionId}.min.json`  , JSON.stringify(new AzureRoleAssignmentsConverter().mapMinimal     (result.roleAssignments), null, 2)),

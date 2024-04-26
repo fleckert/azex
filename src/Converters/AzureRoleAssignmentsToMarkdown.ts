@@ -1,4 +1,4 @@
-import { AzureResourceId                            } from "../AzureResourceId";
+import { AzureResourceIdSlim                        } from "../AzureResourceIdSlim";
 import { Markdown                                   } from "./Markdown";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
 import { RoleAssignmentHelper                       } from "../RoleAssignmentHelper";
@@ -33,8 +33,8 @@ export class AzureRoleAssignmentsToMarkdown{
 
         lines.push("");
 
-        lines.push("|Subscription|ResourceGroup|Resource|Instance|Role|Principal|");
-        lines.push("|-|-|-|-|-|-|");
+        lines.push("|Subscription|ResourceGroup|Resource<br/>Instance|Role<br/>Principal|");
+        lines.push("|-|-|-|-|");
 
         const collectionSubscription = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment) === false);
 
@@ -43,15 +43,15 @@ export class AzureRoleAssignmentsToMarkdown{
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
             const subscriptionDisplayName = item.subscriptionName;
-            const resourceId              = new AzureResourceId(`${item.roleAssignment.scope}`);
+            const resourceId              = new AzureResourceIdSlim(`${item.roleAssignment.scope}`);
 
             lines.push(
                 `|${Markdown.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}` +
                 `|${Markdown.resourceGroup           (tenantId, subscriptionId, resourceId.resourceGroupName)}` +
-                `|${Markdown.providerNamespace       (resourceId.providerNamespace, resourceId.resourceType)}` +
-                `|${Markdown.resource                (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.providerNamespace, resourceId.resourceType, resourceId.name)}` +
+                `|${Markdown.provider                (resourceId.provider)}` +
+                `<br/>${Markdown.resourceSlim            (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.provider, resourceId.resource)}` +
                 `|${Markdown.roleDefinition          (item)}` +
-                `|${Markdown.activeDirectoryPrincipal(item)}|`
+                `<br/><br/>${Markdown.activeDirectoryPrincipal(item)}|`
             );
         }
 
@@ -86,8 +86,8 @@ export class AzureRoleAssignmentsToMarkdown{
 
         lines.push("");
 
-        lines.push("|Status|Subscription|ResourceGroup|Resource|Instance|Role|Principal|");
-        lines.push("|:-:|-|-|-|-|-|-|");
+        lines.push("|Status|Subscription|ResourceGroup|Resource<br/>Instance|Role|Principal|");
+        lines.push("|:-:|-|-|-|-|-|");
 
         const collectionSubscription = collection.filter(p => RoleAssignmentHelper.isManagementGroupScope(p.roleAssignment) === false);
 
@@ -96,14 +96,14 @@ export class AzureRoleAssignmentsToMarkdown{
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
             const subscriptionDisplayName = item.subscriptionName;
-            const resourceId              = new AzureResourceId(`${item.roleAssignment.scope}`);
+            const resourceId              = new AzureResourceIdSlim(`${item.roleAssignment.scope}`);
 
             lines.push(
                 `|${Markdown.azureRoleAssignmentStatus(item)}` +
                 `|${Markdown.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}` +
                 `|${Markdown.resourceGroup           (tenantId, subscriptionId, resourceId.resourceGroupName)}` +
-                `|${Markdown.providerNamespace       (resourceId.providerNamespace, resourceId.resourceType)}` +
-                `|${Markdown.resource                (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.providerNamespace, resourceId.resourceType, resourceId.name)}` +
+                `|${Markdown.provider                (resourceId.provider)}` +
+                `<br/>${Markdown.resourceSlim            (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.provider, resourceId.resource)}` +
                 `|${Markdown.roleDefinition          (item)}` +
                 `|${Markdown.activeDirectoryPrincipal(item)}|`
             );

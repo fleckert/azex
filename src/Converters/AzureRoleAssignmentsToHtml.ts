@@ -1,4 +1,4 @@
-import { AzureResourceId                            } from "../AzureResourceId";
+import { AzureResourceIdSlim                        } from "../AzureResourceIdSlim";
 import { Html                                       } from "./Html";
 import { AzureRoleAssignment, AzureRoleAssignmentEx } from "../models/AzureRoleAssignment";
 import { RoleAssignmentHelper                       } from "../RoleAssignmentHelper";
@@ -62,10 +62,8 @@ export class AzureRoleAssignmentsToHtml{
         lines.push('    <tr>');
         lines.push('      <th scope="col">Subscription</td>');
         lines.push('      <th scope="col">ResourceGroup</td>');
-        lines.push('      <th scope="col">Resource</td>');
-        lines.push('      <th scope="col">Instance</td>');
-        lines.push('      <th scope="col">Role</td>');
-        lines.push('      <th scope="col">Principal</td>');
+        lines.push('      <th scope="col">Resource<br/>Instance</td>'); 
+        lines.push('      <th scope="col">Role<br/>Principal</td>');
         lines.push('    </tr>');
         lines.push('  </thead>');
         lines.push('  <tbody>');
@@ -77,15 +75,14 @@ export class AzureRoleAssignmentsToHtml{
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
             const subscriptionDisplayName = item.subscriptionName;
-            const resourceId              = new AzureResourceId(`${item.roleAssignment.scope}`);
+            const resourceId              = new AzureResourceIdSlim(`${item.roleAssignment.scope}`);
 
             lines.push('  <tr>');
             lines.push(`     <td>${Html.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}</td>`);
             lines.push(`     <td>${Html.resourceGroup           (tenantId, subscriptionId, resourceId.resourceGroupName)}</td>`);
-            lines.push(`     <td>${Html.providerNamespace       (resourceId.providerNamespace, resourceId.resourceType)}</td>`);
-            lines.push(`     <td>${Html.resource                (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.providerNamespace, resourceId.resourceType, resourceId.name)}</td>`);
-            lines.push(`     <td>${Html.roleDefinition          (item)}</td>`);
-            lines.push(`     <td>${Html.activeDirectoryPrincipal(item)}</td>`);
+            lines.push(`     <td>${Html.provider                (resourceId.provider                                   )}`);
+            lines.push(`     <br/>${Html.resourceSlim           (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.provider, resourceId.resource)}</td>`);
+            lines.push(`     <td>${Html.roleDefinition          (item)}<br/>${Html.activeDirectoryPrincipal(item)}</td>`);
             lines.push('  </tr>');
         }
         lines.push('  </tbody>');
@@ -134,10 +131,10 @@ export class AzureRoleAssignmentsToHtml{
                 const subscriptionDisplayName = item.subscriptionName;
 
                 lines.push('  <tr>');
-                lines.push(`     <td>${Html.managementGroup(item)}</td>`);
-                lines.push(`     <td>${Html.subscription(tenantId, subscriptionId, subscriptionDisplayName)}</td>`);
-                lines.push(`     <td>${Html.roleDefinition(item)}</td>`);
-                lines.push(`     <td>${Html.activeDirectoryPrincipal(item)}</td>`);
+                lines.push(`     <td>${Html.managementGroup         (item                                             )}</td>`);
+                lines.push(`     <td>${Html.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}</td>`);
+                lines.push(`     <td>${Html.roleDefinition          (item                                             )}</td>`);
+                lines.push(`     <td>${Html.activeDirectoryPrincipal(item                                             )}</td>`);
                 lines.push('  </tr>');
             }
             lines.push('  </tbody>');
@@ -152,10 +149,8 @@ export class AzureRoleAssignmentsToHtml{
         lines.push('      <th scope="col">Status</td>');
         lines.push('      <th scope="col">Subscription</td>');
         lines.push('      <th scope="col">ResourceGroup</td>');
-        lines.push('      <th scope="col">Resource</td>');
-        lines.push('      <th scope="col">Instance</td>');
-        lines.push('      <th scope="col">Role</td>');
-        lines.push('      <th scope="col">Principal</td>');
+        lines.push('      <th scope="col">Resource<br/>Instance</td>');
+        lines.push('      <th scope="col">Role<br/>Principal</td>');
         lines.push('    </tr>');
         lines.push('  </thead>');
         lines.push('  <tbody>');
@@ -167,16 +162,16 @@ export class AzureRoleAssignmentsToHtml{
             const tenantId                = item.tenantId;
             const subscriptionId          = item.subscriptionId;
             const subscriptionDisplayName = item.subscriptionName;
-            const resourceId              = new AzureResourceId(`${item.roleAssignment.scope}`);
+            const resourceId              = new AzureResourceIdSlim(`${item.roleAssignment.scope}`);
 
             lines.push('  <tr>');
             lines.push(`     <td>${Html.azureRoleAssignmentStatus(item)}</td>`);
-            lines.push(`     <td>${Html.subscription            (tenantId, subscriptionId, subscriptionDisplayName)}</td>`);
+            lines.push(`     <td>${Html.subscription            (tenantId, subscriptionId, subscriptionDisplayName     )}</td>`);
             lines.push(`     <td>${Html.resourceGroup           (tenantId, subscriptionId, resourceId.resourceGroupName)}</td>`);
-            lines.push(`     <td>${Html.providerNamespace       (resourceId.providerNamespace, resourceId.resourceType)}</td>`);
-            lines.push(`     <td>${Html.resource                (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.providerNamespace, resourceId.resourceType, resourceId.name)}</td>`);
+            lines.push(`     <td>${Html.provider                (resourceId.provider                                   )}`);
+            lines.push(`     <br/>${Html.resourceSlim           (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.provider, resourceId.resource)}</td>`);
             lines.push(`     <td>${Html.roleDefinition          (item)}</td>`);
-            lines.push(`     <td>${Html.activeDirectoryPrincipal(item)}</td>`);
+            lines.push(`     <br/>${Html.activeDirectoryPrincipal(item)}</td>`);
             lines.push('  </tr>');
         }
         lines.push('  </tbody>');

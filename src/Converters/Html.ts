@@ -49,7 +49,7 @@ export class Html {
         return principalId;
     }
     static activeDirectoryServicePrincipal(principal: ActiveDirectoryServicePrincipal): string {
-        const title = `${principal.displayName}<br/>${principal.servicePrincipalType}`;
+        const title = `${principal.servicePrincipalType} ${principal.displayName}`;
         const url = AzurePortalLinks.servicePrincipal(principal.id, principal.appId);
         const tooltip = `ServicePrincipal${this.lineBreak}` +
             `-----------------${this.lineBreak}` +
@@ -61,7 +61,7 @@ export class Html {
         return this.getLinkWithToolTip(title, url, tooltip);
     }
     static activeDirectoryUser(principal: ActiveDirectoryUser): string {
-        const title = `${principal.displayName}<br/>User`;
+        const title = `User ${principal.displayName}`;
         const url = AzurePortalLinks.user(principal.id);
         const tooltip = `User${this.lineBreak}` +
             `-----${this.lineBreak}` +
@@ -72,7 +72,7 @@ export class Html {
         return this.getLinkWithToolTip(title, url, tooltip);
     }
     static activeDirectoryGroup(principal: ActiveDirectoryGroup): string {
-        const title = `${principal.displayName}<br/>Group`;
+        const title = `Group ${principal.displayName}`;
         const url = AzurePortalLinks.group(principal.id);;
         const tooltip = `Group${this.lineBreak}` +
             `-------${this.lineBreak}` +
@@ -117,6 +117,28 @@ export class Html {
                 `${providerNamespace}<br/>${resourceType}`,
                 `https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/${providerNamespace}%2F${resourceType}`,
                 `show link to '${providerNamespace}/${resourceType}' resources`)
+            ;
+
+        return markdown;
+    }
+
+    static provider(provider: string | undefined): string {
+        const markdown
+            = provider === undefined
+            ? ''
+            : provider;
+
+        return markdown;
+    }
+
+    static resourceSlim(tenantId: string, subscriptionId: string, resourceGroupName: string | undefined, provider: string | undefined, resource: string | undefined): string {
+        const markdown
+            = resourceGroupName ===undefined || provider === undefined || resource === undefined
+            ? ''
+            : Html.getLinkWithToolTip(
+                resource,
+                `https://portal.azure.com/#@${tenantId}/resource/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/${provider}/${resource}`,
+                `show link to '${resource}'`)
             ;
 
         return markdown;
