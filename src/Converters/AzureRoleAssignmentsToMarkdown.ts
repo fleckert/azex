@@ -13,8 +13,8 @@ export class AzureRoleAssignmentsToMarkdown{
 
         if (collectionManagementGroups.length > 0) {
             // ManagementGroups are not supported on all subscriptions
-            lines.push("|ManagementGroup|Subscription|Role|Principal|");
-            lines.push("|-|-|-|-|");
+            lines.push("|ManagementGroup|Subscription|Role<br/>Principal|");
+            lines.push("|-              |-           |-                 |");
 
             for (const item of collectionManagementGroups) {
 
@@ -26,7 +26,7 @@ export class AzureRoleAssignmentsToMarkdown{
                     `|${Markdown.managementGroup(item)}` +
                     `|${Markdown.subscription(tenantId, subscriptionId, subscriptionDisplayName)}` +
                     `|${Markdown.roleDefinition(item)}`+
-                    `|${Markdown.activeDirectoryPrincipal(item)}|`
+                    `<br/>${Markdown.activeDirectoryPrincipal(item)}|`
                 );
             }
         }
@@ -51,7 +51,7 @@ export class AzureRoleAssignmentsToMarkdown{
                 `|${Markdown.provider                (resourceId.provider)}` +
                 `<br/>${Markdown.resourceSlim            (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.provider, resourceId.resource)}` +
                 `|${Markdown.roleDefinition          (item)}` +
-                `<br/><br/>${Markdown.activeDirectoryPrincipal(item)}|`
+                `<br/>${Markdown.activeDirectoryPrincipal(item)}|`
             );
         }
 

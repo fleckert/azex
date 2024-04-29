@@ -1,6 +1,7 @@
 import { AzureResourceIdSlim                                        } from "../AzureResourceIdSlim";
 import { Markdown                                                   } from "./Markdown";
 import { AzureRoleAssignmentCosmosDb, AzureRoleAssignmentCosmosDbEx } from "../models/AzureRoleAssignmentCosmosDb";
+import { SqlRoleAssignmentGetResults } from "@azure/arm-cosmosdb";
 
 export class AzureRoleAssignmentsCosmosDbToMarkdown{
 
@@ -24,6 +25,25 @@ export class AzureRoleAssignmentsCosmosDbToMarkdown{
                 `|${Markdown.roleDefinitionCosmosDb  (item)}` +
                 `<br/>${Markdown.activeDirectoryPrincipal(item)}|`
             );
+        }
+
+        lines.push("\n");
+
+        const sqlRoleAssignmentGetResults = new Map<string, SqlRoleAssignmentGetResults>();
+
+        for (const item of collection) {
+            if(item.roleDefinition.id !== undefined) {
+                sqlRoleAssignmentGetResults.set(item.roleDefinition.id, item.roleDefinition);
+            }
+        }
+
+        for(const sqlRoleAssignmentGetResult of sqlRoleAssignmentGetResults.values()){
+            lines.push('');
+            lines.push("<hr/>");
+            lines.push('');
+            lines.push('```JSON');
+            lines.push(JSON.stringify(sqlRoleAssignmentGetResult, null, 2));
+            lines.push('```');
         }
 
         return lines.join('\n');

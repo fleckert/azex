@@ -3,15 +3,13 @@ import { ActiveDirectoryGroup                                  } from "./models/
 import { ActiveDirectoryHelper                                 } from "./ActiveDirectoryHelper";
 import { ActiveDirectoryServicePrincipal                       } from "./models/ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser                                   } from "./models/ActiveDirectoryUser";
-import { AzureRoleAssignment                                   } from "./models/AzureRoleAssignment";
-import { ManagementGroupInfo                                   } from "@azure/arm-managementgroups";
-import { RoleDefinition                                        } from "@azure/arm-authorization/esm/models";
+import { AzureRoleAssignmentCosmosDb                           } from "./models/AzureRoleAssignmentCosmosDb";
+import { CosmosDBManagementClient, SqlRoleDefinitionGetResults } from "@azure/arm-cosmosdb";
 import { ResourceManagementClient                              } from "@azure/arm-resources";
+import { RoleDefinition                                        } from "@azure/arm-authorization/esm/models";
 import { SubscriptionClient                                    } from "@azure/arm-subscriptions";
 import { TenantIdResolver                                      } from "./TenantIdResolver";
 import { TokenCredential                                       } from "@azure/identity";
-import { CosmosDBManagementClient, SqlRoleDefinitionGetResults } from "@azure/arm-cosmosdb";
-import { AzureRoleAssignmentCosmosDb } from "./models/AzureRoleAssignmentCosmosDb";
 
 export class AzureRoleAssignmentsResolverCosmosDb {
     async resolve(
@@ -144,10 +142,11 @@ export class AzureRoleAssignmentsResolverCosmosDb {
 
             if (accountName       === undefined) { continue; }
             if (resourceGroupName === undefined) { continue; }
+            if (resource.kind    === 'MongoDB' ) { continue; }
 
             const sqlRoleDefinitionsResponse = cosmosDBManagementClient.sqlResources.listSqlRoleDefinitions(resourceGroupName, accountName);
-
-            const sqlRoleDefinitions =new Array<SqlRoleDefinitionGetResults>;
+            
+            const sqlRoleDefinitions = new Array<SqlRoleDefinitionGetResults>;
 
             for await (const sqlRoleDefinition of sqlRoleDefinitionsResponse) {
                 sqlRoleDefinitions.push(sqlRoleDefinition);

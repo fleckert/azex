@@ -44,9 +44,9 @@ export class AzureRoleAssignmentsCosmosDbToHtml{
             lines.push('  <tr>');
             lines.push(`     <td>${Html.subscription                    (tenantId, subscriptionId, subscriptionDisplayName)}</td>`);
             lines.push(`     <td>${Html.resourceGroup                   (tenantId, subscriptionId, resourceId.resourceGroupName)}</td>`);
-            lines.push(`     <td>${Html.resourceSlim                    (tenantId, subscriptionId, resourceId.resourceGroupName, resourceId.provider, resourceId.resource)}</td>`);
+            lines.push(`     <td>${Html.cosmosDb                        (tenantId, subscriptionId, item.resourceGroupName, item.accountName, resourceId.resource ?? item.accountName)}</td>`);
             lines.push(`     <td>${Html.roleDefinitionCosmosDb          (item)}`);
-            lines.push(`     </br>${Html.activeDirectoryPrincipalCosmosDb(item)}</td>`);
+            lines.push(`    </br>${Html.activeDirectoryPrincipalCosmosDb(item)}</td>`);
             lines.push('  </tr>');
         }
         lines.push('  </tbody>');

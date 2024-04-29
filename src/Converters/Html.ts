@@ -143,6 +143,16 @@ export class Html {
 
         return markdown;
     }
+    static cosmosDb(tenantId: string, subscriptionId: string, resourceGroupName: string, accountName: string, resource:string): string {
+        const markdown
+            = Html.getLinkWithToolTip(
+                resource,
+                `https://portal.azure.com/#@${tenantId}/resource/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}/overview`,
+                `show link to '${resource}'`)
+            ;
+
+        return markdown;
+    }
 
     static resource(tenantId: string, subscriptionId: string, resourceGroupName: string | undefined, providerNamespace: string | undefined, resourceType: string | undefined, name: string | undefined): string {
         const markdown
