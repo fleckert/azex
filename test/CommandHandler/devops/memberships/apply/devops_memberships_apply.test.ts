@@ -7,7 +7,7 @@ test('devops_memberships_apply', async () => {
     const organization = config.azureDevOps.organization;
     const tenant       = config.azureDevOps.tenant;
 
-    const pathIn = '' ?? path.join(__dirname, 'test.json');
+    const pathIn = path.join(__dirname, 'test.json');
 
     if (`${pathIn}` !== '') {
         await devops_memberships_apply.handle(tenant, organization, pathIn);

@@ -1,6 +1,5 @@
-import { AuthorizationManagementClient } from "@azure/arm-authorization";
-import { RoleDefinition                } from "@azure/arm-authorization/esm/models";
-import { TokenCredential               } from "@azure/identity";
+import { AuthorizationManagementClient, RoleDefinition } from "@azure/arm-authorization";
+import { TokenCredential                               } from "@azure/identity";
 
 export class RoleDefinitionHelper {
 
@@ -18,36 +17,12 @@ export class RoleDefinitionHelper {
         subscriptionId: string,
         roleName      : string
     ): Promise<RoleDefinition | undefined> {
-        const roleDefinitions = await this.authorizationManagementClient.roleDefinitions.list(`/subscriptions/${subscriptionId}`);
+        const roleDefinitions = this.authorizationManagementClient.roleDefinitions.list(`/subscriptions/${subscriptionId}`);
 
-        for (const roleDefinition of roleDefinitions) {
+        for await (const roleDefinition of roleDefinitions) {
             if (this.checkRoleDefinition(roleDefinition, roleName)) {
                 return roleDefinition;
             }
-        }
-
-        if (roleDefinitions.nextLink !== undefined) {
-            return await this.getRoleDefinitionNext(roleName, roleDefinitions.nextLink);
-        }
-
-        return undefined;
-    }
-
-    private async getRoleDefinitionNext(
-        roleName        : string,
-        nextPageLink    : string
-    ): Promise<RoleDefinition | undefined> {
-
-        const roleDefinitions = await this.authorizationManagementClient.roleDefinitions.listNext(nextPageLink);
-
-        for (const roleDefinition of roleDefinitions) {
-            if (this.checkRoleDefinition(roleDefinition, roleName)) {
-                return roleDefinition;
-            }
-        }
-
-        if (roleDefinitions.nextLink !== undefined) {
-            return await this.getRoleDefinitionNext(roleName, roleDefinitions.nextLink);
         }
 
         return undefined;
@@ -65,18 +40,10 @@ export class RoleDefinitionHelper {
 
         const roleDefinitionsAll = new Array<RoleDefinition>();
 
-        const roleDefinitions = await this.authorizationManagementClient.roleDefinitions.list(scope);
+        const roleDefinitions = this.authorizationManagementClient.roleDefinitions.list(scope);
 
-        roleDefinitionsAll.push(...roleDefinitions);
-
-        let nextLink = roleDefinitions.nextLink;
-
-        while (nextLink !== undefined) {
-            const roleDefinitionsNext = await this.authorizationManagementClient.roleDefinitions.listNext(nextLink);
-
-            roleDefinitionsAll.push(...roleDefinitionsNext);
-
-            nextLink = roleDefinitionsNext.nextLink;
+        for await (const roleDefinition of roleDefinitions) {
+            roleDefinitionsAll.push(roleDefinition);
         }
 
         return roleDefinitionsAll;
@@ -86,32 +53,15 @@ export class RoleDefinitionHelper {
 
         const roleDefinitionsAll = new Array<RoleDefinition>();
 
-        const roleDefinitions = await this.authorizationManagementClient.roleDefinitions.list(scope);
+        const roleDefinitions = this.authorizationManagementClient.roleDefinitions.list(scope);
 
-        for (const roleDefinition of roleDefinitions) {
+        for await (const roleDefinition of roleDefinitions) {
             if (roleDefinitionIds.find(p => roleDefinition.id?.toLowerCase() === p.toLowerCase()) !== undefined) {
                 roleDefinitionsAll.push(roleDefinition);
             }
             else if (roleDefinitionNames.find(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase()) !== undefined) {
                 roleDefinitionsAll.push(roleDefinition);
             }
-        }
-
-        let nextLink = roleDefinitions.nextLink;
-
-        while (nextLink !== undefined) {
-            const roleDefinitionsNext = await this.authorizationManagementClient.roleDefinitions.listNext(nextLink);
-
-            for (const roleDefinition of roleDefinitionsNext) {
-                if (roleDefinitionIds.find(p => roleDefinition.id === p) !== undefined) {
-                    roleDefinitionsAll.push(roleDefinition);
-                }
-                else if(roleDefinitionNames.find(p => roleDefinition.roleName?.toLowerCase() === p.toLowerCase()) !== undefined){
-                    roleDefinitionsAll.push(roleDefinition);
-                }
-            }
-
-            nextLink = roleDefinitionsNext.nextLink;
         }
 
         return roleDefinitionsAll;

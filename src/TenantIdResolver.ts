@@ -48,7 +48,7 @@ export class TenantIdResolver {
             return undefined;
         }
 
-        var decoded = jwt_decode<{ tid: string }>(token.token);
+        var decoded = jwt_decode.jwtDecode<{ tid: string }>(token.token);
 
         return decoded.tid;
     }

@@ -3,7 +3,7 @@ import { AzureRoleAssignmentsVerifier  } from "../AzureRoleAssignmentsVerifier";
 import { Helper                        } from "../Helper";
 import { RbacDefinition                } from "../models/RbacDefinition";
 import { readFile                      } from "fs/promises";
-import { RoleAssignment                } from "@azure/arm-authorization/esm/models";
+import { RoleAssignment                } from "@azure/arm-authorization";
 import { RoleAssignmentHelper          } from "../RoleAssignmentHelper";
 import { TokenCredential               } from "@azure/identity";
 
