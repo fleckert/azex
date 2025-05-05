@@ -72,33 +72,4 @@ export class AzureDevOpsWrapper {
     workTeamSettings(projectId: string, teamId: string): Promise<TeamSetting> {
         return new WorkApi(this.baseUrl, this.requestHandlers).getTeamSettings({ projectId, teamId });
     }
-
-    private async projectsInternal(): Promise<Array<TeamProjectReference>> {
-
-        const teamProjectReferences = new Array<TeamProjectReference>();
-
-        const client = new CoreApi(this.baseUrl, this.requestHandlers);
-
-        while (true) {
-            const stateFilter           : any     | undefined = undefined;
-            const top                   : number  | undefined = 2; 
-            const skip                  : number  | undefined = undefined; 
-            const continuationToken     : string  | undefined = teamProjectReferences.length.toString(); 
-            const getDefaultTeamImageUrl: boolean | undefined = undefined;
-
-            const collection = await client.getProjects(stateFilter, top, skip, continuationToken, getDefaultTeamImageUrl);
-
-            for (const item of collection) {
-                if (teamProjectReferences.find(p=>p.id === item.id) === undefined) {
-                    teamProjectReferences.push(item);
-                }
-            }
-
-            if (collection.length <= 1) {
-                break;
-            }
-        }
-
-        return teamProjectReferences;
-    }
 }

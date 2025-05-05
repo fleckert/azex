@@ -1,8 +1,8 @@
-import {  RoleAssignment,  RoleDefinition } from "@azure/arm-authorization/esm/models";
 import { ActiveDirectoryGroup             } from "./ActiveDirectoryGroup";
 import { ActiveDirectoryServicePrincipal  } from "./ActiveDirectoryServicePrincipal";
 import { ActiveDirectoryUser              } from "./ActiveDirectoryUser";
 import { ManagementGroupInfo              } from "@azure/arm-managementgroups";
+import { RoleAssignment, RoleDefinition   } from "@azure/arm-authorization";
 
 export interface AzureRoleAssignment {
     roleAssignment     : RoleAssignment;

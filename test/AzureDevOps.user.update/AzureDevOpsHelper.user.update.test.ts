@@ -7,7 +7,7 @@ test('AzureDevOpsHelper - user - update', async () => {
     const config           = await TestConfigurationProvider.get();
     const organization     = config.azureDevOps.organization;
     const tenant           = config.azureDevOps.tenant;
-    const maxNumberOfTests = 1??config.azureDevOps.maxNumberOfTests;
+    const maxNumberOfTests = config.azureDevOps.maxNumberOfTests;
 
     const azureDevOpsHelper = await AzureDevOpsHelper.instance(tenant);
 

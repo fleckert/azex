@@ -682,7 +682,7 @@ export class AzureDevOpsSecurityTokens {
             }
 
             const displayName = (rd: ReleaseDefinition): string => {
-                const value = `${folderName(rd)}${rd.name}` ?? `${folderName(rd)}${rd.id}` ?? `${folderName(rd)}noNameOrId`;
+                const value = `${folderName(rd)}${rd.name}`;
                 return value;
             }
 

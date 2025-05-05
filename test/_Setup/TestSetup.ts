@@ -5,7 +5,7 @@ import { ActiveDirectoryServicePrincipal } from "../../src/models/ActiveDirector
 import { ActiveDirectoryUser             } from "../../src/models/ActiveDirectoryUser";
 import { AzureRoleAssignmentsExtender    } from "../../src/AzureRoleAssignmentsExtender";
 import { Guid                            } from "../../src/Guid";
-import { PrincipalType, RoleAssignment   } from "@azure/arm-authorization/esm/models";
+import { PrincipalType, RoleAssignment   } from "@azure/arm-authorization";
 import { RbacDefinition                  } from "../../src/models/RbacDefinition";
 import { ResourceManagementClient        } from "@azure/arm-resources";
 import { RoleAssignmentHelper            } from "../../src/RoleAssignmentHelper";

@@ -1,7 +1,6 @@
-import { AuthorizationManagementClient } from "@azure/arm-authorization";
-import { Guid                          } from "./Guid";
-import { PrincipalType, RoleAssignment } from "@azure/arm-authorization/esm/models";
-import { TokenCredential               } from "@azure/identity";
+import { AuthorizationManagementClient, PrincipalType, RoleAssignment } from "@azure/arm-authorization";
+import { Guid                                                         } from "./Guid";
+import { TokenCredential                                              } from "@azure/identity";
 
 export class RoleAssignmentHelper {
 
@@ -49,7 +48,7 @@ export class RoleAssignmentHelper {
     scope             : string,
     roleAssignmentName: string
   ): Promise<RoleAssignment> {
-      return this.authorizationManagementClient.roleAssignments.deleteMethod(
+      return this.authorizationManagementClient.roleAssignments.delete(
         scope,
         roleAssignmentName
       );
@@ -61,50 +60,12 @@ export class RoleAssignmentHelper {
     roleDefinitionId: string,
     principalType   : PrincipalType
   ): Promise<RoleAssignment | undefined> {
-    const roleAssignments = await this.authorizationManagementClient.roleAssignments.listForScope(scope);
+    const roleAssignments = this.authorizationManagementClient.roleAssignments.listForScope(scope);
 
-    for (const roleAssignment of roleAssignments) {
+    for await(const roleAssignment of roleAssignments) {
       if (this.checkRoleAssignment(roleAssignment, scope, principalId, roleDefinitionId, principalType)) {
         return roleAssignment;
       }
-    }
-
-    if (roleAssignments.nextLink !== undefined) {
-      return await this.getRoleAssignmentNext(
-        scope,
-        principalId,
-        roleDefinitionId,
-        principalType,
-        roleAssignments.nextLink
-      );
-    }
-
-    return undefined;
-  }
-
-  private async getRoleAssignmentNext(
-    scope           : string,
-    principalId     : string,
-    roleDefinitionId: string,
-    principalType   : PrincipalType,
-    nextPageLink    : string
-  ): Promise<RoleAssignment | undefined> {
-    const roleAssignments = await this.authorizationManagementClient.roleAssignments.listForScopeNext(nextPageLink);
-
-    for (const roleAssignment of roleAssignments) {
-      if (this.checkRoleAssignment(roleAssignment, scope, principalId, roleDefinitionId, principalType)) {
-        return roleAssignment;
-      }
-    }
-
-    if (roleAssignments.nextLink !== undefined) {
-      return await this.getRoleAssignmentNext(
-        scope,
-        principalId,
-        roleDefinitionId,
-        principalType,
-        roleAssignments.nextLink
-      );
     }
 
     return undefined;
@@ -128,18 +89,10 @@ export class RoleAssignmentHelper {
   async listAllForScope(scope: string): Promise<Array<RoleAssignment>> {
     const roleAssignmentsAll = new Array<RoleAssignment>();
 
-    const roleAssignments = await this.authorizationManagementClient.roleAssignments.listForScope(scope);
+    const roleAssignments = this.authorizationManagementClient.roleAssignments.listForScope(scope);
 
-    roleAssignmentsAll.push(...roleAssignments);
-
-    let nextLink = roleAssignments.nextLink;
-
-    while (nextLink !== undefined) {
-      const roleAssignmentsNext = await this.authorizationManagementClient.roleAssignments.listForScopeNext(nextLink);
-
-      roleAssignmentsAll.push(...roleAssignmentsNext);
-
-      nextLink = roleAssignmentsNext.nextLink;
+    for await (const roleAssignment of roleAssignments) {
+      roleAssignmentsAll.push(roleAssignment);
     }
 
     return roleAssignmentsAll;
