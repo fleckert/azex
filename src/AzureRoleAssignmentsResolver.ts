@@ -26,6 +26,8 @@ export class AzureRoleAssignmentsResolver {
         const roleAssignmentHelper   = new RoleAssignmentHelper  (credentials, subscriptionId);
         const tenantIdResolver       = new TenantIdResolver      (credentials                );
 
+        const subscriptionPromise = subscriptionClient.subscriptions.get(subscriptionId);
+
         const roleAssignments = await roleAssignmentHelper.listAllForScope(`/subscriptions/${subscriptionId}`);
     
         const userIds             = Array.from(new Set(roleAssignments.filter(p => p.principalType === 'User'             && p.principalId !== undefined).map(p => p.principalId!)));
@@ -54,17 +56,20 @@ export class AzureRoleAssignmentsResolver {
 
         const roleDefinitionIds  = Array.from(new Set(roleAssignments.filter(p => p.roleDefinitionId !== undefined).map(p => p.roleDefinitionId!)));
 
-        const roleDefinitions = roleDefinitionHelper.listAllForScopeById(`/subscriptions/${subscriptionId}`, roleDefinitionIds, []);
+        const roleDefinitionsPromise = roleDefinitionHelper.listAllForScopeById(`/subscriptions/${subscriptionId}`, roleDefinitionIds, []);
 
         const usersPromise             = activeDirectoryHelper.getUsersById            (userIds            );
         const groupsPromise            = activeDirectoryHelper.getGroupsById           (groupIds           );
         const servicePrincipalsPromise = activeDirectoryHelper.getServicePrincipalsById(servicePrincipalIds);
-        const managementGroups         = managementGroupsHelper.getByIds(managementGroupIds);
+        const managementGroupsPromise  = managementGroupsHelper.getByIds(managementGroupIds);
         const tenantIdPromise          = tenantIdResolver.getTenantId();
 
         const usersResponses             = await usersPromise;
         const groupsResponses            = await groupsPromise;
         const servicePrincipalsResponses = await servicePrincipalsPromise;
+        const roleDefinitions            = await roleDefinitionsPromise;
+        const managementGroups           = await managementGroupsPromise;
+        const subscription               = await subscriptionPromise
 
         for (const item of usersResponses            .failedRequests) { failedRequests.push(`Azure Active Directory request failed [${item}]`); }
         for (const item of groupsResponses           .failedRequests) { failedRequests.push(`Azure Active Directory request failed [${item}]`); }
@@ -77,13 +82,13 @@ export class AzureRoleAssignmentsResolver {
 
         const resolvedRoleAssignments = this.resolveRoleAssignments(
             roleAssignments,
-            await roleDefinitions,
+            roleDefinitions,
             usersResponses.items,
             groupsResponses.items,
             servicePrincipalsResponses.items,
-            await managementGroups,
+            managementGroups,
             subscriptionId,
-            (await subscriptionClient.subscriptions.get(subscriptionId))?.displayName,
+            subscription?.displayName,
             tenantId
         );
 
