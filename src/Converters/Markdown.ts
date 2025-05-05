@@ -63,7 +63,7 @@ export class Markdown {
     }
 
     static getLinkWithToolTip(title: string, url: string, tooltip: string) {
-        return `[${title}](${url} "${tooltip}")`;
+        return `[${title}](${encodeURI(url)} "${tooltip}")`;
     }
 
     static subscription(tenantId: string, subscriptionId: string, subscriptionDisplayName: string | undefined): string {
