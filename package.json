@@ -1,6 +1,6 @@
 {
   "name": "azex",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Azure CLI extensions",
   "main": "index.js",
   "bin": {
